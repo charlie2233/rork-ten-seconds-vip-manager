@@ -1,0 +1,145 @@
+import { User, Transaction, Benefit } from '@/types';
+
+export const mockUser: User = {
+  id: '1',
+  memberId: 'SSD20250112001',
+  name: '张三',
+  phone: '138****8888',
+  balance: 2580.00,
+  points: 12680,
+  tier: 'gold',
+  joinDate: '2024-06-15',
+};
+
+export const mockTransactions: Transaction[] = [
+  {
+    id: '1',
+    type: 'spend',
+    amount: -128.00,
+    description: '门店消费 - 十秒到(朝阳店)',
+    date: '2026-01-12 12:30',
+    balance: 2580.00,
+  },
+  {
+    id: '2',
+    type: 'bonus',
+    amount: 50.00,
+    description: '会员日充值赠送',
+    date: '2026-01-10 14:22',
+    balance: 2708.00,
+  },
+  {
+    id: '3',
+    type: 'deposit',
+    amount: 500.00,
+    description: '账户充值',
+    date: '2026-01-10 14:20',
+    balance: 2658.00,
+  },
+  {
+    id: '4',
+    type: 'spend',
+    amount: -89.50,
+    description: '门店消费 - 十秒到(海淀店)',
+    date: '2026-01-08 19:15',
+    balance: 2158.00,
+  },
+  {
+    id: '5',
+    type: 'spend',
+    amount: -156.00,
+    description: '门店消费 - 十秒到(西城店)',
+    date: '2026-01-05 13:45',
+    balance: 2247.50,
+  },
+  {
+    id: '6',
+    type: 'deposit',
+    amount: 1000.00,
+    description: '账户充值',
+    date: '2026-01-01 10:00',
+    balance: 2403.50,
+  },
+  {
+    id: '7',
+    type: 'bonus',
+    amount: 100.00,
+    description: '新年会员礼',
+    date: '2026-01-01 00:00',
+    balance: 1403.50,
+  },
+];
+
+export const mockBenefits: Benefit[] = [
+  {
+    id: '1',
+    title: '会员折扣',
+    description: '全场消费享受9折优惠',
+    icon: 'percent',
+    tier: 'silver',
+    isActive: true,
+  },
+  {
+    id: '2',
+    title: '生日礼遇',
+    description: '生日当月享双倍积分及免费菜品',
+    icon: 'gift',
+    tier: 'silver',
+    isActive: true,
+  },
+  {
+    id: '3',
+    title: '充值赠送',
+    description: '充500送50，充1000送120',
+    icon: 'wallet',
+    tier: 'silver',
+    isActive: true,
+  },
+  {
+    id: '4',
+    title: '优先订座',
+    description: '高峰期优先安排座位',
+    icon: 'calendar-check',
+    tier: 'gold',
+    isActive: true,
+  },
+  {
+    id: '5',
+    title: '专属客服',
+    description: '一对一专属客服服务',
+    icon: 'headphones',
+    tier: 'gold',
+    isActive: true,
+  },
+  {
+    id: '6',
+    title: '免费停车',
+    description: '消费满200免费停车2小时',
+    icon: 'car',
+    tier: 'gold',
+    isActive: true,
+  },
+  {
+    id: '7',
+    title: 'VIP包间',
+    description: '免费使用VIP专属包间',
+    icon: 'crown',
+    tier: 'platinum',
+    isActive: false,
+  },
+  {
+    id: '8',
+    title: '新品优先',
+    description: '新品上市优先品尝',
+    icon: 'sparkles',
+    tier: 'platinum',
+    isActive: false,
+  },
+];
+
+export const tierInfo = {
+  silver: { name: '白银会员', color: '#C0C0C0', minPoints: 0 },
+  gold: { name: '黄金会员', color: '#D4AF37', minPoints: 5000 },
+  platinum: { name: '铂金会员', color: '#E5E4E2', minPoints: 20000 },
+  diamond: { name: '钻石会员', color: '#B9F2FF', minPoints: 50000 },
+};
