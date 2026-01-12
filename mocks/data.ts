@@ -1,4 +1,4 @@
-import { User, Transaction, Benefit, CouponDefinition } from '@/types';
+import { User, Transaction, Benefit, CouponDefinition, StoreLocation } from '@/types';
 
 export const mockUser: User = {
   id: '1',
@@ -216,5 +216,25 @@ export const couponCatalog: CouponDefinition[] = [
     tier: 'diamond',
     code: 'SSD-DIAMOND-VIP',
     themeColor: '#B9F2FF',
+  },
+];
+
+export const storeLocations: StoreLocation[] = [
+  {
+    id: 'irvine-campus-plaza',
+    name: 'Ten Seconds Yunnan Rice Noodle',
+    address: '4535 Campus Dr, Irvine, CA 92612',
+    place: 'Campus Plaza',
+    website: 'https://10ricenoodle.com',
+    phone: '(949) 527-1009',
+    hours: [
+      { day: 'mon', time: '11:00 AM - 1:30 AM' },
+      { day: 'tue', time: '11:00 AM - 1:30 AM' },
+      { day: 'wed', time: '11:00 AM - 1:30 AM' },
+      { day: 'thu', time: '11:00 AM - 1:30 AM' },
+      { day: 'fri', time: '11:00 AM - 1:30 AM' },
+      { day: 'sat', time: '11:00 AM - 1:30 AM' },
+      { day: 'sun', time: '11:00 AM - 1:30 AM' },
+    ],
   },
 ];

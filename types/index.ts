@@ -55,3 +55,20 @@ export interface UserCoupon {
   claimedAt: string; // ISO datetime
   usedAt?: string; // ISO datetime
 }
+
+export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+
+export interface StoreHours {
+  day: Weekday;
+  time: string;
+}
+
+export interface StoreLocation {
+  id: string;
+  name: string;
+  address: string;
+  place?: string;
+  website?: string;
+  phone?: string;
+  hours: StoreHours[];
+}
