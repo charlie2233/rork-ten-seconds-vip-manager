@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Eye, EyeOff, CreditCard, Lock } from 'lucide-react-native';
+import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
@@ -144,10 +145,10 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <View style={styles.linksContainer}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/forgot-password')}>
               <Text style={styles.linkText}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/register')}>
               <Text style={styles.linkText}>{t('auth.register')}</Text>
             </TouchableOpacity>
           </View>

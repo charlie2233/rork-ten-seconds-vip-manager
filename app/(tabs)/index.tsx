@@ -144,7 +144,11 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            activeOpacity={0.7}
+            onPress={() => router.push('/recharge')}
+          >
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(201, 169, 98, 0.15)' }]}>
               <Wallet size={22} color={Colors.primary} />
             </View>
@@ -237,7 +241,10 @@ export default function HomeScreen() {
               <Text style={styles.promoTitle}>{t('home.promoTitle')}</Text>
               <Text style={styles.promoDesc}>{t('home.promoDesc')}</Text>
             </View>
-            <TouchableOpacity style={styles.promoButton}>
+            <TouchableOpacity 
+              style={styles.promoButton}
+              onPress={() => router.push('/promo')}
+            >
               <Text style={styles.promoButtonText}>{t('home.promoCta')}</Text>
             </TouchableOpacity>
           </LinearGradient>

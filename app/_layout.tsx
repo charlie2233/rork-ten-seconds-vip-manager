@@ -48,6 +48,16 @@ function RootLayoutNav() {
           contentStyle: { backgroundColor: 'transparent' } 
         }} 
       />
+      <Stack.Screen name="recharge" options={{ headerShown: false }} />
+      <Stack.Screen name="promo" options={{ headerShown: false }} />
+      <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="security" options={{ headerShown: false }} />
+      <Stack.Screen name="preferences" options={{ headerShown: false }} />
+      <Stack.Screen name="nearby-stores" options={{ headerShown: false }} />
+      <Stack.Screen name="support-chat" options={{ headerShown: false }} />
+      <Stack.Screen name="help-center" options={{ headerShown: false }} />
     </Stack>
   );
 }

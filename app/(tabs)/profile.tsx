@@ -23,6 +23,7 @@ import {
   Settings,
   MapPin,
 } from 'lucide-react-native';
+import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
@@ -33,17 +34,17 @@ const menuSections = [
   {
     titleKey: 'profile.section.account',
     items: [
-      { icon: Bell, labelKey: 'profile.item.notifications', value: '' },
-      { icon: Shield, labelKey: 'profile.item.security', value: '' },
-      { icon: Settings, labelKey: 'profile.item.preferences', value: '' },
+      { icon: Bell, labelKey: 'profile.item.notifications', value: '', route: '/notifications' },
+      { icon: Shield, labelKey: 'profile.item.security', value: '', route: '/security' },
+      { icon: Settings, labelKey: 'profile.item.preferences', value: '', route: '/preferences' },
     ],
   },
   {
     titleKey: 'profile.section.support',
     items: [
-      { icon: MapPin, labelKey: 'profile.item.nearbyStores', value: '' },
-      { icon: MessageSquare, labelKey: 'profile.item.supportChat', value: '' },
-      { icon: HelpCircle, labelKey: 'profile.item.helpCenter', value: '' },
+      { icon: MapPin, labelKey: 'profile.item.nearbyStores', value: '', route: '/nearby-stores' },
+      { icon: MessageSquare, labelKey: 'profile.item.supportChat', value: '', route: '/support-chat' },
+      { icon: HelpCircle, labelKey: 'profile.item.helpCenter', value: '', route: '/help-center' },
     ],
   },
 ];
@@ -172,6 +173,7 @@ export default function ProfileScreen() {
                       index === section.items.length - 1 && styles.lastMenuItem,
                     ]}
                     activeOpacity={0.7}
+                    onPress={() => router.push(item.route as any)}
                   >
                     <View style={styles.menuIcon}>
                       <IconComponent size={20} color={Colors.textSecondary} />
