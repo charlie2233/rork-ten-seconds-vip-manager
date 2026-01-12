@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,7 +37,17 @@ export default function HomeScreen() {
     return () => shimmer.stop();
   }, [shimmerAnim]);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <LinearGradient
+          colors={[Colors.background, Colors.backgroundLight]}
+          style={StyleSheet.absoluteFill}
+        />
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   const tier = tierInfo[user.tier];
   const recentTransactions = mockTransactions.slice(0, 3);

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,7 +40,17 @@ export default function BenefitsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <LinearGradient
+          colors={[Colors.background, Colors.backgroundLight]}
+          style={StyleSheet.absoluteFill}
+        />
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   const currentTier = tierInfo[user.tier];
   const tierOrder = ['silver', 'gold', 'platinum', 'diamond'] as const;
