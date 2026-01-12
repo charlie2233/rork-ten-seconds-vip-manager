@@ -12,19 +12,22 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const authQuery = useQuery({
     queryKey: ['auth'],
     queryFn: async () => {
+      console.log('[AuthContext] Loading auth state...');
       try {
         const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+        console.log('[AuthContext] Stored auth:', stored ? 'found' : 'not found');
         if (stored) {
           const userData = JSON.parse(stored) as User;
           return userData;
         }
       } catch (error) {
-        console.error('Failed to restore auth state:', error);
-        // Clear invalid storage
+        console.error('[AuthContext] Failed to restore auth state:', error);
         await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
       }
       return null;
     },
+    staleTime: Infinity,
+    retry: false,
   });
 
   // Derive state directly from the query cache to avoid synchronization issues
@@ -70,10 +73,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return logoutMutation.mutateAsync();
   };
 
+  const isLoading = authQuery.isLoading && !authQuery.isFetched;
+  
+  console.log('[AuthContext] State:', { isLoading, isAuthenticated, queryStatus: authQuery.status });
+
   return {
     user,
     isAuthenticated,
-    isLoading: authQuery.isLoading,
+    isLoading,
     isLoggingIn: loginMutation.isPending,
     loginError: loginMutation.error?.message || null,
     login,
