@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { QrCode, Wallet, Gift, TrendingUp, ChevronRight } from 'lucide-react-native';
+import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
+import * as bwipjs from 'bwip-js/generic';
 import { useAuth } from '@/contexts/AuthContext';
 import { tierInfo, mockTransactions } from '@/mocks/data';
 import Colors from '@/constants/colors';
@@ -41,6 +43,24 @@ export default function HomeScreen() {
 
   const tier = user ? tierInfo[user.tier] : tierInfo.silver;
   const recentTransactions = mockTransactions.slice(0, 3);
+
+  const barcodeSvg = useMemo(() => {
+    if (!user?.memberId) return null;
+    try {
+      return bwipjs.toSVG({
+        bcid: 'code128',
+        text: user.memberId,
+        scale: 2,
+        height: 8,
+        includetext: false,
+        backgroundcolor: 'FFFFFF',
+        paddingwidth: 4,
+        paddingheight: 4,
+      });
+    } catch {
+      return null;
+    }
+  }, [user?.memberId]);
 
   const shimmerTranslate = shimmerAnim.interpolate({
     inputRange: [0, 1],
@@ -113,9 +133,26 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.cardFooter}>
-              <View>
+              <View style={styles.memberIdSection}>
                 <Text style={styles.memberIdLabel}>{t('home.memberId')}</Text>
                 <Text style={styles.memberId}>{user?.memberId ?? ''}</Text>
+                {user ? (
+                  <View style={styles.barcodeContainer}>
+                    {barcodeSvg ? (
+                      <SvgXml xml={barcodeSvg} width="100%" height="100%" />
+                    ) : (
+                      <Text style={styles.barcodeError}>{t('home.barcodeFailed')}</Text>
+                    )}
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.loginPrompt}
+                    onPress={() => router.push('/login')}
+                  >
+                    <LogIn size={12} color={Colors.primary} />
+                    <Text style={styles.loginPromptText}>{t('home.loginToShowBarcode')}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
               <View style={styles.pointsContainer}>
                 <Text style={styles.pointsLabel}>{t('home.points')}</Text>
@@ -367,6 +404,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: Colors.primary,
+  },
+  memberIdSection: {
+    flex: 1,
+  },
+  barcodeContainer: {
+    marginTop: 8,
+    backgroundColor: 'white',
+    borderRadius: 6,
+    padding: 6,
+    width: 140,
+    height: 36,
+  },
+  barcodeError: {
+    fontSize: 10,
+    color: Colors.textMuted,
+  },
+  loginPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: 'rgba(201, 169, 98, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    gap: 4,
+  },
+  loginPromptText: {
+    fontSize: 11,
+    color: Colors.primary,
+    fontWeight: '500' as const,
   },
   cardDecoration: {
     position: 'absolute',

@@ -55,6 +55,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'home.promoTitle': '会员日特惠',
     'home.promoDesc': '每周三充值享双倍积分',
     'home.promoCta': '立即参与',
+    'home.barcodeFailed': '条码生成失败',
+    'home.loginToShowBarcode': '登录查看条码',
 
     'transactions.title': '交易记录',
     'transactions.totalDeposit': '累计充值',
@@ -318,6 +320,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'home.promoTitle': 'Member Day Deal',
     'home.promoDesc': 'Double points on top-ups every Wednesday',
     'home.promoCta': 'Join now',
+    'home.barcodeFailed': 'Barcode failed',
+    'home.loginToShowBarcode': 'Login to show barcode',
 
     'transactions.title': 'Transactions',
     'transactions.totalDeposit': 'Total top-up',
@@ -581,6 +585,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'home.promoTitle': 'Oferta del día de miembros',
     'home.promoDesc': 'Doble puntos en recargas todos los miércoles',
     'home.promoCta': 'Participar',
+    'home.barcodeFailed': 'Error en código',
+    'home.loginToShowBarcode': 'Inicia sesión para ver',
 
     'transactions.title': 'Transacciones',
     'transactions.totalDeposit': 'Total recargado',
