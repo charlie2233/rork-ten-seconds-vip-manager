@@ -89,9 +89,13 @@ export default function HomeScreen() {
                 <Text style={styles.brandName}>十秒到</Text>
                 <Text style={[styles.tierName, { color: tier.color }]}>{tier.name}</Text>
               </View>
-              <View style={styles.qrButton}>
+              <TouchableOpacity 
+                style={styles.qrButton}
+                onPress={() => router.push('/member-code')}
+                activeOpacity={0.7}
+              >
                 <QrCode size={28} color={Colors.primary} />
-              </View>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.balanceContainer}>
@@ -152,7 +156,11 @@ export default function HomeScreen() {
             <Text style={styles.actionText}>账单</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            activeOpacity={0.7}
+            onPress={() => router.push('/member-code')}
+          >
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(255, 152, 0, 0.15)' }]}>
               <QrCode size={22} color={Colors.warning} />
             </View>

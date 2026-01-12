@@ -35,6 +35,14 @@ function RootLayoutNav() {
       ) : (
         <Stack.Screen name="login" options={{ headerShown: false }} />
       )}
+      <Stack.Screen 
+        name="member-code" 
+        options={{ 
+          presentation: 'modal', 
+          headerShown: false,
+          contentStyle: { backgroundColor: 'transparent' } 
+        }} 
+      />
     </Stack>
   );
 }
