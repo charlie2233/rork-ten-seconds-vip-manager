@@ -31,9 +31,7 @@ export default function CouponsScreen() {
   const { t } = useI18n();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
 
-  if (!user) return null;
-
-  const currentTier = tierInfo[user.tier];
+  const currentTier = user ? tierInfo[user.tier] : tierInfo.silver;
 
   const segmentedCoupons = useMemo(() => {
     return claimedCoupons.filter((c) => {
@@ -71,7 +69,7 @@ export default function CouponsScreen() {
           <View style={styles.tierRow}>
             <View style={styles.tierBadge}>
               <Text style={[styles.tierText, { color: currentTier.color }]}>
-                {t(formatTierKey(user.tier))}
+                {t(formatTierKey(user?.tier ?? 'silver'))}
               </Text>
             </View>
           </View>

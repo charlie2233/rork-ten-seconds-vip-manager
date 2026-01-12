@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -54,19 +53,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { t } = useI18n();
 
-  if (!user) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <LinearGradient
-          colors={[Colors.background, Colors.backgroundLight]}
-          style={StyleSheet.absoluteFill}
-        />
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
-  const tier = tierInfo[user.tier];
+  const tier = user ? tierInfo[user.tier] : tierInfo.silver;
 
   const handleLogout = () => {
     Alert.alert(
@@ -112,7 +99,7 @@ export default function ProfileScreen() {
                 style={styles.avatarGradient}
               >
                 <Text style={styles.avatarText}>
-                  {user.name.charAt(0)}
+                  {user?.name?.charAt(0) ?? ''}
                 </Text>
               </LinearGradient>
               <View style={[styles.tierBadge, { backgroundColor: tier.color }]}>
@@ -121,9 +108,9 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user.name}</Text>
+              <Text style={styles.profileName}>{user?.name ?? ''}</Text>
               <Text style={[styles.profileTier, { color: tier.color }]}>
-                {t(`tier.${user.tier}`)}
+                {t(`tier.${user?.tier ?? 'silver'}`)}
               </Text>
             </View>
           </LinearGradient>
@@ -135,7 +122,7 @@ export default function ProfileScreen() {
               <CreditCard size={18} color={Colors.primary} />
             </View>
             <Text style={styles.infoLabel}>{t('profile.memberId')}</Text>
-            <Text style={styles.infoValue}>{user.memberId}</Text>
+            <Text style={styles.infoValue}>{user?.memberId ?? ''}</Text>
           </View>
           
           <View style={styles.infoDivider} />
@@ -145,7 +132,7 @@ export default function ProfileScreen() {
               <Phone size={18} color={Colors.primary} />
             </View>
             <Text style={styles.infoLabel}>{t('profile.phone')}</Text>
-            <Text style={styles.infoValue}>{user.phone}</Text>
+            <Text style={styles.infoValue}>{user?.phone ?? ''}</Text>
           </View>
           
           <View style={styles.infoDivider} />
@@ -155,7 +142,7 @@ export default function ProfileScreen() {
               <Calendar size={18} color={Colors.primary} />
             </View>
             <Text style={styles.infoLabel}>{t('profile.joinDate')}</Text>
-            <Text style={styles.infoValue}>{user.joinDate}</Text>
+            <Text style={styles.infoValue}>{user?.joinDate ?? ''}</Text>
           </View>
         </View>
 

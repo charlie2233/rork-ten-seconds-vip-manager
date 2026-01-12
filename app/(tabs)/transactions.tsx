@@ -5,12 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowDownLeft, ArrowUpRight, Gift, RotateCcw } from 'lucide-react-native';
-import { useAuth } from '@/contexts/AuthContext';
 import { mockTransactions } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { Transaction } from '@/types';
@@ -58,21 +56,9 @@ const getTransactionColor = (type: Transaction['type']) => {
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  
   const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-
-  if (!user) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <LinearGradient
-          colors={[Colors.background, Colors.backgroundLight]}
-          style={StyleSheet.absoluteFill}
-        />
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
 
   const filteredTransactions = mockTransactions.filter((t) => {
     if (activeFilter === 'all') return true;

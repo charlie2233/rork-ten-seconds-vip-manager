@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
-  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,19 +39,7 @@ export default function HomeScreen() {
     return () => shimmer.stop();
   }, [shimmerAnim]);
 
-  if (!user) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <LinearGradient
-          colors={[Colors.background, Colors.backgroundLight]}
-          style={StyleSheet.absoluteFill}
-        />
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
-  const tier = tierInfo[user.tier];
+  const tier = user ? tierInfo[user.tier] : tierInfo.silver;
   const recentTransactions = mockTransactions.slice(0, 3);
 
   const shimmerTranslate = shimmerAnim.interpolate({
@@ -75,7 +62,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <LanguageToggle style={styles.languageMenu} />
           <Text style={styles.greeting}>{t('home.welcomeBack')}</Text>
-          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userName}>{user?.name ?? ''}</Text>
         </View>
 
         <View style={styles.cardContainer}>
@@ -103,7 +90,7 @@ export default function HomeScreen() {
               <View>
                 <Text style={styles.brandName}>十秒到</Text>
                 <Text style={[styles.tierName, { color: tier.color }]}>
-                  {t(`tier.${user.tier}`)}
+                  {t(`tier.${user?.tier ?? 'silver'}`)}
                 </Text>
               </View>
               <TouchableOpacity 
@@ -120,7 +107,7 @@ export default function HomeScreen() {
               <View style={styles.balanceRow}>
                 <Text style={styles.currencySymbol}>$</Text>
                 <Text style={styles.balanceAmount}>
-                  {user.balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                  {(user?.balance ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                 </Text>
               </View>
             </View>
@@ -128,11 +115,11 @@ export default function HomeScreen() {
             <View style={styles.cardFooter}>
               <View>
                 <Text style={styles.memberIdLabel}>{t('home.memberId')}</Text>
-                <Text style={styles.memberId}>{user.memberId}</Text>
+                <Text style={styles.memberId}>{user?.memberId ?? ''}</Text>
               </View>
               <View style={styles.pointsContainer}>
                 <Text style={styles.pointsLabel}>{t('home.points')}</Text>
-                <Text style={styles.pointsValue}>{user.points.toLocaleString()}</Text>
+                <Text style={styles.pointsValue}>{(user?.points ?? 0).toLocaleString()}</Text>
               </View>
             </View>
 
