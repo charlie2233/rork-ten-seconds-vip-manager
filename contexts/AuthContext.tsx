@@ -1,41 +1,39 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
 import { User } from '@/types';
 import { mockUser } from '@/mocks/data';
 
 const AUTH_STORAGE_KEY = 'auth_user';
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const queryClient = useQueryClient();
 
   const authQuery = useQuery({
     queryKey: ['auth'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const userData = JSON.parse(stored) as User;
-        return userData;
+      try {
+        const stored = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+        if (stored) {
+          const userData = JSON.parse(stored) as User;
+          return userData;
+        }
+      } catch (error) {
+        console.error('Failed to restore auth state:', error);
+        // Clear invalid storage
+        await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
       }
       return null;
     },
   });
 
-  useEffect(() => {
-    if (authQuery.data) {
-      setUser(authQuery.data);
-      setIsAuthenticated(true);
-    } else if (authQuery.data === null && !authQuery.isLoading) {
-      setUser(null);
-      setIsAuthenticated(false);
-    }
-  }, [authQuery.data, authQuery.isLoading]);
+  // Derive state directly from the query cache to avoid synchronization issues
+  const user = authQuery.data ?? null;
+  const isAuthenticated = !!user;
 
   const loginMutation = useMutation({
     mutationFn: async ({ memberId, password }: { memberId: string; password: string }) => {
+      // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (memberId.length >= 4 && password.length >= 4) {
@@ -49,9 +47,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       throw new Error('auth.invalidCredentials');
     },
     onSuccess: (userData) => {
-      setUser(userData);
-      setIsAuthenticated(true);
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      // Update query cache immediately
+      queryClient.setQueryData(['auth'], userData);
     },
   });
 
@@ -60,9 +57,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
     },
     onSuccess: () => {
-      setUser(null);
-      setIsAuthenticated(false);
-      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      // Update query cache immediately
+      queryClient.setQueryData(['auth'], null);
     },
   });
 
