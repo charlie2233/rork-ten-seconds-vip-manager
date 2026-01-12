@@ -33,3 +33,25 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export type CouponStatus = 'available' | 'used' | 'expired';
+
+export interface CouponDefinition {
+  id: string;
+  title: string;
+  description: string;
+  discountText: string;
+  minSpendText?: string;
+  validFrom: string; // ISO date
+  validTo: string; // ISO date
+  tier: User['tier'];
+  code: string;
+  themeColor?: string;
+}
+
+export interface UserCoupon {
+  couponId: string;
+  status: CouponStatus;
+  claimedAt: string; // ISO datetime
+  usedAt?: string; // ISO datetime
+}

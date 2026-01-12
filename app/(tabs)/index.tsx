@@ -16,6 +16,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { tierInfo, mockTransactions } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { router } from 'expo-router';
+import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -23,6 +25,7 @@ const CARD_WIDTH = width - 48;
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { t } = useI18n();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -70,7 +73,8 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>欢迎回来</Text>
+          <LanguageToggle style={styles.languageMenu} />
+          <Text style={styles.greeting}>{t('home.welcomeBack')}</Text>
           <Text style={styles.userName}>{user.name}</Text>
         </View>
 
@@ -98,7 +102,9 @@ export default function HomeScreen() {
             <View style={styles.cardHeader}>
               <View>
                 <Text style={styles.brandName}>十秒到</Text>
-                <Text style={[styles.tierName, { color: tier.color }]}>{tier.name}</Text>
+                <Text style={[styles.tierName, { color: tier.color }]}>
+                  {t(`tier.${user.tier}`)}
+                </Text>
               </View>
               <TouchableOpacity 
                 style={styles.qrButton}
@@ -110,9 +116,9 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.balanceContainer}>
-              <Text style={styles.balanceLabel}>账户余额</Text>
+              <Text style={styles.balanceLabel}>{t('home.balance')}</Text>
               <View style={styles.balanceRow}>
-                <Text style={styles.currencySymbol}>¥</Text>
+                <Text style={styles.currencySymbol}>$</Text>
                 <Text style={styles.balanceAmount}>
                   {user.balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                 </Text>
@@ -121,11 +127,11 @@ export default function HomeScreen() {
 
             <View style={styles.cardFooter}>
               <View>
-                <Text style={styles.memberIdLabel}>会员ID</Text>
+                <Text style={styles.memberIdLabel}>{t('home.memberId')}</Text>
                 <Text style={styles.memberId}>{user.memberId}</Text>
               </View>
               <View style={styles.pointsContainer}>
-                <Text style={styles.pointsLabel}>积分</Text>
+                <Text style={styles.pointsLabel}>{t('home.points')}</Text>
                 <Text style={styles.pointsValue}>{user.points.toLocaleString()}</Text>
               </View>
             </View>
@@ -142,7 +148,7 @@ export default function HomeScreen() {
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(201, 169, 98, 0.15)' }]}>
               <Wallet size={22} color={Colors.primary} />
             </View>
-            <Text style={styles.actionText}>充值</Text>
+            <Text style={styles.actionText}>{t('home.action.recharge')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -153,7 +159,7 @@ export default function HomeScreen() {
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(212, 57, 58, 0.15)' }]}>
               <Gift size={22} color={Colors.secondary} />
             </View>
-            <Text style={styles.actionText}>权益</Text>
+            <Text style={styles.actionText}>{t('home.action.coupons')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -164,7 +170,7 @@ export default function HomeScreen() {
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
               <TrendingUp size={22} color={Colors.success} />
             </View>
-            <Text style={styles.actionText}>账单</Text>
+            <Text style={styles.actionText}>{t('home.action.transactions')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -175,18 +181,18 @@ export default function HomeScreen() {
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(255, 152, 0, 0.15)' }]}>
               <QrCode size={22} color={Colors.warning} />
             </View>
-            <Text style={styles.actionText}>付款码</Text>
+            <Text style={styles.actionText}>{t('home.action.memberCode')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>最近交易</Text>
+            <Text style={styles.sectionTitle}>{t('home.recentTransactions')}</Text>
             <TouchableOpacity 
               style={styles.seeAllButton}
               onPress={() => router.push('/(tabs)/transactions')}
             >
-              <Text style={styles.seeAllText}>查看全部</Text>
+              <Text style={styles.seeAllText}>{t('home.seeAll')}</Text>
               <ChevronRight size={16} color={Colors.primary} />
             </TouchableOpacity>
           </View>
@@ -228,11 +234,11 @@ export default function HomeScreen() {
             style={styles.promoGradient}
           >
             <View style={styles.promoContent}>
-              <Text style={styles.promoTitle}>会员日特惠</Text>
-              <Text style={styles.promoDesc}>每周三充值享双倍积分</Text>
+              <Text style={styles.promoTitle}>{t('home.promoTitle')}</Text>
+              <Text style={styles.promoDesc}>{t('home.promoDesc')}</Text>
             </View>
             <TouchableOpacity style={styles.promoButton}>
-              <Text style={styles.promoButtonText}>立即参与</Text>
+              <Text style={styles.promoButtonText}>{t('home.promoCta')}</Text>
             </TouchableOpacity>
           </LinearGradient>
         </View>
@@ -256,6 +262,10 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 24,
+  },
+  languageMenu: {
+    alignSelf: 'flex-start',
+    marginBottom: 14,
   },
   greeting: {
     fontSize: 14,

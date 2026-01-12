@@ -14,31 +14,40 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Eye, EyeOff, CreditCard, Lock } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
+import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { login, isLoggingIn, loginError } = useAuth();
+  const { t } = useI18n();
   const [memberId, setMemberId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (!memberId.trim()) {
-      setError('请输入会员ID');
+      setErrorKey('auth.memberIdRequired');
       return;
     }
     if (!password.trim()) {
-      setError('请输入密码');
+      setErrorKey('auth.passwordRequired');
       return;
     }
-    setError(null);
+    setErrorKey(null);
     try {
       await login(memberId, password);
     } catch (e: any) {
-      setError(e.message || '登录失败');
+      const key =
+        typeof e?.message === 'string' && e.message.startsWith('auth.')
+          ? e.message
+          : 'auth.loginFailed';
+      setErrorKey(key);
     }
   };
+
+  const displayedErrorKey = errorKey ?? loginError;
 
   return (
     <View style={styles.container}>
@@ -46,6 +55,10 @@ export default function LoginScreen() {
         colors={[Colors.background, Colors.backgroundLight, Colors.background]}
         style={StyleSheet.absoluteFill}
       />
+
+      <View style={[styles.langToggle, { top: insets.top + 16 }]}>
+        <LanguageToggle />
+      </View>
       
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -60,7 +73,7 @@ export default function LoginScreen() {
               <Text style={styles.logoText}>十秒到</Text>
             </LinearGradient>
           </View>
-          <Text style={styles.subtitle}>VIP会员中心</Text>
+          <Text style={styles.subtitle}>{t('auth.subtitle')}</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -70,7 +83,7 @@ export default function LoginScreen() {
             </View>
             <TextInput
               style={styles.input}
-              placeholder="会员ID"
+              placeholder={t('auth.memberId')}
               placeholderTextColor={Colors.textMuted}
               value={memberId}
               onChangeText={setMemberId}
@@ -86,7 +99,7 @@ export default function LoginScreen() {
             </View>
             <TextInput
               style={styles.input}
-              placeholder="密码"
+              placeholder={t('auth.password')}
               placeholderTextColor={Colors.textMuted}
               value={password}
               onChangeText={setPassword}
@@ -105,8 +118,8 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {(error || loginError) && (
-            <Text style={styles.errorText}>{error || loginError}</Text>
+          {displayedErrorKey && (
+            <Text style={styles.errorText}>{t(displayedErrorKey)}</Text>
           )}
 
           <TouchableOpacity
@@ -125,23 +138,23 @@ export default function LoginScreen() {
               {isLoggingIn ? (
                 <ActivityIndicator color={Colors.background} />
               ) : (
-                <Text style={styles.loginButtonText}>登录</Text>
+                <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
 
           <View style={styles.linksContainer}>
             <TouchableOpacity>
-              <Text style={styles.linkText}>忘记密码?</Text>
+              <Text style={styles.linkText}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
             <TouchableOpacity>
-              <Text style={styles.linkText}>注册新会员</Text>
+              <Text style={styles.linkText}>{t('auth.register')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>首次登录请使用手机号注册</Text>
+          <Text style={styles.footerText}>{t('auth.firstLoginHint')}</Text>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -152,6 +165,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  langToggle: {
+    position: 'absolute',
+    left: 24,
+    zIndex: 10,
   },
   content: {
     flex: 1,

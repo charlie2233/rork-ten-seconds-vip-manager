@@ -6,13 +6,17 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
+import { I18nProvider, useI18n } from "@/contexts/I18nContext";
+import { CouponsProvider } from "@/contexts/CouponsContext";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isLoading: isI18nLoading } = useI18n();
+  const isLoading = isAuthLoading || isI18nLoading;
 
   useEffect(() => {
     if (!isLoading) {
@@ -53,9 +57,13 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <AuthProvider>
-            <RootLayoutNav />
-          </AuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <CouponsProvider>
+                <RootLayoutNav />
+              </CouponsProvider>
+            </AuthProvider>
+          </I18nProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>
     </trpc.Provider>

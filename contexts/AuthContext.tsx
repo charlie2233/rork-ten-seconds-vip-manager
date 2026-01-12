@@ -46,7 +46,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
         return userData;
       }
-      throw new Error('会员ID或密码错误');
+      throw new Error('auth.invalidCredentials');
     },
     onSuccess: (userData) => {
       setUser(userData);

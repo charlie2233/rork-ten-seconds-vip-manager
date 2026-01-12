@@ -26,22 +26,24 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
+import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 
 const menuSections = [
   {
-    title: '账户设置',
+    titleKey: 'profile.section.account',
     items: [
-      { icon: Bell, label: '消息通知', value: '' },
-      { icon: Shield, label: '账户安全', value: '' },
-      { icon: Settings, label: '偏好设置', value: '' },
+      { icon: Bell, labelKey: 'profile.item.notifications', value: '' },
+      { icon: Shield, labelKey: 'profile.item.security', value: '' },
+      { icon: Settings, labelKey: 'profile.item.preferences', value: '' },
     ],
   },
   {
-    title: '服务支持',
+    titleKey: 'profile.section.support',
     items: [
-      { icon: MapPin, label: '附近门店', value: '' },
-      { icon: MessageSquare, label: '在线客服', value: '' },
-      { icon: HelpCircle, label: '帮助中心', value: '' },
+      { icon: MapPin, labelKey: 'profile.item.nearbyStores', value: '' },
+      { icon: MessageSquare, labelKey: 'profile.item.supportChat', value: '' },
+      { icon: HelpCircle, labelKey: 'profile.item.helpCenter', value: '' },
     ],
   },
 ];
@@ -49,6 +51,7 @@ const menuSections = [
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { t } = useI18n();
 
   if (!user) {
     return (
@@ -66,12 +69,12 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      '退出登录',
-      '确定要退出当前账号吗？',
+      t('profile.logoutConfirmTitle'),
+      t('profile.logoutConfirmMessage'),
       [
-        { text: '取消', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '退出',
+          text: t('profile.logout'),
           style: 'destructive',
           onPress: () => logout(),
         },
@@ -91,7 +94,11 @@ export default function ProfileScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>我的</Text>
+        <View style={styles.languageRow}>
+          <LanguageToggle />
+        </View>
+
+        <Text style={styles.title}>{t('profile.title')}</Text>
 
         <View style={styles.profileCard}>
           <LinearGradient
@@ -115,7 +122,7 @@ export default function ProfileScreen() {
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{user.name}</Text>
               <Text style={[styles.profileTier, { color: tier.color }]}>
-                {tier.name}
+                {t(`tier.${user.tier}`)}
               </Text>
             </View>
           </LinearGradient>
@@ -126,7 +133,7 @@ export default function ProfileScreen() {
             <View style={styles.infoIcon}>
               <CreditCard size={18} color={Colors.primary} />
             </View>
-            <Text style={styles.infoLabel}>会员ID</Text>
+            <Text style={styles.infoLabel}>{t('profile.memberId')}</Text>
             <Text style={styles.infoValue}>{user.memberId}</Text>
           </View>
           
@@ -136,7 +143,7 @@ export default function ProfileScreen() {
             <View style={styles.infoIcon}>
               <Phone size={18} color={Colors.primary} />
             </View>
-            <Text style={styles.infoLabel}>手机号</Text>
+            <Text style={styles.infoLabel}>{t('profile.phone')}</Text>
             <Text style={styles.infoValue}>{user.phone}</Text>
           </View>
           
@@ -146,20 +153,20 @@ export default function ProfileScreen() {
             <View style={styles.infoIcon}>
               <Calendar size={18} color={Colors.primary} />
             </View>
-            <Text style={styles.infoLabel}>入会日期</Text>
+            <Text style={styles.infoLabel}>{t('profile.joinDate')}</Text>
             <Text style={styles.infoValue}>{user.joinDate}</Text>
           </View>
         </View>
 
         {menuSections.map((section) => (
-          <View key={section.title} style={styles.menuSection}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
+          <View key={section.titleKey} style={styles.menuSection}>
+            <Text style={styles.sectionTitle}>{t(section.titleKey)}</Text>
             <View style={styles.menuCard}>
               {section.items.map((item, index) => {
                 const IconComponent = item.icon;
                 return (
                   <TouchableOpacity
-                    key={item.label}
+                    key={item.labelKey}
                     style={[
                       styles.menuItem,
                       index === section.items.length - 1 && styles.lastMenuItem,
@@ -169,7 +176,7 @@ export default function ProfileScreen() {
                     <View style={styles.menuIcon}>
                       <IconComponent size={20} color={Colors.textSecondary} />
                     </View>
-                    <Text style={styles.menuLabel}>{item.label}</Text>
+                    <Text style={styles.menuLabel}>{t(item.labelKey)}</Text>
                     <View style={styles.menuRight}>
                       {item.value && (
                         <Text style={styles.menuValue}>{item.value}</Text>
@@ -189,10 +196,10 @@ export default function ProfileScreen() {
           activeOpacity={0.7}
         >
           <LogOut size={20} color={Colors.error} />
-          <Text style={styles.logoutText}>退出登录</Text>
+          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>版本 1.0.0</Text>
+        <Text style={styles.version}>{t('profile.version', { version: '1.0.0' })}</Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -210,6 +217,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
+  },
+  languageRow: {
+    marginBottom: 16,
   },
   title: {
     fontSize: 28,

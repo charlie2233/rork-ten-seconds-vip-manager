@@ -1,15 +1,24 @@
 import { Link, Stack } from "expo-router";
 import { StyleSheet, View, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
+import { useI18n } from "@/contexts/I18nContext";
+import LanguageToggle from "@/components/LanguageToggle";
 
 export default function NotFoundScreen() {
+  const { t } = useI18n();
+  const insets = useSafeAreaInsets();
+
   return (
     <>
-      <Stack.Screen options={{ title: "页面未找到", headerShown: false }} />
+      <Stack.Screen options={{ title: t("notFound.title"), headerShown: false }} />
       <View style={styles.container}>
-        <Text style={styles.title}>页面不存在</Text>
+        <View style={[styles.langToggle, { top: insets.top + 16 }]}>
+          <LanguageToggle />
+        </View>
+        <Text style={styles.title}>{t("notFound.message")}</Text>
         <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>返回首页</Text>
+          <Text style={styles.linkText}>{t("notFound.backHome")}</Text>
         </Link>
       </View>
     </>
@@ -23,6 +32,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: Colors.background,
     padding: 20,
+  },
+  langToggle: {
+    position: "absolute",
+    left: 24,
   },
   title: {
     fontSize: 20,

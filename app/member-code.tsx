@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,24 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, RefreshCw, Copy, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
+import { SvgXml } from 'react-native-svg';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
+import * as bwipjs from 'bwip-js/generic';
+import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 
 // const CODE_SIZE = width * 0.6;
 
 export default function MemberCodeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -32,21 +36,47 @@ export default function MemberCodeScreen() {
           onPress={() => router.back()}
         />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>请先登录</Text>
+          <Text style={styles.errorText}>{t('memberCode.pleaseLoginFirst')}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>返回</Text>
+            <Text style={styles.backButtonText}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  // Generate QR Code URL (using a public API for demo purposes since we can't use native packages)
-  // In a real app with native code we would use react-native-qrcode-svg
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${user.memberId}&margin=10&color=000000&bgcolor=FFFFFF`;
-  
-  // Barcode URL (Code 128)
-  const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${user.memberId}&scale=3&height=10&incltext=false&backgroundcolor=FFFFFF&paddingwidth=10&paddingheight=10`;
+  const qrSvg = useMemo(() => {
+    try {
+      return bwipjs.toSVG({
+        bcid: 'qrcode',
+        text: user.memberId,
+        scale: 4,
+        includetext: false,
+        backgroundcolor: 'FFFFFF',
+        paddingwidth: 10,
+        paddingheight: 10,
+      });
+    } catch {
+      return null;
+    }
+  }, [user.memberId, refreshKey]);
+
+  const barcodeSvg = useMemo(() => {
+    try {
+      return bwipjs.toSVG({
+        bcid: 'code128',
+        text: user.memberId,
+        scale: 3,
+        height: 10,
+        includetext: false,
+        backgroundcolor: 'FFFFFF',
+        paddingwidth: 10,
+        paddingheight: 10,
+      });
+    } catch {
+      return null;
+    }
+  }, [user.memberId, refreshKey]);
 
   const copyToClipboard = async () => {
     await Clipboard.setStringAsync(user.memberId);
@@ -76,15 +106,14 @@ export default function MemberCodeScreen() {
       />
 
       <View style={[styles.content, { paddingTop: insets.top + 20 }]}>
-        <View style={styles.header}>
-          <Text style={styles.title}>会员码</Text>
-          <TouchableOpacity 
-            style={styles.closeButton} 
-            onPress={() => router.back()}
-          >
+        <View style={styles.headerTop}>
+          <LanguageToggle />
+          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
             <X size={24} color={Colors.text} />
           </TouchableOpacity>
         </View>
+
+        <Text style={styles.title}>{t('memberCode.title')}</Text>
 
         <View style={styles.card}>
           <LinearGradient
@@ -97,33 +126,39 @@ export default function MemberCodeScreen() {
               </View>
               <View>
                 <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userTier}>
-                  {user.tier === 'gold' ? '黄金会员' : 
-                   user.tier === 'silver' ? '白银会员' : 
-                   user.tier === 'platinum' ? '铂金会员' : '钻石会员'}
-                </Text>
+                <Text style={styles.userTier}>{t(`tier.${user.tier}`)}</Text>
               </View>
             </View>
 
             <View style={styles.codeContainer}>
               <View style={styles.qrCodeWrapper}>
-                <Image
-                  key={`qr-${refreshKey}`}
-                  source={{ uri: qrCodeUrl }}
-                  style={styles.qrCode}
-                  contentFit="contain"
-                  transition={200}
-                />
+                {qrSvg ? (
+                  <SvgXml
+                    key={`qr-${refreshKey}`}
+                    xml={qrSvg}
+                    width="100%"
+                    height="100%"
+                  />
+                ) : (
+                  <View style={styles.codeError}>
+                    <Text style={styles.codeErrorText}>{t('code.qrFailed')}</Text>
+                  </View>
+                )}
               </View>
 
               <View style={styles.barcodeWrapper}>
-                <Image
-                  key={`bar-${refreshKey}`}
-                  source={{ uri: barcodeUrl }}
-                  style={styles.barcode}
-                  contentFit="fill"
-                  transition={200}
-                />
+                {barcodeSvg ? (
+                  <SvgXml
+                    key={`bar-${refreshKey}`}
+                    xml={barcodeSvg}
+                    width="100%"
+                    height="100%"
+                  />
+                ) : (
+                  <View style={styles.codeError}>
+                    <Text style={styles.codeErrorText}>{t('code.barcodeFailed')}</Text>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -132,7 +167,7 @@ export default function MemberCodeScreen() {
               onPress={copyToClipboard}
               activeOpacity={0.7}
             >
-              <Text style={styles.memberIdLabel}>会员卡号</Text>
+              <Text style={styles.memberIdLabel}>{t('memberCode.memberCardNo')}</Text>
               <View style={styles.memberIdValueContainer}>
                 <Text style={styles.memberIdValue}>{user.memberId}</Text>
                 {copied ? (
@@ -146,13 +181,13 @@ export default function MemberCodeScreen() {
             <View style={styles.divider} />
 
             <View style={styles.tipsContainer}>
-              <Text style={styles.tipsText}>付款时请向收银员出示此码</Text>
+              <Text style={styles.tipsText}>{t('memberCode.showToCashier')}</Text>
               <TouchableOpacity 
                 style={styles.refreshButton}
                 onPress={handleRefresh}
               >
                 <RefreshCw size={14} color={Colors.primary} />
-                <Text style={styles.refreshText}>刷新</Text>
+                <Text style={styles.refreshText}>{t('common.refresh')}</Text>
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -160,12 +195,12 @@ export default function MemberCodeScreen() {
 
         <View style={styles.balanceCard}>
           <View style={styles.balanceItem}>
-            <Text style={styles.balanceLabel}>账户余额</Text>
-            <Text style={styles.balanceValue}>¥{user.balance.toFixed(2)}</Text>
+            <Text style={styles.balanceLabel}>{t('memberCode.balance')}</Text>
+            <Text style={styles.balanceValue}>${user.balance.toFixed(2)}</Text>
           </View>
           <View style={styles.balanceDivider} />
           <View style={styles.balanceItem}>
-            <Text style={styles.balanceLabel}>可用积分</Text>
+            <Text style={styles.balanceLabel}>{t('memberCode.points')}</Text>
             <Text style={[styles.balanceValue, { color: Colors.primary }]}>
               {user.points}
             </Text>
@@ -193,17 +228,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  header: {
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 40, 
+    marginBottom: 12,
+    marginTop: 40,
   },
   title: {
     fontSize: 20,
     fontWeight: '600',
     color: Colors.text,
+    marginBottom: 24,
   },
   closeButton: {
     width: 40,
@@ -268,6 +304,18 @@ const styles = StyleSheet.create({
   qrCode: {
     width: '100%',
     height: '100%',
+  },
+  codeError: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+  },
+  codeErrorText: {
+    color: '#111111',
+    fontSize: 12,
+    fontWeight: '600',
   },
   barcodeWrapper: {
     width: '100%',

@@ -2,8 +2,11 @@ import { Tabs } from "expo-router";
 import { Home, Gift, Receipt, User } from "lucide-react-native";
 import React from "react";
 import Colors from "@/constants/colors";
+import { useI18n } from "@/contexts/I18nContext";
 
 export default function TabLayout() {
+  const { t } = useI18n();
+
   return (
     <Tabs
       screenOptions={{
@@ -27,28 +30,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "首页",
+          title: t("tabs.home"),
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="benefits"
         options={{
-          title: "权益",
+          title: t("tabs.coupons"),
           tabBarIcon: ({ color, size }) => <Gift size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="transactions"
         options={{
-          title: "账单",
+          title: t("tabs.transactions"),
           tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "我的",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />

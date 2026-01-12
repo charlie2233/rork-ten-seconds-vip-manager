@@ -14,14 +14,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { mockTransactions } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { Transaction } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 
 type FilterType = 'all' | 'deposit' | 'spend' | 'bonus';
 
-const filterOptions: { key: FilterType; label: string }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'deposit', label: '充值' },
-  { key: 'spend', label: '消费' },
-  { key: 'bonus', label: '赠送' },
+const filterOptions: { key: FilterType; labelKey: string }[] = [
+  { key: 'all', labelKey: 'transactions.filter.all' },
+  { key: 'deposit', labelKey: 'transactions.filter.deposit' },
+  { key: 'spend', labelKey: 'transactions.filter.spend' },
+  { key: 'bonus', labelKey: 'transactions.filter.bonus' },
 ];
 
 const getTransactionIcon = (type: Transaction['type']) => {
@@ -57,6 +59,7 @@ const getTransactionColor = (type: Transaction['type']) => {
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   if (!user) {
@@ -98,7 +101,11 @@ export default function TransactionsScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>交易记录</Text>
+        <View style={styles.languageRow}>
+          <LanguageToggle />
+        </View>
+
+        <Text style={styles.title}>{t('transactions.title')}</Text>
 
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
@@ -106,9 +113,9 @@ export default function TransactionsScreen() {
               colors={['rgba(76, 175, 80, 0.15)', 'rgba(76, 175, 80, 0.05)']}
               style={styles.statGradient}
             >
-              <Text style={styles.statLabel}>累计充值</Text>
+              <Text style={styles.statLabel}>{t('transactions.totalDeposit')}</Text>
               <Text style={[styles.statValue, { color: Colors.success }]}>
-                +¥{totalDeposit.toFixed(2)}
+                +${totalDeposit.toFixed(2)}
               </Text>
             </LinearGradient>
           </View>
@@ -118,9 +125,9 @@ export default function TransactionsScreen() {
               colors={['rgba(201, 169, 98, 0.15)', 'rgba(201, 169, 98, 0.05)']}
               style={styles.statGradient}
             >
-              <Text style={styles.statLabel}>累计消费</Text>
+              <Text style={styles.statLabel}>{t('transactions.totalSpend')}</Text>
               <Text style={[styles.statValue, { color: Colors.primary }]}>
-                -¥{totalSpend.toFixed(2)}
+                -${totalSpend.toFixed(2)}
               </Text>
             </LinearGradient>
           </View>
@@ -143,7 +150,7 @@ export default function TransactionsScreen() {
                   activeFilter === option.key && styles.filterTextActive,
                 ]}
               >
-                {option.label}
+                {t(option.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -152,7 +159,7 @@ export default function TransactionsScreen() {
         <View style={styles.transactionsList}>
           {filteredTransactions.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>暂无交易记录</Text>
+              <Text style={styles.emptyText}>{t('transactions.empty')}</Text>
             </View>
           ) : (
             filteredTransactions.map((transaction, index) => {
@@ -193,10 +200,10 @@ export default function TransactionsScreen() {
                       ]}
                     >
                       {transaction.amount > 0 ? '+' : ''}
-                      ¥{Math.abs(transaction.amount).toFixed(2)}
+                      ${Math.abs(transaction.amount).toFixed(2)}
                     </Text>
                     <Text style={styles.transactionBalance}>
-                      余额: ¥{transaction.balance.toFixed(2)}
+                      {t('transactions.balancePrefix')}: ${transaction.balance.toFixed(2)}
                     </Text>
                   </View>
                 </View>
@@ -221,6 +228,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
+  },
+  languageRow: {
+    marginBottom: 16,
   },
   title: {
     fontSize: 28,
