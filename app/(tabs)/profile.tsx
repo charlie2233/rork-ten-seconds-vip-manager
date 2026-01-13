@@ -19,6 +19,7 @@ import {
   HelpCircle,
   MessageSquare,
   LogOut,
+  LogIn,
   Settings,
   MapPin,
   RefreshCw,
@@ -30,6 +31,7 @@ import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { migrationService } from '@/lib/migration';
+import { getTierFromBalance } from '@/lib/tier';
 
 interface MenuItem {
   icon: typeof Bell;
@@ -74,7 +76,11 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { t } = useI18n();
 
-  const tier = user ? tierInfo[user.tier] : tierInfo.silver;
+  const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
+  const tier = tierInfo[effectiveTier];
+  const sections = user
+    ? menuSections
+    : menuSections.filter((section) => section.titleKey !== 'profile.section.migration');
 
   const handleLogout = () => {
     Alert.alert(
@@ -136,7 +142,12 @@ export default function ProfileScreen() {
 
         <Text style={styles.title}>{t('profile.title')}</Text>
 
-        <View style={styles.profileCard}>
+        <TouchableOpacity
+          style={styles.profileCard}
+          activeOpacity={user ? 1 : 0.8}
+          disabled={!!user}
+          onPress={() => router.push('/login')}
+        >
           <LinearGradient
             colors={[Colors.surface, Colors.surfaceLight]}
             style={styles.profileGradient}
@@ -147,7 +158,7 @@ export default function ProfileScreen() {
                 style={styles.avatarGradient}
               >
                 <Text style={styles.avatarText}>
-                  {user?.name?.charAt(0) ?? ''}
+                  {user ? user.name?.charAt(0) ?? '' : ''}
                 </Text>
               </LinearGradient>
               <View style={[styles.tierBadge, { backgroundColor: tier.color }]}>
@@ -156,45 +167,56 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user?.name ?? ''}</Text>
-              <Text style={[styles.profileTier, { color: tier.color }]}>
-                {t(`tier.${user?.tier ?? 'silver'}`)}
-              </Text>
+              {user ? (
+                <>
+                  <Text style={styles.profileName}>{user.name}</Text>
+                  <Text style={[styles.profileTier, { color: tier.color }]}>
+                    {t(`tier.${effectiveTier}`)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.profileName}>{t('auth.login')}</Text>
+                  <Text style={styles.profileSignInHint}>{t('profile.signInHint')}</Text>
+                </>
+              )}
             </View>
           </LinearGradient>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
-              <CreditCard size={18} color={Colors.primary} />
+        {user ? (
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <View style={styles.infoIcon}>
+                <CreditCard size={18} color={Colors.primary} />
+              </View>
+              <Text style={styles.infoLabel}>{t('profile.memberId')}</Text>
+              <Text style={styles.infoValue}>{user.memberId}</Text>
             </View>
-            <Text style={styles.infoLabel}>{t('profile.memberId')}</Text>
-            <Text style={styles.infoValue}>{user?.memberId ?? ''}</Text>
-          </View>
-          
-          <View style={styles.infoDivider} />
-          
-          <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
-              <Phone size={18} color={Colors.primary} />
+            
+            <View style={styles.infoDivider} />
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIcon}>
+                <Phone size={18} color={Colors.primary} />
+              </View>
+              <Text style={styles.infoLabel}>{t('profile.phone')}</Text>
+              <Text style={styles.infoValue}>{user.phone}</Text>
             </View>
-            <Text style={styles.infoLabel}>{t('profile.phone')}</Text>
-            <Text style={styles.infoValue}>{user?.phone ?? ''}</Text>
-          </View>
-          
-          <View style={styles.infoDivider} />
-          
-          <View style={styles.infoRow}>
-            <View style={styles.infoIcon}>
-              <Calendar size={18} color={Colors.primary} />
+            
+            <View style={styles.infoDivider} />
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIcon}>
+                <Calendar size={18} color={Colors.primary} />
+              </View>
+              <Text style={styles.infoLabel}>{t('profile.joinDate')}</Text>
+              <Text style={styles.infoValue}>{user.joinDate}</Text>
             </View>
-            <Text style={styles.infoLabel}>{t('profile.joinDate')}</Text>
-            <Text style={styles.infoValue}>{user?.joinDate ?? ''}</Text>
           </View>
-        </View>
+        ) : null}
 
-        {menuSections.map((section) => (
+        {sections.map((section) => (
           <View key={section.titleKey} style={styles.menuSection}>
             <Text style={styles.sectionTitle}>{t(section.titleKey)}</Text>
             <View style={styles.menuCard}>
@@ -233,14 +255,25 @@ export default function ProfileScreen() {
           </View>
         ))}
 
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          activeOpacity={0.7}
-        >
-          <LogOut size={20} color={Colors.error} />
-          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
-        </TouchableOpacity>
+        {user ? (
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
+            <LogOut size={20} color={Colors.error} />
+            <Text style={styles.logoutText}>{t('profile.logout')}</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.signInButton}
+            onPress={() => router.push('/login')}
+            activeOpacity={0.8}
+          >
+            <LogIn size={20} color={Colors.background} />
+            <Text style={styles.signInText}>{t('auth.login')}</Text>
+          </TouchableOpacity>
+        )}
 
         <Text style={styles.version}>{t('profile.version', { version: '1.0.0' })}</Text>
 
@@ -324,6 +357,11 @@ const styles = StyleSheet.create({
   profileTier: {
     fontSize: 14,
     fontWeight: '600' as const,
+  },
+  profileSignInHint: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
   },
   infoCard: {
     backgroundColor: Colors.surface,
@@ -421,6 +459,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.error,
     fontWeight: '500' as const,
+  },
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    padding: 16,
+    gap: 8,
+    marginBottom: 16,
+  },
+  signInText: {
+    fontSize: 16,
+    color: Colors.background,
+    fontWeight: '700' as const,
   },
   version: {
     textAlign: 'center',

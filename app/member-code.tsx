@@ -21,6 +21,7 @@ import * as bwipjs from 'bwip-js/generic';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { trpc } from '@/lib/trpc';
+import { getTierFromBalance } from '@/lib/tier';
 
 // const CODE_SIZE = width * 0.6;
 
@@ -62,6 +63,7 @@ export default function MemberCodeScreen() {
 
   const displayBalance = syncedBalance ?? user?.balance ?? 0;
   const displayPoints = syncedPoints ?? user?.points ?? 0;
+  const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
 
   const qrSvg = useMemo(() => {
     if (!user?.memberId) return null;
@@ -193,7 +195,7 @@ export default function MemberCodeScreen() {
               </View>
               <View>
                 <Text style={styles.userName}>{user.name}</Text>
-                <Text style={styles.userTier}>{t(`tier.${user.tier}`)}</Text>
+                <Text style={styles.userTier}>{t(`tier.${effectiveTier}`)}</Text>
               </View>
             </View>
 

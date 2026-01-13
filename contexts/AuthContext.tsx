@@ -5,6 +5,7 @@ import { User } from '@/types';
 import { mockUser } from '@/mocks/data';
 
 const AUTH_STORAGE_KEY = 'auth_user';
+const GUEST_STORAGE_KEY = 'auth_guest_mode';
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const queryClient = useQueryClient();
@@ -30,9 +31,24 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     retry: false,
   });
 
+  const guestQuery = useQuery({
+    queryKey: ['auth_guest'],
+    queryFn: async () => {
+      try {
+        const stored = await AsyncStorage.getItem(GUEST_STORAGE_KEY);
+        return stored === '1';
+      } catch {
+        return false;
+      }
+    },
+    staleTime: Infinity,
+    retry: false,
+  });
+
   // Derive state directly from the query cache to avoid synchronization issues
   const user = authQuery.data ?? null;
   const isAuthenticated = !!user;
+  const isGuest = guestQuery.data ?? false;
 
   const loginMutation = useMutation({
     mutationFn: async ({ memberId, password }: { memberId: string; password: string }) => {
@@ -52,6 +68,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     onSuccess: (userData) => {
       // Update query cache immediately
       queryClient.setQueryData(['auth'], userData);
+      // Logged in: exit guest mode
+      queryClient.setQueryData(['auth_guest'], false);
+      void AsyncStorage.removeItem(GUEST_STORAGE_KEY);
     },
   });
 
@@ -62,6 +81,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     onSuccess: () => {
       // Update query cache immediately
       queryClient.setQueryData(['auth'], null);
+      // Keep the app usable after logout
+      queryClient.setQueryData(['auth_guest'], true);
+      void AsyncStorage.setItem(GUEST_STORAGE_KEY, '1');
     },
   });
 
@@ -73,7 +95,24 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return logoutMutation.mutateAsync();
   };
 
-  const isLoading = authQuery.isLoading && !authQuery.isFetched;
+  const setGuestMode = async (next: boolean) => {
+    queryClient.setQueryData(['auth_guest'], next);
+    try {
+      if (next) {
+        await AsyncStorage.setItem(GUEST_STORAGE_KEY, '1');
+      } else {
+        await AsyncStorage.removeItem(GUEST_STORAGE_KEY);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const enterGuestMode = () => setGuestMode(true);
+  const exitGuestMode = () => setGuestMode(false);
+
+  const isLoading =
+    (authQuery.isLoading && !authQuery.isFetched) || (guestQuery.isLoading && !guestQuery.isFetched);
   
   console.log('[AuthContext] State:', { isLoading, isAuthenticated, queryStatus: authQuery.status });
 
@@ -81,9 +120,25 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     user,
     isAuthenticated,
     isLoading,
+    isGuest,
     isLoggingIn: loginMutation.isPending,
     loginError: loginMutation.error?.message || null,
     login,
     logout,
+    enterGuestMode,
+    exitGuestMode,
+    setUserName: async (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      const current = queryClient.getQueryData<User | null>(['auth']);
+      if (!current) return;
+      const next: User = { ...current, name: trimmed };
+      queryClient.setQueryData(['auth'], next);
+      try {
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+    },
   };
 });

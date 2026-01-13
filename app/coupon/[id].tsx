@@ -18,12 +18,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
-import { CouponStatus, User } from '@/types';
-
-const TIER_ORDER: readonly User['tier'][] = ['silver', 'gold', 'platinum', 'diamond'];
-function isTierAtLeast(userTier: User['tier'], requiredTier: User['tier']) {
-  return TIER_ORDER.indexOf(userTier) >= TIER_ORDER.indexOf(requiredTier);
-}
+import { CouponStatus } from '@/types';
+import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
 
 export default function CouponDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -134,7 +130,8 @@ export default function CouponDetailScreen() {
   const status: CouponStatus | 'unclaimed' =
     state?.status === 'used' ? 'used' : isExpired ? 'expired' : state ? 'available' : 'unclaimed';
 
-  const isUnlocked = isTierAtLeast(user.tier, definition.tier);
+  const effectiveTier = getTierFromBalance(user.balance);
+  const isUnlocked = isTierAtLeast(effectiveTier, definition.tier);
 
   const copyToClipboard = async () => {
     await Clipboard.setStringAsync(definition.code);

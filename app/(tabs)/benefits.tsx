@@ -10,7 +10,8 @@ import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
-import { CouponStatus } from '@/types';
+import { CouponStatus, User } from '@/types';
+import { getTierFromBalance } from '@/lib/tier';
 
 type SegmentKey = CouponStatus;
 
@@ -20,7 +21,7 @@ const SEGMENTS: { key: SegmentKey; labelKey: string }[] = [
   { key: 'expired', labelKey: 'coupons.segment.expired' },
 ];
 
-function formatTierKey(tier: 'silver' | 'gold' | 'platinum' | 'diamond') {
+function formatTierKey(tier: User['tier']) {
   return `tier.${tier}`;
 }
 
@@ -31,7 +32,8 @@ export default function CouponsScreen() {
   const { t } = useI18n();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
 
-  const currentTier = user ? tierInfo[user.tier] : tierInfo.silver;
+  const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
+  const currentTier = tierInfo[effectiveTier];
 
   const segmentedCoupons = useMemo(() => {
     return claimedCoupons.filter((c) => {
@@ -79,7 +81,7 @@ export default function CouponsScreen() {
           <View style={styles.tierRow}>
             <View style={styles.tierBadge}>
               <Text style={[styles.tierText, { color: currentTier.color }]}>
-                {t(formatTierKey(user?.tier ?? 'silver'))}
+                {t(formatTierKey(effectiveTier))}
               </Text>
             </View>
           </View>

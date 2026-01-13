@@ -6,14 +6,20 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Modal,
+  Pressable,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Moon, Volume2, Vibrate, Globe, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Moon, Volume2, Vibrate, Globe, ChevronRight, User } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n, Locale } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
+import { useAuth } from '@/contexts/AuthContext';
 
 const LANGUAGES: { key: Locale; label: string }[] = [
   { key: 'zh', label: '中文' },
@@ -24,10 +30,13 @@ const LANGUAGES: { key: Locale; label: string }[] = [
 export default function PreferencesScreen() {
   const insets = useSafeAreaInsets();
   const { t, locale, setLocale } = useI18n();
+  const { user, setUserName } = useAuth();
   const [darkMode, setDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [pendingName, setPendingName] = useState('');
 
   const currentLanguage = LANGUAGES.find((l) => l.key === locale)?.label || '中文';
 
@@ -68,6 +77,30 @@ export default function PreferencesScreen() {
                 thumbColor={Colors.text}
               />
             </View>
+
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => {
+                if (!user) {
+                  router.push('/login');
+                  return;
+                }
+                setPendingName(user.name ?? '');
+                setShowNameModal(true);
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.rowLeft}>
+                <View style={styles.rowIcon}>
+                  <User size={20} color={Colors.primary} />
+                </View>
+                <Text style={styles.rowLabel}>{t('preferences.userName')}</Text>
+              </View>
+              <View style={styles.rowRight}>
+                <Text style={styles.rowValue}>{user?.name ?? t('auth.login')}</Text>
+                <ChevronRight size={18} color={Colors.textMuted} />
+              </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.menuRow, styles.lastRow]}
@@ -114,6 +147,57 @@ export default function PreferencesScreen() {
             ))}
           </View>
         )}
+
+        <Modal
+          visible={showNameModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowNameModal(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setShowNameModal(false)}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              style={styles.modalCenter}
+            >
+              <Pressable style={styles.modalCard} onPress={() => {}}>
+                <Text style={styles.modalTitle}>{t('preferences.userName')}</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={pendingName}
+                  onChangeText={setPendingName}
+                  placeholder={t('preferences.userNamePlaceholder')}
+                  placeholderTextColor={Colors.textMuted}
+                  autoFocus
+                  maxLength={24}
+                  returnKeyType="done"
+                  onSubmitEditing={async () => {
+                    await setUserName(pendingName);
+                    setShowNameModal(false);
+                  }}
+                />
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonSecondary]}
+                    onPress={() => setShowNameModal(false)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.modalButtonSecondaryText}>{t('common.cancel')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonPrimary]}
+                    onPress={async () => {
+                      await setUserName(pendingName);
+                      setShowNameModal(false);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.modalButtonPrimaryText}>{t('common.ok')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </Pressable>
+            </KeyboardAvoidingView>
+          </Pressable>
+        </Modal>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('preferences.soundSection')}</Text>
@@ -272,5 +356,65 @@ const styles = StyleSheet.create({
   languageTextActive: {
     color: Colors.primary,
     fontWeight: '600' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 24,
+  },
+  modalCenter: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modalCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 18,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  modalInput: {
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: 14,
+    color: Colors.text,
+    fontSize: 15,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  modalButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonSecondary: {
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalButtonSecondaryText: {
+    color: Colors.text,
+    fontWeight: '700' as const,
+  },
+  modalButtonPrimary: {
+    backgroundColor: Colors.primary,
+  },
+  modalButtonPrimaryText: {
+    color: Colors.background,
+    fontWeight: '800' as const,
   },
 });

@@ -14,7 +14,7 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated, isGuest, isLoading: isAuthLoading } = useAuth();
   const { isLoading: isI18nLoading } = useI18n();
   const isLoading = isAuthLoading || isI18nLoading;
 
@@ -35,7 +35,7 @@ function RootLayoutNav() {
         contentStyle: { backgroundColor: Colors.background },
       }}
     >
-      {isAuthenticated ? (
+      {isAuthenticated || isGuest ? (
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       ) : (
         <Stack.Screen name="login" options={{ headerShown: false }} />

@@ -2,18 +2,13 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { couponCatalog } from '@/mocks/data';
-import { CouponDefinition, CouponStatus, UserCoupon, User } from '@/types';
+import { CouponDefinition, CouponStatus, UserCoupon } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
 
 const COUPONS_STORAGE_PREFIX = 'coupons_v1';
 
-const TIER_ORDER: readonly User['tier'][] = ['silver', 'gold', 'platinum', 'diamond'];
-
-function isTierAtLeast(userTier: User['tier'], requiredTier: User['tier']) {
-  return TIER_ORDER.indexOf(userTier) >= TIER_ORDER.indexOf(requiredTier);
-}
-
-function getDefaultClaimedCoupons(userTier: User['tier']): UserCoupon[] {
+function getDefaultClaimedCoupons(userTier: (typeof couponCatalog)[number]['tier']): UserCoupon[] {
   const now = new Date().toISOString();
   const claimed: UserCoupon[] = [{ couponId: 'c1', status: 'available', claimedAt: now }];
 
@@ -68,6 +63,11 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
   const [coupons, setCoupons] = useState<UserCoupon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const effectiveTier = useMemo(() => {
+    if (!user) return 'silver';
+    return getTierFromBalance(user.balance);
+  }, [user]);
+
   const storageKey = user ? `${COUPONS_STORAGE_PREFIX}:${user.id}` : null;
 
   const persist = useCallback(
@@ -94,7 +94,7 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     try {
       const stored = await AsyncStorage.getItem(storageKey);
       const parsed = safeParseCoupons(stored);
-      const initial = parsed ?? getDefaultClaimedCoupons(user.tier);
+      const initial = parsed ?? getDefaultClaimedCoupons(effectiveTier);
 
       const now = new Date();
       const normalized = initial.map((c) => {
@@ -113,7 +113,7 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  }, [storageKey, user]);
+  }, [effectiveTier, storageKey, user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -131,7 +131,7 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
       if (!user || !storageKey) return;
       const definition = couponCatalog.find((c) => c.id === couponId);
       if (!definition) return;
-      if (!isTierAtLeast(user.tier, definition.tier)) return;
+      if (!isTierAtLeast(effectiveTier, definition.tier)) return;
 
       setCoupons((current) => {
         if (current.some((c) => c.couponId === couponId)) return current;
@@ -143,7 +143,7 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
         return next;
       });
     },
-    [persist, storageKey, user]
+    [effectiveTier, persist, storageKey, user]
   );
 
   const markCouponUsed = useCallback(
@@ -187,9 +187,9 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
       .filter((definition) => !claimedById.has(definition.id))
       .map((definition) => ({
         definition,
-        isUnlocked: isTierAtLeast(user.tier, definition.tier),
+        isUnlocked: isTierAtLeast(effectiveTier, definition.tier),
       }));
-  }, [claimedById, user]);
+  }, [claimedById, effectiveTier, user]);
 
   const getCoupon = useCallback((couponId: string) => {
     const definition = couponCatalog.find((c) => c.id === couponId) ?? null;
@@ -208,4 +208,3 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     getCoupon,
   };
 });
-

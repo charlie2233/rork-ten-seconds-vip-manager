@@ -5,7 +5,7 @@ export interface User {
   phone: string;
   balance: number;
   points: number;
-  tier: 'silver' | 'gold' | 'platinum' | 'diamond';
+  tier: 'silver' | 'gold' | 'diamond' | 'platinum' | 'blackGold';
   joinDate: string;
   avatar?: string;
 }
@@ -24,7 +24,7 @@ export interface Benefit {
   title: string;
   description: string;
   icon: string;
-  tier: 'silver' | 'gold' | 'platinum' | 'diamond';
+  tier: User['tier'];
   isActive: boolean;
 }
 

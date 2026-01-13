@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Eye, EyeOff, CreditCard, Lock } from 'lucide-react-native';
+import { Eye, EyeOff, CreditCard, Lock, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
@@ -20,7 +20,7 @@ import LanguageToggle from '@/components/LanguageToggle';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
-  const { login, isLoggingIn, loginError } = useAuth();
+  const { login, enterGuestMode, isLoggingIn, loginError } = useAuth();
   const { t } = useI18n();
   const [memberId, setMemberId] = useState('');
   const [password, setPassword] = useState('');
@@ -59,6 +59,20 @@ export default function LoginScreen() {
 
       <View style={[styles.langToggle, { top: insets.top + 16 }]}>
         <LanguageToggle />
+      </View>
+
+      <View style={[styles.closeToggle, { top: insets.top + 16 }]}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={async () => {
+            await enterGuestMode();
+            router.replace('/');
+          }}
+          activeOpacity={0.7}
+          testID="login-close"
+        >
+          <X size={18} color={Colors.textSecondary} />
+        </TouchableOpacity>
       </View>
       
       <KeyboardAvoidingView
@@ -171,6 +185,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 24,
     zIndex: 10,
+  },
+  closeToggle: {
+    position: 'absolute',
+    right: 24,
+    zIndex: 10,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   content: {
     flex: 1,

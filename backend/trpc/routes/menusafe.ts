@@ -109,11 +109,12 @@ export const menusafeRouter = createTRPCRouter({
       }
 
       // 2. Map MenuSafe fields to Rork User fields
-      const tierMap: Record<string, 'silver' | 'gold' | 'platinum' | 'diamond'> = {
+      const tierMap: Record<string, 'silver' | 'gold' | 'diamond' | 'platinum' | 'blackGold'> = {
         '普通会员': 'silver',
         '黄金会员': 'gold',
-        '铂金会员': 'platinum',
         '钻石会员': 'diamond',
+        '铂金会员': 'platinum',
+        '黑金会员': 'blackGold',
       };
 
       const importedUser = {

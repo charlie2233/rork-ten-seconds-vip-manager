@@ -23,6 +23,7 @@ import { z } from 'zod';
 import { trpcClient } from '@/lib/trpc';
 import { storeLocations } from '@/mocks/data';
 import { useCoupons } from '@/contexts/CouponsContext';
+import { getTierFromBalance } from '@/lib/tier';
 
 const QUICK_QUESTIONS = [
   'support.quick.balance',
@@ -67,7 +68,7 @@ export default function SupportChatScreen() {
 
           const balance = result?.balance ?? 0;
           const points = result?.points ?? 0;
-          const tier = resolvedMemberId === user?.memberId ? user?.tier : undefined;
+          const tier = getTierFromBalance(balance);
 
           return JSON.stringify({
             memberId: resolvedMemberId,

@@ -7,7 +7,7 @@ export const mockUser: User = {
   phone: '138****8888',
   balance: 2580.00,
   points: 12680,
-  tier: 'gold',
+  tier: 'blackGold',
   joinDate: '2024-06-15',
 };
 
@@ -138,10 +138,11 @@ export const mockBenefits: Benefit[] = [
 ];
 
 export const tierInfo = {
-  silver: { name: '白银会员', color: '#C0C0C0', minPoints: 0 },
-  gold: { name: '黄金会员', color: '#D4AF37', minPoints: 5000 },
-  platinum: { name: '铂金会员', color: '#E5E4E2', minPoints: 20000 },
-  diamond: { name: '钻石会员', color: '#B9F2FF', minPoints: 50000 },
+  silver: { name: '白银会员', color: '#C0C0C0', minBalance: 100 },
+  gold: { name: '黄金会员', color: '#D4AF37', minBalance: 200 },
+  diamond: { name: '钻石会员', color: '#B9F2FF', minBalance: 300 },
+  platinum: { name: '铂金会员', color: '#E5E4E2', minBalance: 500 },
+  blackGold: { name: '黑金会员', color: '#F4E4BA', minBalance: 1000 },
 };
 
 export const couponCatalog: CouponDefinition[] = [

@@ -14,8 +14,9 @@ import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn } from 'lucide-re
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
 import { useAuth } from '@/contexts/AuthContext';
-import { tierInfo } from '@/mocks/data';
+import { storeLocations, tierInfo } from '@/mocks/data';
 import { trpc } from '@/lib/trpc';
+import { getTierFromBalance } from '@/lib/tier';
 import Colors from '@/constants/colors';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
@@ -29,6 +30,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { t } = useI18n();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
 
   useEffect(() => {
     const shimmer = Animated.loop(
@@ -41,8 +43,6 @@ export default function HomeScreen() {
     shimmer.start();
     return () => shimmer.stop();
   }, [shimmerAnim]);
-
-  const tier = user ? tierInfo[user.tier] : tierInfo.silver;
 
   // Auto-renew (refresh) balance from MenuSafe every 5 seconds when screen is focused
   const { data: latestBalance } = trpc.menusafe.getLatestBalance.useQuery(
@@ -57,6 +57,8 @@ export default function HomeScreen() {
   // Use latest polled balance if available, otherwise fall back to stored user balance
   const displayBalance = latestBalance?.balance ?? user?.balance ?? 0;
   const displayPoints = latestBalance?.points ?? user?.points ?? 0;
+  const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
+  const tier = tierInfo[effectiveTier];
 
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
@@ -127,10 +129,13 @@ export default function HomeScreen() {
             </Animated.View>
 
             <View style={styles.cardHeader}>
-              <View>
+              <View style={styles.cardHeaderLeft}>
                 <Text style={styles.brandName}>十秒到</Text>
+                <Text style={styles.storeAddress} numberOfLines={1}>
+                  {storeAddress}
+                </Text>
                 <Text style={[styles.tierName, { color: tier.color }]}>
-                  {t(`tier.${user?.tier ?? 'silver'}`)}
+                  {t(`tier.${effectiveTier}`)}
                 </Text>
               </View>
               <TouchableOpacity 
@@ -331,7 +336,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   greeting: {
-    fontSize: 14,
+    fontSize: 18,
     color: Colors.textSecondary,
     marginBottom: 4,
   },
@@ -364,11 +369,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 24,
   },
+  cardHeaderLeft: {
+    flex: 1,
+    paddingRight: 12,
+    minWidth: 0,
+  },
   brandName: {
     fontSize: 24,
     fontWeight: '700' as const,
     color: Colors.primary,
     letterSpacing: 2,
+  },
+  storeAddress: {
+    marginTop: 4,
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600' as const,
   },
   tierName: {
     fontSize: 12,
