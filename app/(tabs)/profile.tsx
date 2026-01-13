@@ -31,7 +31,20 @@ import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { migrationService } from '@/lib/migration';
 
-const menuSections = [
+interface MenuItem {
+  icon: typeof Bell;
+  labelKey: string;
+  value: string;
+  route?: string;
+  action?: string;
+}
+
+interface MenuSection {
+  titleKey: string;
+  items: MenuItem[];
+}
+
+const menuSections: MenuSection[] = [
   {
     titleKey: 'profile.section.account',
     items: [
@@ -93,7 +106,7 @@ export default function ProfileScreen() {
               const result = await migrationService.syncUser(user.memberId);
               Alert.alert(t('profile.migration.success'), `${t('home.balance')}: ¥${result.balance}\n${t('home.points')}: ${result.points}`);
               // In a real app, you would refresh the user context here
-            } catch (error) {
+            } catch {
               Alert.alert(t('forgot.error'), t('profile.migration.notFound'));
             }
           },

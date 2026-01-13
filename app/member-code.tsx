@@ -29,6 +29,41 @@ export default function MemberCodeScreen() {
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const qrSvg = useMemo(() => {
+    if (!user?.memberId) return null;
+    try {
+      return bwipjs.toSVG({
+        bcid: 'qrcode',
+        text: user.memberId,
+        scale: 4,
+        includetext: false,
+        backgroundcolor: 'FFFFFF',
+        paddingwidth: 10,
+        paddingheight: 10,
+      });
+    } catch {
+      return null;
+    }
+  }, [user?.memberId, refreshKey]);
+
+  const barcodeSvg = useMemo(() => {
+    if (!user?.memberId) return null;
+    try {
+      return bwipjs.toSVG({
+        bcid: 'code128',
+        text: user.memberId,
+        scale: 3,
+        height: 10,
+        includetext: false,
+        backgroundcolor: 'FFFFFF',
+        paddingwidth: 10,
+        paddingheight: 10,
+      });
+    } catch {
+      return null;
+    }
+  }, [user?.memberId, refreshKey]);
+
   // If no user, we shouldn't really be here, but handle it gracefully
   if (!user) {
     return (
@@ -46,39 +81,6 @@ export default function MemberCodeScreen() {
       </View>
     );
   }
-
-  const qrSvg = useMemo(() => {
-    try {
-      return bwipjs.toSVG({
-        bcid: 'qrcode',
-        text: user.memberId,
-        scale: 4,
-        includetext: false,
-        backgroundcolor: 'FFFFFF',
-        paddingwidth: 10,
-        paddingheight: 10,
-      });
-    } catch {
-      return null;
-    }
-  }, [user.memberId, refreshKey]);
-
-  const barcodeSvg = useMemo(() => {
-    try {
-      return bwipjs.toSVG({
-        bcid: 'code128',
-        text: user.memberId,
-        scale: 3,
-        height: 10,
-        includetext: false,
-        backgroundcolor: 'FFFFFF',
-        paddingwidth: 10,
-        paddingheight: 10,
-      });
-    } catch {
-      return null;
-    }
-  }, [user.memberId, refreshKey]);
 
   const copyToClipboard = async () => {
     await Clipboard.setStringAsync(user.memberId);
