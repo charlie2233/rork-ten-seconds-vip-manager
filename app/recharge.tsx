@@ -88,7 +88,7 @@ export default function RechargeScreen() {
             <View>
               <Text style={styles.balanceLabel}>{t('recharge.currentBalance')}</Text>
               <Text style={styles.balanceValue}>
-                ¥{user?.balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                ¥{(user?.balance ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
               </Text>
             </View>
           </LinearGradient>

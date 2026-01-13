@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, ChevronRight, Lock, Ticket } from 'lucide-react-native';
+import { Check, ChevronRight, Lock, Ticket, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
@@ -65,7 +65,17 @@ export default function CouponsScreen() {
         </View>
 
         <View style={styles.header}>
-          <Text style={styles.title}>{t('coupons.title')}</Text>
+          <View style={styles.headerTop}>
+            <Text style={styles.title}>{t('coupons.title')}</Text>
+            <TouchableOpacity 
+              style={styles.rechargeButton}
+              onPress={() => router.push('/recharge')}
+              activeOpacity={0.7}
+            >
+              <Wallet size={16} color={Colors.primary} />
+              <Text style={styles.rechargeButtonText}>{t('home.action.recharge')}</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.tierRow}>
             <View style={styles.tierBadge}>
               <Text style={[styles.tierText, { color: currentTier.color }]}>
@@ -224,11 +234,32 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 20,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
   title: {
     fontSize: 28,
     fontWeight: '700' as const,
     color: Colors.text,
-    marginBottom: 10,
+  },
+  rechargeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(201, 169, 98, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(201, 169, 98, 0.2)',
+  },
+  rechargeButtonText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
   tierRow: {
     flexDirection: 'row',

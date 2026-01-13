@@ -41,7 +41,7 @@ const menuSections = [
   {
     titleKey: 'profile.section.support',
     items: [
-      { icon: MapPin, labelKey: 'profile.item.nearbyStores', value: '', route: '/locations' },
+      { icon: MapPin, labelKey: 'profile.item.nearbyStores', value: '', route: '/nearby-stores' },
       { icon: MessageSquare, labelKey: 'profile.item.supportChat', value: '', route: '/support-chat' },
       { icon: HelpCircle, labelKey: 'profile.item.helpCenter', value: '', route: '/help-center' },
     ],

@@ -33,10 +33,76 @@ export default function CouponDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [copied, setCopied] = useState(false);
 
-  if (!user) return null;
+  const { definition, state } = useMemo(() => {
+    if (!id) return { definition: null, state: null };
+    return getCoupon(id);
+  }, [id, getCoupon]);
+
+  const qrSvg = useMemo(() => {
+    if (!definition?.code) return null;
+    try {
+      return bwipjs.toSVG({
+        bcid: 'qrcode',
+        text: definition.code,
+        scale: 4,
+        includetext: false,
+        backgroundcolor: 'FFFFFF',
+        paddingwidth: 10,
+        paddingheight: 10,
+      });
+    } catch {
+      return null;
+    }
+  }, [definition?.code]);
+
+  const barcodeSvg = useMemo(() => {
+    if (!definition?.code) return null;
+    try {
+      return bwipjs.toSVG({
+        bcid: 'code128',
+        text: definition.code,
+        scale: 3,
+        height: 10,
+        includetext: false,
+        backgroundcolor: 'FFFFFF',
+        paddingwidth: 10,
+        paddingheight: 10,
+      });
+    } catch {
+      return null;
+    }
+  }, [definition?.code]);
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[Colors.background, Colors.backgroundLight]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <ChevronLeft size={22} color={Colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{t('couponDetail.title')}</Text>
+          </View>
+          <View style={styles.notFoundBox}>
+            <Text style={styles.notFoundText}>{t('memberCode.pleaseLoginFirst')}</Text>
+            <TouchableOpacity 
+              style={[styles.primaryButton, { marginTop: 20, width: '100%' }]}
+              onPress={() => router.push('/login')}
+            >
+              <Text style={styles.primaryButtonText}>{t('auth.login')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   if (!id) return null;
 
-  const { definition, state } = getCoupon(id);
   if (!definition) {
     return (
       <View style={styles.container}>
@@ -69,39 +135,6 @@ export default function CouponDetailScreen() {
     state?.status === 'used' ? 'used' : isExpired ? 'expired' : state ? 'available' : 'unclaimed';
 
   const isUnlocked = isTierAtLeast(user.tier, definition.tier);
-
-  const qrSvg = useMemo(() => {
-    try {
-      return bwipjs.toSVG({
-        bcid: 'qrcode',
-        text: definition.code,
-        scale: 4,
-        includetext: false,
-        backgroundcolor: 'FFFFFF',
-        paddingwidth: 10,
-        paddingheight: 10,
-      });
-    } catch {
-      return null;
-    }
-  }, [definition.code]);
-
-  const barcodeSvg = useMemo(() => {
-    try {
-      return bwipjs.toSVG({
-        bcid: 'code128',
-        text: definition.code,
-        scale: 3,
-        height: 10,
-        includetext: false,
-        backgroundcolor: 'FFFFFF',
-        paddingwidth: 10,
-        paddingheight: 10,
-      });
-    } catch {
-      return null;
-    }
-  }, [definition.code]);
 
   const copyToClipboard = async () => {
     await Clipboard.setStringAsync(definition.code);

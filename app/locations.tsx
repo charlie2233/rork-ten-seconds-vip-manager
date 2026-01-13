@@ -120,7 +120,7 @@ export default function LocationsScreen() {
               <Globe size={18} color={Colors.textSecondary} />
               <Text style={styles.actionText}>{t('locations.website')}</Text>
               <Text style={styles.actionValue} numberOfLines={1}>
-                {location.website.replace(/^https?:\\/\\//, '')}
+                {location.website.replace(/^https?:\/\//, '')}
               </Text>
             </TouchableOpacity>
           ) : null}
