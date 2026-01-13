@@ -25,6 +25,17 @@ import LanguageToggle from '@/components/LanguageToggle';
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
 
+const VIP_CARD_GRADIENTS: Record<
+  keyof typeof tierInfo,
+  [string, string, string]
+> = {
+  silver: ['#2C2C2C', '#1A1A1A', '#111111'],
+  gold: ['#2D2D2D', '#1F1F1F', '#171717'],
+  diamond: ['#122C3D', '#0B1F2C', '#08131D'],
+  platinum: ['#2B2B2F', '#1B1C1F', '#141414'],
+  blackGold: ['#1A120A', '#0F0B07', '#090705'],
+};
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -59,6 +70,18 @@ export default function HomeScreen() {
   const displayPoints = latestBalance?.points ?? user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const tier = tierInfo[effectiveTier];
+  const cardAccent = tier.color;
+  const cardTheme = useMemo(() => {
+    const gradient = VIP_CARD_GRADIENTS[effectiveTier] ?? VIP_CARD_GRADIENTS.silver;
+    return {
+      gradient,
+      accent: cardAccent,
+      borderColor: `${cardAccent}66`,
+      accentBackground: `${cardAccent}1A`,
+      decorBorderColor: `${cardAccent}26`,
+      shimmerColor: `${cardAccent}14`,
+    };
+  }, [cardAccent, effectiveTier]);
 
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
@@ -109,10 +132,10 @@ export default function HomeScreen() {
 
         <View style={styles.cardContainer}>
           <LinearGradient
-            colors={['#2D2D2D', '#1F1F1F', '#171717']}
+            colors={cardTheme.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.vipCard}
+            style={[styles.vipCard, { borderColor: cardTheme.borderColor }]}
           >
             <Animated.View
               style={[
@@ -121,7 +144,7 @@ export default function HomeScreen() {
               ]}
             >
               <LinearGradient
-                colors={['transparent', 'rgba(255,255,255,0.05)', 'transparent']}
+                colors={['transparent', cardTheme.shimmerColor, 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
@@ -130,27 +153,30 @@ export default function HomeScreen() {
 
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
-                <Text style={styles.brandName}>十秒到</Text>
+                <Text style={[styles.brandName, { color: cardTheme.accent }]}>十秒到</Text>
                 <Text style={styles.storeAddress} numberOfLines={1}>
                   {storeAddress}
                 </Text>
-                <Text style={[styles.tierName, { color: tier.color }]}>
+                <Text style={[styles.tierName, { color: cardTheme.accent }]}>
                   {t(`tier.${effectiveTier}`)}
                 </Text>
               </View>
               <TouchableOpacity 
-                style={styles.qrButton}
+                style={[
+                  styles.qrButton,
+                  { backgroundColor: cardTheme.accentBackground, borderColor: cardTheme.borderColor },
+                ]}
                 onPress={() => router.push('/member-code')}
                 activeOpacity={0.7}
               >
-                <QrCode size={28} color={Colors.primary} />
+                <QrCode size={28} color={cardTheme.accent} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.balanceContainer}>
               <Text style={styles.balanceLabel}>{t('home.balance')}</Text>
               <View style={styles.balanceRow}>
-                <Text style={styles.currencySymbol}>$</Text>
+                <Text style={[styles.currencySymbol, { color: cardTheme.accent }]}>$</Text>
                 <Text style={styles.balanceAmount}>
                   {displayBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                 </Text>
@@ -171,23 +197,39 @@ export default function HomeScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity 
-                    style={styles.loginPrompt}
+                    style={[styles.loginPrompt, { backgroundColor: cardTheme.accentBackground }]}
                     onPress={() => router.push('/login')}
                   >
-                    <LogIn size={12} color={Colors.primary} />
-                    <Text style={styles.loginPromptText}>{t('home.loginToShowBarcode')}</Text>
+                    <LogIn size={12} color={cardTheme.accent} />
+                    <Text style={[styles.loginPromptText, { color: cardTheme.accent }]}>
+                      {t('home.loginToShowBarcode')}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
               <View style={styles.pointsContainer}>
                 <Text style={styles.pointsLabel}>{t('home.points')}</Text>
-                <Text style={styles.pointsValue}>{displayPoints.toLocaleString()}</Text>
+                <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
+                  {displayPoints.toLocaleString()}
+                </Text>
               </View>
             </View>
 
             <View style={styles.cardDecoration}>
-              <View style={[styles.decorCircle, styles.decorCircle1]} />
-              <View style={[styles.decorCircle, styles.decorCircle2]} />
+              <View
+                style={[
+                  styles.decorCircle,
+                  styles.decorCircle1,
+                  { borderColor: cardTheme.decorBorderColor },
+                ]}
+              />
+              <View
+                style={[
+                  styles.decorCircle,
+                  styles.decorCircle2,
+                  { borderColor: cardTheme.decorBorderColor },
+                ]}
+              />
             </View>
           </LinearGradient>
         </View>
@@ -387,16 +429,18 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   tierName: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    marginTop: 4,
-    letterSpacing: 1,
+    fontSize: 15,
+    fontWeight: '800' as const,
+    marginTop: 10,
+    letterSpacing: 0.3,
   },
   qrButton: {
     width: 48,
     height: 48,
     borderRadius: 12,
     backgroundColor: 'rgba(201, 169, 98, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(201, 169, 98, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
