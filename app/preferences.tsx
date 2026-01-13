@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Moon, Volume2, Vibrate, Globe, ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n, Locale } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
 
 const LANGUAGES: { key: Locale; label: string }[] = [
@@ -42,7 +43,7 @@ export default function PreferencesScreen() {
           <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('preferences.title')}</Text>
-        <View style={styles.placeholder} />
+        <LanguageToggle variant="icon" align="right" />
       </View>
 
       <ScrollView

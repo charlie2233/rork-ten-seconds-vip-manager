@@ -14,6 +14,7 @@ import { ArrowLeft, Check, Wallet, Gift, Sparkles } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
 
 const RECHARGE_OPTIONS = [
@@ -69,7 +70,7 @@ export default function RechargeScreen() {
           <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('recharge.title')}</Text>
-        <View style={styles.placeholder} />
+        <LanguageToggle variant="icon" align="right" />
       </View>
 
       <ScrollView
@@ -88,7 +89,7 @@ export default function RechargeScreen() {
             <View>
               <Text style={styles.balanceLabel}>{t('recharge.currentBalance')}</Text>
               <Text style={styles.balanceValue}>
-                ¥{(user?.balance ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                ${(user?.balance ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
               </Text>
             </View>
           </LinearGradient>
@@ -115,12 +116,12 @@ export default function RechargeScreen() {
                   </View>
                 )}
                 <Text style={[styles.optionAmount, isSelected && styles.optionAmountSelected]}>
-                  ¥{option.amount}
+                  ${option.amount}
                 </Text>
                 {option.bonus > 0 && (
                   <View style={styles.bonusBadge}>
                     <Gift size={12} color={Colors.secondary} />
-                    <Text style={styles.bonusText}>+¥{option.bonus}</Text>
+                    <Text style={styles.bonusText}>+${option.bonus}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -131,7 +132,7 @@ export default function RechargeScreen() {
         <View style={styles.customSection}>
           <Text style={styles.customLabel}>{t('recharge.customAmount')}</Text>
           <View style={styles.customInputWrapper}>
-            <Text style={styles.currencyPrefix}>¥</Text>
+            <Text style={styles.currencyPrefix}>$</Text>
             <TextInput
               style={styles.customInput}
               placeholder={t('recharge.customPlaceholder')}
@@ -152,7 +153,7 @@ export default function RechargeScreen() {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>{t('recharge.rechargeAmount')}</Text>
               <Text style={styles.summaryValue}>
-                ¥{selectedAmount || customAmount}
+                ${selectedAmount || customAmount}
               </Text>
             </View>
             {totalBonus > 0 && (
@@ -161,13 +162,13 @@ export default function RechargeScreen() {
                   <Sparkles size={16} color={Colors.primary} />
                   <Text style={styles.summaryBonusLabel}>{t('recharge.bonusAmount')}</Text>
                 </View>
-                <Text style={styles.summaryBonusValue}>+¥{totalBonus}</Text>
+                <Text style={styles.summaryBonusValue}>+${totalBonus}</Text>
               </View>
             )}
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>{t('recharge.totalCredit')}</Text>
               <Text style={styles.totalValue}>
-                ¥{(selectedAmount || parseInt(customAmount, 10) || 0) + totalBonus}
+                ${(selectedAmount || parseInt(customAmount, 10) || 0) + totalBonus}
               </Text>
             </View>
           </View>

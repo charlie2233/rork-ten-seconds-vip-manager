@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,12 @@ import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
+import LanguageToggle from '@/components/LanguageToggle';
 import { useRorkAgent } from '@rork-ai/toolkit-sdk';
+import { z } from 'zod';
+import { trpcClient } from '@/lib/trpc';
+import { storeLocations } from '@/mocks/data';
+import { useCoupons } from '@/contexts/CouponsContext';
 
 const QUICK_QUESTIONS = [
   'support.quick.balance',
@@ -28,17 +33,125 @@ const QUICK_QUESTIONS = [
 
 export default function SupportChatScreen() {
   const insets = useSafeAreaInsets();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const { user } = useAuth();
+  const { claimedCoupons, offers } = useCoupons();
   const scrollViewRef = useRef<ScrollView>(null);
   const [inputText, setInputText] = useState('');
 
-  const welcomeMessage = locale === 'zh' 
-    ? `您好${user?.name ? `, ${user.name}` : ''}！我是您的AI助手，很高兴为您服务。有什么可以帮您的吗？` 
-    : `Hello${user?.name ? `, ${user.name}` : ''}! I'm your AI assistant. How can I help you today?`;
+  const welcomeMessage = t('support.welcomeMessage');
+
+  const couponsRef = useRef({ claimedCoupons, offers });
+  useEffect(() => {
+    couponsRef.current = { claimedCoupons, offers };
+  }, [claimedCoupons, offers]);
+
+  const tools = useMemo(() => {
+    return {
+      get_member_summary: {
+        description:
+          'Get the current member account summary (balance, points, tier) from the VIP system.',
+        zodSchema: z.object({
+          memberId: z.string().min(1).optional(),
+        }),
+        execute: async ({ memberId }: { memberId?: string }) => {
+          const resolvedMemberId = memberId ?? user?.memberId;
+          if (!resolvedMemberId) {
+            throw new Error('User is not logged in (missing memberId).');
+          }
+
+          const result = await trpcClient.menusafe.getLatestBalance.query({
+            memberId: resolvedMemberId,
+          });
+
+          return {
+            memberId: resolvedMemberId,
+            tier: resolvedMemberId === user?.memberId ? user?.tier : undefined,
+            balance: result.balance,
+            points: result.points,
+          };
+        },
+      },
+      get_recent_transactions: {
+        description: 'Get recent transactions for the logged-in member.',
+        zodSchema: z.object({
+          count: z.number().int().min(1).max(20).optional(),
+        }),
+        execute: async ({ count }: { count?: number }) => {
+          if (!user?.id) {
+            throw new Error('User is not logged in (missing userId).');
+          }
+          const result = await trpcClient.transactions.getRecent.query({
+            userId: user.id,
+            count: count ?? 5,
+          });
+          return { userId: user.id, transactions: result };
+        },
+      },
+      get_coupon_wallet: {
+        description:
+          'Get coupon wallet summary, including available/used/expired coupons and claimable offers.',
+        zodSchema: z.object({
+          status: z.enum(['available', 'used', 'expired', 'all']).optional(),
+        }),
+        execute: async ({ status }: { status?: 'available' | 'used' | 'expired' | 'all' }) => {
+          const { claimedCoupons: claimed, offers: currentOffers } = couponsRef.current;
+
+          const normalized = claimed.map((c) => ({
+            id: c.definition.id,
+            title: c.definition.title,
+            discountText: c.definition.discountText,
+            validTo: c.definition.validTo,
+            status: c.state.status === 'used' ? 'used' : c.isExpired ? 'expired' : 'available',
+          }));
+
+          const filtered =
+            status && status !== 'all' ? normalized.filter((c) => c.status === status) : normalized;
+
+          return {
+            status: status ?? 'all',
+            counts: {
+              available: normalized.filter((c) => c.status === 'available').length,
+              used: normalized.filter((c) => c.status === 'used').length,
+              expired: normalized.filter((c) => c.status === 'expired').length,
+            },
+            coupons: filtered,
+            offers: currentOffers.map((o) => ({
+              id: o.definition.id,
+              title: o.definition.title,
+              tier: o.definition.tier,
+              unlocked: o.isUnlocked,
+            })),
+          };
+        },
+      },
+      get_store_location: {
+        description: 'Get the current store location (address, hours, phone, website, map link).',
+        zodSchema: z.object({}),
+        execute: async () => {
+          const location = storeLocations[0];
+          if (!location) throw new Error('No store location configured.');
+
+          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            location.address
+          )}`;
+
+          return {
+            name: location.name,
+            address: location.address,
+            place: location.place,
+            website: location.website,
+            phone: location.phone,
+            hours: location.hours,
+            mapUrl,
+          };
+        },
+      },
+    };
+  }, [user?.id, user?.memberId, user?.tier]);
 
   const { messages, sendMessage, status } = useRorkAgent({
-    tools: {},
+    tools,
   });
 
   const isLoading = status === 'streaming' || status === 'submitted';
@@ -67,7 +180,16 @@ export default function SupportChatScreen() {
 
   const visibleMessages = messages.filter(m => m.role !== 'system');
 
-  const renderMessageContent = (message: typeof messages[0]) => {
+  const renderToolOutput = (output: unknown) => {
+    if (typeof output === 'string') return output;
+    try {
+      return JSON.stringify(output, null, 2);
+    } catch {
+      return String(output);
+    }
+  };
+
+  const renderMessageContent = (message: (typeof messages)[number]) => {
     if ('parts' in message && Array.isArray(message.parts)) {
       return message.parts.map((part, i) => {
         if (part.type === 'text') {
@@ -84,10 +206,33 @@ export default function SupportChatScreen() {
           );
         }
         if (part.type === 'tool') {
+          const state = (part as any).state as string | undefined;
+          const toolName = (part as any).toolName ?? (part as any).name ?? 'tool';
+          const output = (part as any).output;
+          const errorText = (part as any).errorText ?? (part as any).error ?? null;
+
+          if (state === 'output-error') {
+            return (
+              <View key={`${message.id}-${i}`} style={styles.toolCard}>
+                <Text style={styles.toolTitle}>{toolName}</Text>
+                <Text style={styles.toolErrorText}>{String(errorText ?? 'Tool failed')}</Text>
+              </View>
+            );
+          }
+
+          if (state === 'output-available') {
+            return (
+              <View key={`${message.id}-${i}`} style={styles.toolCard}>
+                <Text style={styles.toolTitle}>{toolName}</Text>
+                <Text style={styles.toolOutput}>{renderToolOutput(output)}</Text>
+              </View>
+            );
+          }
+
           return (
             <View key={`${message.id}-${i}`} style={styles.toolIndicator}>
               <ActivityIndicator size="small" color={Colors.primary} />
-              <Text style={styles.toolText}>Processing...</Text>
+              <Text style={styles.toolText}>{t('common.loading')}</Text>
             </View>
           );
         }
@@ -134,7 +279,7 @@ export default function SupportChatScreen() {
             <Text style={styles.onlineText}>{t('support.online')}</Text>
           </View>
         </View>
-        <View style={styles.placeholder} />
+        <LanguageToggle variant="icon" align="right" />
       </View>
 
       <KeyboardAvoidingView
@@ -383,6 +528,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textMuted,
     fontStyle: 'italic',
+  },
+  toolCard: {
+    backgroundColor: Colors.backgroundLight,
+    borderRadius: 12,
+    padding: 10,
+    gap: 6,
+  },
+  toolTitle: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700' as const,
+  },
+  toolOutput: {
+    color: Colors.text,
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    lineHeight: 16,
+  },
+  toolErrorText: {
+    color: Colors.error,
+    fontSize: 12,
+    lineHeight: 16,
   },
   typingBubble: {
     paddingVertical: 16,

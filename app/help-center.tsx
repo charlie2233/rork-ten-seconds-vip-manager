@@ -21,6 +21,7 @@ import {
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
 
 type FAQ = {
@@ -84,7 +85,7 @@ export default function HelpCenterScreen() {
           <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('help.title')}</Text>
-        <View style={styles.placeholder} />
+        <LanguageToggle variant="icon" align="right" />
       </View>
 
       <ScrollView

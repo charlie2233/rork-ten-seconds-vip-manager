@@ -62,7 +62,7 @@ const menuSections: MenuSection[] = [
   {
     titleKey: 'profile.section.support',
     items: [
-      { icon: MapPin, labelKey: 'profile.item.nearbyStores', value: '', route: '/nearby-stores' },
+      { icon: MapPin, labelKey: 'profile.item.nearbyStores', value: '', route: '/locations' },
       { icon: MessageSquare, labelKey: 'profile.item.supportChat', value: '', route: '/support-chat' },
       { icon: HelpCircle, labelKey: 'profile.item.helpCenter', value: '', route: '/help-center' },
     ],
@@ -101,10 +101,13 @@ export default function ProfileScreen() {
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.ok'),
-          onPress: async () => {
+              onPress: async () => {
             try {
               const result = await migrationService.syncUser(user.memberId);
-              Alert.alert(t('profile.migration.success'), `${t('home.balance')}: ¥${result.balance}\n${t('home.points')}: ${result.points}`);
+              Alert.alert(
+                t('profile.migration.success'),
+                `${t('home.balance')}: $${result.balance}\n${t('home.points')}: ${result.points}`
+              );
               // In a real app, you would refresh the user context here
             } catch {
               Alert.alert(t('forgot.error'), t('profile.migration.notFound'));

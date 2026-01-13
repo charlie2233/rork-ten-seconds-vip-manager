@@ -15,10 +15,16 @@ import Colors from '@/constants/colors';
 import { Locale, useI18n } from '@/contexts/I18nContext';
 
 type Props = {
+  align?: 'left' | 'right';
+  variant?: 'full' | 'icon';
   style?: StyleProp<ViewStyle>;
 };
 
-export default function LanguageToggle({ style }: Props) {
+export default function LanguageToggle({
+  style,
+  variant = 'full',
+  align = 'left',
+}: Props) {
   const { locale, setLocale } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const insets = useSafeAreaInsets();
@@ -43,14 +49,18 @@ export default function LanguageToggle({ style }: Props) {
   return (
     <>
       <TouchableOpacity
-        style={[styles.button, style]}
+        style={[styles.button, variant === 'icon' && styles.iconButton, style]}
         onPress={() => setIsOpen(true)}
         activeOpacity={0.7}
         testID="language-toggle"
       >
         <Languages size={16} color={Colors.textSecondary} />
-        <Text style={styles.text}>{currentLabel}</Text>
-        <ChevronDown size={16} color={Colors.textMuted} />
+        {variant === 'full' ? (
+          <>
+            <Text style={styles.text}>{currentLabel}</Text>
+            <ChevronDown size={16} color={Colors.textMuted} />
+          </>
+        ) : null}
       </TouchableOpacity>
 
       <Modal
@@ -59,7 +69,15 @@ export default function LanguageToggle({ style }: Props) {
         animationType="fade"
         onRequestClose={() => setIsOpen(false)}
       >
-        <View style={[styles.modalOverlay, { paddingTop: insets.top + 54 }]}>
+        <View
+          style={[
+            styles.modalOverlay,
+            {
+              paddingTop: insets.top + 54,
+              alignItems: align === 'right' ? 'flex-end' : 'flex-start',
+            },
+          ]}
+        >
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setIsOpen(false)} />
           <View style={styles.menu}>
             {options.map((opt) => {
@@ -97,6 +115,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  iconButton: {
+    width: 36,
+    paddingHorizontal: 0,
   },
   text: {
     color: Colors.textSecondary,

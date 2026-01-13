@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, User, Phone, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
 
 export default function RegisterScreen() {
@@ -72,7 +73,7 @@ export default function RegisterScreen() {
           <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('register.title')}</Text>
-        <View style={styles.placeholder} />
+        <LanguageToggle variant="icon" align="right" />
       </View>
 
       <ScrollView

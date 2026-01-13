@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Phone, Shield, CheckCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
+import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
 
 type Step = 'phone' | 'code' | 'success';
@@ -77,6 +78,7 @@ export default function ForgotPasswordScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
+        <LanguageToggle variant="icon" align="right" />
       </View>
 
       <KeyboardAvoidingView
@@ -235,6 +237,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
