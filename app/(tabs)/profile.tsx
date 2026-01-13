@@ -21,6 +21,7 @@ import {
   LogOut,
   Settings,
   MapPin,
+  RefreshCw,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +29,7 @@ import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import { migrationService } from '@/lib/migration';
 
 const menuSections = [
   {
@@ -36,6 +38,12 @@ const menuSections = [
       { icon: Bell, labelKey: 'profile.item.notifications', value: '', route: '/notifications' },
       { icon: Shield, labelKey: 'profile.item.security', value: '', route: '/security' },
       { icon: Settings, labelKey: 'profile.item.preferences', value: '', route: '/preferences' },
+    ],
+  },
+  {
+    titleKey: 'profile.section.migration',
+    items: [
+      { icon: RefreshCw, labelKey: 'profile.item.menusafe', value: '', action: 'sync' },
     ],
   },
   {
@@ -65,6 +73,30 @@ export default function ProfileScreen() {
           text: t('profile.logout'),
           style: 'destructive',
           onPress: () => logout(),
+        },
+      ]
+    );
+  };
+
+  const handleSync = async () => {
+    if (!user) return;
+    
+    Alert.alert(
+      t('profile.migration.confirmTitle'),
+      t('profile.migration.confirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.ok'),
+          onPress: async () => {
+            try {
+              const result = await migrationService.syncUser(user.memberId);
+              Alert.alert(t('profile.migration.success'), `${t('home.balance')}: ¥${result.balance}\n${t('home.points')}: ${result.points}`);
+              // In a real app, you would refresh the user context here
+            } catch (error) {
+              Alert.alert(t('forgot.error'), t('profile.migration.notFound'));
+            }
+          },
         },
       ]
     );
@@ -160,7 +192,13 @@ export default function ProfileScreen() {
                       index === section.items.length - 1 && styles.lastMenuItem,
                     ]}
                     activeOpacity={0.7}
-                    onPress={() => router.push(item.route as any)}
+                    onPress={() => {
+                      if (item.action === 'sync') {
+                        handleSync();
+                      } else if (item.route) {
+                        router.push(item.route as any);
+                      }
+                    }}
                   >
                     <View style={styles.menuIcon}>
                       <IconComponent size={20} color={Colors.textSecondary} />
