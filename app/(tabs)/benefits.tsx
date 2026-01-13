@@ -8,11 +8,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import ImageCarousel from '@/components/ImageCarousel';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
 import { getTierFromBalance } from '@/lib/tier';
 import { getLocalizedString } from '@/lib/localized';
+import { COUPON_BANNERS } from '@/constants/banners';
 
 type SegmentKey = CouponStatus;
 
@@ -87,6 +89,8 @@ export default function CouponsScreen() {
             </View>
           </View>
         </View>
+
+        <ImageCarousel images={COUPON_BANNERS} autoPlay intervalMs={3200} style={styles.carousel} />
 
         <View style={styles.segmentContainer}>
           {SEGMENTS.map((segment) => {
@@ -238,6 +242,9 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
+  },
+  carousel: {
+    marginBottom: 18,
   },
   headerTop: {
     flexDirection: 'row',

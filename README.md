@@ -27,6 +27,18 @@ If you are new to coding and unsure which editor to use, we recommend Cursor. If
 
 The only requirement is having Node.js & Bun installed - [install Node.js with nvm](https://github.com/nvm-sh/nvm) and [install Bun](https://bun.sh/docs/installation)
 
+Quick safe setup (doesn't change system-wide settings):
+
+```bash
+# Checks Node/Bun + suggests next steps
+bash scripts/env-check.sh
+
+# Optional: set local env vars for Expo (ignored by git)
+cp .env.example .env
+```
+
+More details: `docs/LOCAL_DEV.md`
+
 Follow these steps:
 
 ```bash
