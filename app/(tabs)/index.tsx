@@ -21,6 +21,8 @@ import Colors from '@/constants/colors';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import { getIntlLocale } from '@/lib/localized';
+import { getTransactionDescription } from '@/lib/transactions';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -39,9 +41,10 @@ const VIP_CARD_GRADIENTS: Record<
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
+  const numberLocale = getIntlLocale(locale);
 
   useEffect(() => {
     const shimmer = Animated.loop(
@@ -153,7 +156,7 @@ export default function HomeScreen() {
 
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
-                <Text style={[styles.brandName, { color: cardTheme.accent }]}>十秒到</Text>
+                <Text style={[styles.brandName, { color: cardTheme.accent }]}>{t('brand.name')}</Text>
                 <Text style={styles.storeAddress} numberOfLines={1}>
                   {storeAddress}
                 </Text>
@@ -178,7 +181,7 @@ export default function HomeScreen() {
               <View style={styles.balanceRow}>
                 <Text style={[styles.currencySymbol, { color: cardTheme.accent }]}>$</Text>
                 <Text style={styles.balanceAmount}>
-                  {displayBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                  {displayBalance.toLocaleString(numberLocale, { minimumFractionDigits: 2 })}
                 </Text>
               </View>
             </View>
@@ -210,7 +213,7 @@ export default function HomeScreen() {
               <View style={styles.pointsContainer}>
                 <Text style={styles.pointsLabel}>{t('home.points')}</Text>
                 <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
-                  {displayPoints.toLocaleString()}
+                  {displayPoints.toLocaleString(numberLocale)}
                 </Text>
               </View>
             </View>
@@ -313,7 +316,7 @@ export default function HomeScreen() {
                   >
                     <View style={styles.transactionLeft}>
                       <Text style={styles.transactionDesc} numberOfLines={1}>
-                        {transaction.description}
+                        {getTransactionDescription(transaction.description, t)}
                       </Text>
                       <Text style={styles.transactionDate}>{transaction.date}</Text>
                     </View>

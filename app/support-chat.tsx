@@ -248,7 +248,9 @@ export default function SupportChatScreen() {
               return (
                 <View key={`${message.id}-${i}`} style={styles.toolCard}>
                   <Text style={styles.toolTitle}>{String(toolName)}</Text>
-                  <Text style={styles.toolErrorText}>{String(errorText ?? 'Tool failed')}</Text>
+                  <Text style={styles.toolErrorText}>
+                    {String(errorText ?? t('support.toolFailed'))}
+                  </Text>
                 </View>
               );
             }

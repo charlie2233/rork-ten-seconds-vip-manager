@@ -15,6 +15,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
 import LanguageToggle from '@/components/LanguageToggle';
+import { getTransactionDescription } from '@/lib/transactions';
 
 type FilterType = 'all' | 'deposit' | 'spend' | 'bonus';
 
@@ -186,7 +187,7 @@ export default function TransactionsScreen() {
                   
                   <View style={styles.transactionContent}>
                     <Text style={styles.transactionDesc} numberOfLines={1}>
-                      {transaction.description}
+                      {getTransactionDescription(transaction.description, t)}
                     </Text>
                     <Text style={styles.transactionDate}>{transaction.date}</Text>
                   </View>
