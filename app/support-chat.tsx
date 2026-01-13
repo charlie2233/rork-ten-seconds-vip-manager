@@ -321,34 +321,38 @@ export default function SupportChatScreen() {
             </View>
           )}
 
-          {visibleMessages.map((message) => (
-            <View
-              key={message.id}
-              style={[
-                styles.messageRow,
-                message.role === 'assistant' ? styles.botRow : styles.userRow,
-              ]}
-            >
-              {message.role === 'assistant' && (
-                <View style={styles.avatar}>
-                  <Bot size={18} color={Colors.primary} />
-                </View>
-              )}
+          {visibleMessages.map((message) => {
+            const content = renderMessageContent(message);
+            if (!content) return null;
+            return (
               <View
+                key={message.id}
                 style={[
-                  styles.messageBubble,
-                  message.role === 'assistant' ? styles.botBubble : styles.userBubble,
+                  styles.messageRow,
+                  message.role === 'assistant' ? styles.botRow : styles.userRow,
                 ]}
               >
-                {renderMessageContent(message)}
-              </View>
-              {message.role === 'user' && (
-                <View style={[styles.avatar, styles.userAvatar]}>
-                  <User size={18} color={Colors.background} />
+                {message.role === 'assistant' && (
+                  <View style={styles.avatar}>
+                    <Bot size={18} color={Colors.primary} />
+                  </View>
+                )}
+                <View
+                  style={[
+                    styles.messageBubble,
+                    message.role === 'assistant' ? styles.botBubble : styles.userBubble,
+                  ]}
+                >
+                  {content}
                 </View>
-              )}
-            </View>
-          ))}
+                {message.role === 'user' && (
+                  <View style={[styles.avatar, styles.userAvatar]}>
+                    <User size={18} color={Colors.background} />
+                  </View>
+                )}
+              </View>
+            );
+          })}
 
           {isLoading && (
             <View style={[styles.messageRow, styles.botRow]}>
