@@ -156,7 +156,7 @@ export default function SupportChatScreen() {
         },
       },
     };
-  }, [user?.id, user?.memberId, user?.tier]);
+  }, [user?.id, user?.memberId]);
 
   const { messages, sendMessage, status } = useRorkAgent({
     tools,
@@ -199,56 +199,62 @@ export default function SupportChatScreen() {
 
   const renderMessageContent = (message: (typeof messages)[number]) => {
     if ('parts' in message && Array.isArray(message.parts)) {
-      return message.parts.map((part, i) => {
-        if (part.type === 'text') {
-          return (
-            <Text
-              key={`${message.id}-${i}`}
-              style={[
-                styles.messageText,
-                message.role === 'assistant' ? styles.botText : styles.userText,
-              ]}
-            >
-              {part.text}
-            </Text>
-          );
-        }
-        if (part.type === 'tool') {
-          const state = (part as any).state as string | undefined;
-          const toolName = (part as any).toolName ?? (part as any).name ?? 'tool';
-          const output = (part as any).output;
-          const errorText = (part as any).errorText ?? (part as any).error ?? null;
-
-          if (state === 'output-error') {
+      const renderedParts = message.parts
+        .map((part, i) => {
+          if (!part || typeof part !== 'object') return null;
+          
+          if (part.type === 'text' && typeof part.text === 'string' && part.text.trim()) {
             return (
-              <View key={`${message.id}-${i}`} style={styles.toolCard}>
-                <Text style={styles.toolTitle}>{toolName}</Text>
-                <Text style={styles.toolErrorText}>{String(errorText ?? 'Tool failed')}</Text>
+              <Text
+                key={`${message.id}-${i}`}
+                style={[
+                  styles.messageText,
+                  message.role === 'assistant' ? styles.botText : styles.userText,
+                ]}
+              >
+                {part.text}
+              </Text>
+            );
+          }
+          if (part.type === 'tool') {
+            const state = (part as any).state as string | undefined;
+            const toolName = (part as any).toolName ?? (part as any).name ?? 'tool';
+            const output = (part as any).output;
+            const errorText = (part as any).errorText ?? (part as any).error ?? null;
+
+            if (state === 'output-error') {
+              return (
+                <View key={`${message.id}-${i}`} style={styles.toolCard}>
+                  <Text style={styles.toolTitle}>{String(toolName)}</Text>
+                  <Text style={styles.toolErrorText}>{String(errorText ?? 'Tool failed')}</Text>
+                </View>
+              );
+            }
+
+            if (state === 'output-available') {
+              return (
+                <View key={`${message.id}-${i}`} style={styles.toolCard}>
+                  <Text style={styles.toolTitle}>{String(toolName)}</Text>
+                  <Text style={styles.toolOutput}>{renderToolOutput(output)}</Text>
+                </View>
+              );
+            }
+
+            return (
+              <View key={`${message.id}-${i}`} style={styles.toolIndicator}>
+                <ActivityIndicator size="small" color={Colors.primary} />
+                <Text style={styles.toolText}>{t('common.loading')}</Text>
               </View>
             );
           }
-
-          if (state === 'output-available') {
-            return (
-              <View key={`${message.id}-${i}`} style={styles.toolCard}>
-                <Text style={styles.toolTitle}>{toolName}</Text>
-                <Text style={styles.toolOutput}>{renderToolOutput(output)}</Text>
-              </View>
-            );
-          }
-
-          return (
-            <View key={`${message.id}-${i}`} style={styles.toolIndicator}>
-              <ActivityIndicator size="small" color={Colors.primary} />
-              <Text style={styles.toolText}>{t('common.loading')}</Text>
-            </View>
-          );
-        }
-        return null;
-      });
+          return null;
+        })
+        .filter(Boolean);
+      
+      return renderedParts.length > 0 ? renderedParts : null;
     }
     
-    if ('content' in message && typeof message.content === 'string') {
+    if ('content' in message && typeof message.content === 'string' && message.content.trim()) {
       return (
         <Text
           style={[
