@@ -17,6 +17,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'common.ok': '确定',
     'common.refresh': '刷新',
     'common.back': '返回',
+    'common.loading': '加载中...',
     'code.qrFailed': 'QR生成失败',
     'code.barcodeFailed': '条码生成失败',
 
@@ -66,6 +67,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'transactions.filter.spend': '消费',
     'transactions.filter.bonus': '赠送',
     'transactions.empty': '暂无交易记录',
+    'transactions.noTransactions': '暂无交易记录',
+    'transactions.loginRequired': '请先登录查看交易记录',
     'transactions.balancePrefix': '余额',
 
     'memberCode.title': '会员码',
@@ -298,6 +301,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'common.ok': 'OK',
     'common.refresh': 'Refresh',
     'common.back': 'Back',
+    'common.loading': 'Loading...',
     'code.qrFailed': 'QR generation failed',
     'code.barcodeFailed': 'Barcode generation failed',
 
@@ -347,6 +351,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'transactions.filter.spend': 'Spend',
     'transactions.filter.bonus': 'Bonus',
     'transactions.empty': 'No transactions yet',
+    'transactions.noTransactions': 'No transactions yet',
+    'transactions.loginRequired': 'Please sign in to view transactions',
     'transactions.balancePrefix': 'Balance',
 
     'memberCode.title': 'Member Code',
@@ -579,6 +585,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'common.ok': 'Aceptar',
     'common.refresh': 'Actualizar',
     'common.back': 'Atrás',
+    'common.loading': 'Cargando...',
     'code.qrFailed': 'Error al generar el QR',
     'code.barcodeFailed': 'Error al generar el código de barras',
 
@@ -628,6 +635,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'transactions.filter.spend': 'Gasto',
     'transactions.filter.bonus': 'Bono',
     'transactions.empty': 'Aún no hay transacciones',
+    'transactions.noTransactions': 'Aún no hay transacciones',
+    'transactions.loginRequired': 'Inicia sesión para ver transacciones',
     'transactions.balancePrefix': 'Saldo',
 
     'memberCode.title': 'Código de miembro',

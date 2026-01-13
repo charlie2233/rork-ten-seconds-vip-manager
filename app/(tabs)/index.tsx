@@ -14,7 +14,8 @@ import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn } from 'lucide-re
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
 import { useAuth } from '@/contexts/AuthContext';
-import { tierInfo, mockTransactions } from '@/mocks/data';
+import { tierInfo } from '@/mocks/data';
+import { trpc } from '@/lib/trpc';
 import Colors from '@/constants/colors';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
@@ -42,7 +43,12 @@ export default function HomeScreen() {
   }, [shimmerAnim]);
 
   const tier = user ? tierInfo[user.tier] : tierInfo.silver;
-  const recentTransactions = mockTransactions.slice(0, 3);
+
+  const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
+    { userId: user?.id, count: 3 },
+    { enabled: !!user }
+  );
+  const recentTransactions = recentTransactionsQuery.data ?? [];
 
   const barcodeSvg = useMemo(() => {
     if (!user?.memberId) return null;
@@ -213,46 +219,58 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('home.recentTransactions')}</Text>
-            <TouchableOpacity 
-              style={styles.seeAllButton}
-              onPress={() => router.push('/(tabs)/transactions')}
-            >
-              <Text style={styles.seeAllText}>{t('home.seeAll')}</Text>
-              <ChevronRight size={16} color={Colors.primary} />
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.transactionsList}>
-            {recentTransactions.map((transaction, index) => (
-              <View
-                key={transaction.id}
-                style={[
-                  styles.transactionItem,
-                  index === recentTransactions.length - 1 && styles.lastItem,
-                ]}
+        {user && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('home.recentTransactions')}</Text>
+              <TouchableOpacity 
+                style={styles.seeAllButton}
+                onPress={() => router.push('/(tabs)/transactions')}
               >
-                <View style={styles.transactionLeft}>
-                  <Text style={styles.transactionDesc} numberOfLines={1}>
-                    {transaction.description}
-                  </Text>
-                  <Text style={styles.transactionDate}>{transaction.date}</Text>
+                <Text style={styles.seeAllText}>{t('home.seeAll')}</Text>
+                <ChevronRight size={16} color={Colors.primary} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.transactionsList}>
+              {recentTransactionsQuery.isLoading ? (
+                <View style={styles.transactionItem}>
+                  <Text style={styles.transactionDesc}>{t('common.loading')}</Text>
                 </View>
-                <Text
-                  style={[
-                    styles.transactionAmount,
-                    transaction.amount > 0 ? styles.positiveAmount : styles.negativeAmount,
-                  ]}
-                >
-                  {transaction.amount > 0 ? '+' : ''}
-                  {transaction.amount.toFixed(2)}
-                </Text>
-              </View>
-            ))}
+              ) : recentTransactions.length === 0 ? (
+                <View style={styles.transactionItem}>
+                  <Text style={styles.transactionDesc}>{t('transactions.noTransactions')}</Text>
+                </View>
+              ) : (
+                recentTransactions.map((transaction, index) => (
+                  <View
+                    key={transaction.id}
+                    style={[
+                      styles.transactionItem,
+                      index === recentTransactions.length - 1 && styles.lastItem,
+                    ]}
+                  >
+                    <View style={styles.transactionLeft}>
+                      <Text style={styles.transactionDesc} numberOfLines={1}>
+                        {transaction.description}
+                      </Text>
+                      <Text style={styles.transactionDate}>{transaction.date}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.transactionAmount,
+                        transaction.amount > 0 ? styles.positiveAmount : styles.negativeAmount,
+                      ]}
+                    >
+                      {transaction.amount > 0 ? '+' : ''}
+                      {transaction.amount.toFixed(2)}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
         <View style={styles.promoCard}>
           <LinearGradient

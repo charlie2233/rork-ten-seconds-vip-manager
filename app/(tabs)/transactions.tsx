@@ -9,10 +9,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowDownLeft, ArrowUpRight, Gift, RotateCcw } from 'lucide-react-native';
-import { mockTransactions } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { Transaction } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { trpc } from '@/lib/trpc';
 import LanguageToggle from '@/components/LanguageToggle';
 
 type FilterType = 'all' | 'deposit' | 'spend' | 'bonus';
@@ -56,23 +57,29 @@ const getTransactionColor = (type: Transaction['type']) => {
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
-  
+  const { user } = useAuth();
   const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
-  const filteredTransactions = mockTransactions.filter((t) => {
+  const transactionsQuery = trpc.transactions.list.useQuery(
+    { userId: user?.id, limit: 50 },
+    { enabled: !!user }
+  );
+  const transactions = transactionsQuery.data ?? [];
+
+  const filteredTransactions = transactions.filter((tx) => {
     if (activeFilter === 'all') return true;
-    return t.type === activeFilter;
+    return tx.type === activeFilter;
   });
 
-  const totalDeposit = mockTransactions
-    .filter((t) => t.type === 'deposit' || t.type === 'bonus')
-    .reduce((sum, t) => sum + t.amount, 0);
+  const totalDeposit = transactions
+    .filter((tx) => tx.type === 'deposit' || tx.type === 'bonus')
+    .reduce((sum, tx) => sum + tx.amount, 0);
 
   const totalSpend = Math.abs(
-    mockTransactions
-      .filter((t) => t.type === 'spend')
-      .reduce((sum, t) => sum + t.amount, 0)
+    transactions
+      .filter((tx) => tx.type === 'spend')
+      .reduce((sum, tx) => sum + tx.amount, 0)
   );
 
   return (
@@ -143,7 +150,15 @@ export default function TransactionsScreen() {
         </View>
 
         <View style={styles.transactionsList}>
-          {filteredTransactions.length === 0 ? (
+          {!user ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>{t('transactions.loginRequired')}</Text>
+            </View>
+          ) : transactionsQuery.isLoading ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>{t('common.loading')}</Text>
+            </View>
+          ) : filteredTransactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>{t('transactions.empty')}</Text>
             </View>
