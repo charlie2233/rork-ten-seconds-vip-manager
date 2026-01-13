@@ -44,6 +44,20 @@ export default function HomeScreen() {
 
   const tier = user ? tierInfo[user.tier] : tierInfo.silver;
 
+  // Auto-renew (refresh) balance from MenuSafe every 5 seconds when screen is focused
+  const { data: latestBalance } = trpc.menusafe.getLatestBalance.useQuery(
+    { memberId: user?.memberId ?? '' },
+    { 
+      enabled: !!user?.memberId,
+      refetchInterval: 5000, // Poll every 5 seconds
+      refetchOnWindowFocus: true,
+    }
+  );
+
+  // Use latest polled balance if available, otherwise fall back to stored user balance
+  const displayBalance = latestBalance?.balance ?? user?.balance ?? 0;
+  const displayPoints = latestBalance?.points ?? user?.points ?? 0;
+
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
     { enabled: !!user }
@@ -133,7 +147,7 @@ export default function HomeScreen() {
               <View style={styles.balanceRow}>
                 <Text style={styles.currencySymbol}>$</Text>
                 <Text style={styles.balanceAmount}>
-                  {(user?.balance ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                  {displayBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                 </Text>
               </View>
             </View>
@@ -162,7 +176,7 @@ export default function HomeScreen() {
               </View>
               <View style={styles.pointsContainer}>
                 <Text style={styles.pointsLabel}>{t('home.points')}</Text>
-                <Text style={styles.pointsValue}>{(user?.points ?? 0).toLocaleString()}</Text>
+                <Text style={styles.pointsValue}>{displayPoints.toLocaleString()}</Text>
               </View>
             </View>
 

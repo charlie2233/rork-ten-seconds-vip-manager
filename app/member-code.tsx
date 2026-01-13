@@ -5,10 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Linking,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, RefreshCw, Copy, Check } from 'lucide-react-native';
+import { X, RefreshCw, Copy, Check, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SvgXml } from 'react-native-svg';
@@ -86,6 +88,30 @@ export default function MemberCodeScreen() {
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleAddToWallet = async () => {
+    if (Platform.OS !== 'ios') {
+      Alert.alert(t('common.error'), 'Apple Wallet is only available on iOS');
+      return;
+    }
+
+    try {
+      // In production, this URL points to your actual backend
+      // e.g. https://api.rork.com/api/pass/VIP123
+      const passUrl = `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'http://localhost:3000'}/api/pass/${user.memberId}`;
+      
+      const supported = await Linking.canOpenURL(passUrl);
+      if (supported) {
+        await Linking.openURL(passUrl);
+      } else {
+        // Fallback or explain
+        Alert.alert("Wallet Pass", "Could not open the pass. Please check your internet connection.");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to add pass to wallet.");
+    }
   };
 
   return (
@@ -190,6 +216,23 @@ export default function MemberCodeScreen() {
                 <Text style={styles.refreshText}>{t('common.refresh')}</Text>
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity 
+              style={styles.walletButton}
+              onPress={handleAddToWallet}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#000000', '#1a1a1a']}
+                style={styles.walletButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+              >
+                <Wallet size={20} color="#FFF" style={{ marginRight: 8 }} />
+                <Text style={styles.walletButtonText}>Add to Apple Wallet</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
           </LinearGradient>
         </View>
 
@@ -381,6 +424,24 @@ const styles = StyleSheet.create({
   refreshText: {
     fontSize: 12,
     color: Colors.primary,
+  },
+  walletButton: {
+    marginTop: 20,
+    width: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  walletButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    backgroundColor: 'black',
+  },
+  walletButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   balanceCard: {
     flexDirection: 'row',

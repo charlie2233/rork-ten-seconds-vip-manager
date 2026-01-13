@@ -127,17 +127,35 @@ export const menusafeRouter = createTRPCRouter({
         joinDate: menusafeUser.CreateTime,
       };
 
-      // 3. Persist to our database (mocked for now)
+      // 3. Create initial "Migration" transaction to reflect the balance
+      // This ensures the ledger matches the user's balance
+      const migrationTransaction = {
+        id: `tx_migrate_${menusafeUser.CardNo}`,
+        type: 'deposit' as const,
+        amount: menusafeUser.Balance,
+        description: 'MenuSafe System Migration Balance',
+        date: new Date().toISOString(),
+        balance: menusafeUser.Balance,
+      };
+
+      // 4. Persist to our database (mocked for now)
       console.log('[Migration] Imported user from MenuSafe:', importedUser);
+      console.log('[Migration] Created initial transaction:', migrationTransaction);
 
       // In a real scenario, you'd insert this into your main DB
       // and possibly invalidate caches.
       // Example with a hypothetical DB:
-      // await db.users.upsert({ where: { phone: importedUser.phone }, update: importedUser, create: importedUser });
+      // await db.transaction(async (tx) => {
+      //   await tx.users.create({ data: importedUser });
+      //   await tx.transactions.create({ 
+      //     data: { ...migrationTransaction, userId: importedUser.id } 
+      //   });
+      // });
 
       return {
         success: true,
         user: importedUser,
+        initialTransaction: migrationTransaction,
       };
     }),
 
@@ -170,5 +188,21 @@ export const menusafeRouter = createTRPCRouter({
         points: menusafeUser.Points,
         lastSync: new Date().toISOString(),
       };
+    }),
+
+  /**
+   * Lightweight balance check for auto-renewal polling.
+   * This is optimized for frequent calls.
+   */
+  getLatestBalance: publicProcedure
+    .input(z.object({ memberId: z.string() }))
+    .query(async ({ input }: { input: { memberId: string } }) => {
+       const menusafeUser = await fetchMenuSafeUser({ cardNo: input.memberId });
+       if (!menusafeUser) return null;
+       
+       return {
+         balance: menusafeUser.Balance,
+         points: menusafeUser.Points,
+       };
     }),
 });

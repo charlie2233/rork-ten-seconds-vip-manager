@@ -4,6 +4,8 @@ import { cors } from "hono/cors";
 
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
+import revenueCatWebhook from "./webhooks/revenuecat";
+import { appleWalletHandler } from "./api/pass";
 
 // app will be mounted at /api
 const app = new Hono();
@@ -20,6 +22,12 @@ app.use(
     createContext,
   }),
 );
+
+// Mount RevenueCat Webhook
+app.route("/webhooks/revenuecat", revenueCatWebhook);
+
+// Apple Wallet Pass Download Endpoint
+app.get("/pass/:memberId", appleWalletHandler);
 
 // Simple health check endpoint
 app.get("/", (c) => {
