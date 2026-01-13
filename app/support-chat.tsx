@@ -54,7 +54,8 @@ export default function SupportChatScreen() {
         zodSchema: z.object({
           memberId: z.string().min(1).optional(),
         }),
-        execute: async ({ memberId }: { memberId?: string }) => {
+        execute: async (input: unknown) => {
+          const { memberId } = (input ?? {}) as { memberId?: string };
           const resolvedMemberId = memberId ?? user?.memberId;
           if (!resolvedMemberId) {
             throw new Error('User is not logged in (missing memberId).');
@@ -64,12 +65,16 @@ export default function SupportChatScreen() {
             memberId: resolvedMemberId,
           });
 
-          return {
+          const balance = result?.balance ?? 0;
+          const points = result?.points ?? 0;
+          const tier = resolvedMemberId === user?.memberId ? user?.tier : undefined;
+
+          return JSON.stringify({
             memberId: resolvedMemberId,
-            tier: resolvedMemberId === user?.memberId ? user?.tier : undefined,
-            balance: result.balance,
-            points: result.points,
-          };
+            tier,
+            balance,
+            points,
+          });
         },
       },
       get_recent_transactions: {
@@ -77,7 +82,8 @@ export default function SupportChatScreen() {
         zodSchema: z.object({
           count: z.number().int().min(1).max(20).optional(),
         }),
-        execute: async ({ count }: { count?: number }) => {
+        execute: async (input: unknown) => {
+          const { count } = (input ?? {}) as { count?: number };
           if (!user?.id) {
             throw new Error('User is not logged in (missing userId).');
           }
@@ -85,7 +91,7 @@ export default function SupportChatScreen() {
             userId: user.id,
             count: count ?? 5,
           });
-          return { userId: user.id, transactions: result };
+          return JSON.stringify({ userId: user.id, transactions: result });
         },
       },
       get_coupon_wallet: {
@@ -94,7 +100,8 @@ export default function SupportChatScreen() {
         zodSchema: z.object({
           status: z.enum(['available', 'used', 'expired', 'all']).optional(),
         }),
-        execute: async ({ status }: { status?: 'available' | 'used' | 'expired' | 'all' }) => {
+        execute: async (input: unknown) => {
+          const { status } = (input ?? {}) as { status?: 'available' | 'used' | 'expired' | 'all' };
           const { claimedCoupons: claimed, offers: currentOffers } = couponsRef.current;
 
           const normalized = claimed.map((c) => ({
@@ -108,7 +115,7 @@ export default function SupportChatScreen() {
           const filtered =
             status && status !== 'all' ? normalized.filter((c) => c.status === status) : normalized;
 
-          return {
+          return JSON.stringify({
             status: status ?? 'all',
             counts: {
               available: normalized.filter((c) => c.status === 'available').length,
@@ -122,13 +129,13 @@ export default function SupportChatScreen() {
               tier: o.definition.tier,
               unlocked: o.isUnlocked,
             })),
-          };
+          });
         },
       },
       get_store_location: {
         description: 'Get the current store location (address, hours, phone, website, map link).',
         zodSchema: z.object({}),
-        execute: async () => {
+        execute: async (_input: unknown) => {
           const location = storeLocations[0];
           if (!location) throw new Error('No store location configured.');
 
@@ -136,7 +143,7 @@ export default function SupportChatScreen() {
             location.address
           )}`;
 
-          return {
+          return JSON.stringify({
             name: location.name,
             address: location.address,
             place: location.place,
@@ -144,7 +151,7 @@ export default function SupportChatScreen() {
             phone: location.phone,
             hours: location.hours,
             mapUrl,
-          };
+          });
         },
       },
     };

@@ -113,7 +113,7 @@ export default function LocationsScreen() {
             </View>
           </View>
 
-          {(location.website || location.phone) && <View style={styles.divider} />}
+          {(location.website || location.phone) ? <View style={styles.divider} /> : null}
 
           {location.website ? (
             <TouchableOpacity style={styles.actionRow} onPress={openWebsite} activeOpacity={0.7}>
