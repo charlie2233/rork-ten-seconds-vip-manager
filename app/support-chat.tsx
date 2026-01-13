@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,20 +8,16 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Send, Bot, User } from 'lucide-react-native';
+import { ArrowLeft, Send, Bot, User, Sparkles } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
-
-type Message = {
-  id: string;
-  text: string;
-  isBot: boolean;
-  time: string;
-};
+import { useRorkAgent } from '@rork-ai/toolkit-sdk';
 
 const QUICK_QUESTIONS = [
   'support.quick.balance',
@@ -32,47 +28,87 @@ const QUICK_QUESTIONS = [
 
 export default function SupportChatScreen() {
   const insets = useSafeAreaInsets();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const { user } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: t('support.welcomeMessage'),
-      isBot: true,
-      time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
 
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
+  const welcomeMessage = locale === 'zh' 
+    ? `您好${user?.name ? `, ${user.name}` : ''}！我是您的AI助手，很高兴为您服务。有什么可以帮您的吗？` 
+    : `Hello${user?.name ? `, ${user.name}` : ''}! I'm your AI assistant. How can I help you today?`;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: text.trim(),
-      isBot: false,
-      time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-    };
+  const { messages, sendMessage, status } = useRorkAgent({
+    tools: {},
+  });
 
-    setMessages((prev) => [...prev, userMessage]);
+  const isLoading = status === 'streaming' || status === 'submitted';
+
+  const handleSend = useCallback(() => {
+    if (!inputText.trim() || isLoading) return;
+    
+    console.log('[SupportChat] Sending message:', inputText);
+    sendMessage(inputText.trim());
     setInputText('');
-
+    
     setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: t('support.autoReply'),
-        isBot: true,
-        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, botMessage]);
       scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 1000);
+    }, 100);
+  }, [inputText, isLoading, sendMessage]);
 
-    scrollViewRef.current?.scrollToEnd({ animated: true });
-  };
+  const handleQuickQuestion = useCallback((questionKey: string) => {
+    const questionText = t(questionKey);
+    console.log('[SupportChat] Quick question:', questionText);
+    sendMessage(questionText);
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [t, sendMessage]);
 
-  const handleQuickQuestion = (questionKey: string) => {
-    sendMessage(t(questionKey));
+  const visibleMessages = messages.filter(m => m.role !== 'system');
+
+  const renderMessageContent = (message: typeof messages[0]) => {
+    if ('parts' in message && Array.isArray(message.parts)) {
+      return message.parts.map((part, i) => {
+        if (part.type === 'text') {
+          return (
+            <Text
+              key={`${message.id}-${i}`}
+              style={[
+                styles.messageText,
+                message.role === 'assistant' ? styles.botText : styles.userText,
+              ]}
+            >
+              {part.text}
+            </Text>
+          );
+        }
+        if (part.type === 'tool') {
+          return (
+            <View key={`${message.id}-${i}`} style={styles.toolIndicator}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.toolText}>Processing...</Text>
+            </View>
+          );
+        }
+        return null;
+      });
+    }
+    
+    if ('content' in message && typeof message.content === 'string') {
+      return (
+        <Text
+          style={[
+            styles.messageText,
+            message.role === 'assistant' ? styles.botText : styles.userText,
+          ]}
+        >
+          {message.content}
+        </Text>
+      );
+    }
+    
+    return null;
   };
 
   return (
@@ -87,9 +123,14 @@ export default function SupportChatScreen() {
           <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('support.title')}</Text>
+          <View style={styles.headerTitleRow}>
+            <Sparkles size={16} color={Colors.primary} />
+            <Text style={styles.headerTitle}>{t('support.title')}</Text>
+          </View>
           <View style={styles.onlineStatus}>
-            <View style={styles.onlineDot} />
+            <View style={styles.aiIndicator}>
+              <Text style={styles.aiText}>AI</Text>
+            </View>
             <Text style={styles.onlineText}>{t('support.online')}</Text>
           </View>
         </View>
@@ -106,16 +147,30 @@ export default function SupportChatScreen() {
           style={styles.messagesContainer}
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {messages.map((message) => (
+          {visibleMessages.length === 0 && (
+            <View style={[styles.messageRow, styles.botRow]}>
+              <View style={styles.avatar}>
+                <Bot size={18} color={Colors.primary} />
+              </View>
+              <View style={[styles.messageBubble, styles.botBubble]}>
+                <Text style={[styles.messageText, styles.botText]}>
+                  {welcomeMessage}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {visibleMessages.map((message) => (
             <View
               key={message.id}
               style={[
                 styles.messageRow,
-                message.isBot ? styles.botRow : styles.userRow,
+                message.role === 'assistant' ? styles.botRow : styles.userRow,
               ]}
             >
-              {message.isBot && (
+              {message.role === 'assistant' && (
                 <View style={styles.avatar}>
                   <Bot size={18} color={Colors.primary} />
                 </View>
@@ -123,27 +178,12 @@ export default function SupportChatScreen() {
               <View
                 style={[
                   styles.messageBubble,
-                  message.isBot ? styles.botBubble : styles.userBubble,
+                  message.role === 'assistant' ? styles.botBubble : styles.userBubble,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.messageText,
-                    message.isBot ? styles.botText : styles.userText,
-                  ]}
-                >
-                  {message.text}
-                </Text>
-                <Text
-                  style={[
-                    styles.messageTime,
-                    message.isBot ? styles.botTime : styles.userTime,
-                  ]}
-                >
-                  {message.time}
-                </Text>
+                {renderMessageContent(message)}
               </View>
-              {!message.isBot && (
+              {message.role === 'user' && (
                 <View style={[styles.avatar, styles.userAvatar]}>
                   <User size={18} color={Colors.background} />
                 </View>
@@ -151,7 +191,22 @@ export default function SupportChatScreen() {
             </View>
           ))}
 
-          {messages.length === 1 && (
+          {isLoading && (
+            <View style={[styles.messageRow, styles.botRow]}>
+              <View style={styles.avatar}>
+                <Bot size={18} color={Colors.primary} />
+              </View>
+              <View style={[styles.messageBubble, styles.botBubble, styles.typingBubble]}>
+                <View style={styles.typingIndicator}>
+                  <View style={[styles.typingDot, styles.typingDot1]} />
+                  <View style={[styles.typingDot, styles.typingDot2]} />
+                  <View style={[styles.typingDot, styles.typingDot3]} />
+                </View>
+              </View>
+            </View>
+          )}
+
+          {visibleMessages.length === 0 && (
             <View style={styles.quickQuestions}>
               <Text style={styles.quickTitle}>{t('support.quickTitle')}</Text>
               {QUICK_QUESTIONS.map((q, index) => (
@@ -160,6 +215,7 @@ export default function SupportChatScreen() {
                   style={styles.quickButton}
                   onPress={() => handleQuickQuestion(q)}
                   activeOpacity={0.7}
+                  disabled={isLoading}
                 >
                   <Text style={styles.quickText}>{t(q)}</Text>
                 </TouchableOpacity>
@@ -178,17 +234,23 @@ export default function SupportChatScreen() {
               onChangeText={setInputText}
               multiline
               maxLength={500}
+              editable={!isLoading}
+              onSubmitEditing={handleSend}
             />
             <TouchableOpacity
               style={[
                 styles.sendButton,
-                !inputText.trim() && styles.sendButtonDisabled,
+                (!inputText.trim() || isLoading) && styles.sendButtonDisabled,
               ]}
-              onPress={() => sendMessage(inputText)}
-              disabled={!inputText.trim()}
+              onPress={handleSend}
+              disabled={!inputText.trim() || isLoading}
               activeOpacity={0.7}
             >
-              <Send size={20} color={inputText.trim() ? Colors.background : Colors.textMuted} />
+              {isLoading ? (
+                <ActivityIndicator size="small" color={Colors.textMuted} />
+              ) : (
+                <Send size={20} color={inputText.trim() ? Colors.background : Colors.textMuted} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -221,6 +283,11 @@ const styles = StyleSheet.create({
   headerCenter: {
     alignItems: 'center',
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
@@ -230,13 +297,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 2,
+    gap: 4,
   },
-  onlineDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.success,
-    marginRight: 4,
+  aiIndicator: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  aiText: {
+    fontSize: 9,
+    fontWeight: '700' as const,
+    color: Colors.background,
   },
   onlineText: {
     fontSize: 11,
@@ -253,6 +325,7 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     padding: 16,
+    paddingBottom: 24,
   },
   messageRow: {
     flexDirection: 'row',
@@ -301,15 +374,39 @@ const styles = StyleSheet.create({
   userText: {
     color: Colors.background,
   },
-  messageTime: {
-    fontSize: 10,
-    marginTop: 6,
+  toolIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  botTime: {
+  toolText: {
+    fontSize: 12,
     color: Colors.textMuted,
+    fontStyle: 'italic',
   },
-  userTime: {
-    color: 'rgba(0,0,0,0.5)',
+  typingBubble: {
+    paddingVertical: 16,
+  },
+  typingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.textMuted,
+    opacity: 0.4,
+  },
+  typingDot1: {
+    opacity: 0.4,
+  },
+  typingDot2: {
+    opacity: 0.6,
+  },
+  typingDot3: {
+    opacity: 0.8,
   },
   quickQuestions: {
     marginTop: 8,

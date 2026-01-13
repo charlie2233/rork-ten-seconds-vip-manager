@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,11 @@ import {
   Platform,
   Linking,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, RefreshCw, Copy, Check, Wallet } from 'lucide-react-native';
+import { X, RefreshCw, Copy, Check, Wallet, AlertCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SvgXml } from 'react-native-svg';
@@ -19,6 +20,7 @@ import Colors from '@/constants/colors';
 import * as bwipjs from 'bwip-js/generic';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import { trpc } from '@/lib/trpc';
 
 // const CODE_SIZE = width * 0.6;
 
@@ -28,6 +30,38 @@ export default function MemberCodeScreen() {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [syncedBalance, setSyncedBalance] = useState<number | null>(null);
+  const [syncedPoints, setSyncedPoints] = useState<number | null>(null);
+
+  const menusafeQuery = trpc.menusafe.getLatestBalance.useQuery(
+    { memberId: user?.memberId || '' },
+    {
+      enabled: !!user?.memberId,
+      refetchOnWindowFocus: false,
+      staleTime: 30000,
+    }
+  );
+
+  const syncMutation = trpc.menusafe.syncData.useMutation({
+    onSuccess: (data) => {
+      console.log('[MemberCode] Synced from MenuSafe:', data);
+      setSyncedBalance(data.balance);
+      setSyncedPoints(data.points);
+    },
+    onError: (error) => {
+      console.error('[MemberCode] Sync failed:', error);
+    },
+  });
+
+  useEffect(() => {
+    if (menusafeQuery.data) {
+      setSyncedBalance(menusafeQuery.data.balance);
+      setSyncedPoints(menusafeQuery.data.points);
+    }
+  }, [menusafeQuery.data]);
+
+  const displayBalance = syncedBalance ?? user?.balance ?? 0;
+  const displayPoints = syncedPoints ?? user?.points ?? 0;
 
   const qrSvg = useMemo(() => {
     if (!user?.memberId) return null;
@@ -44,6 +78,7 @@ export default function MemberCodeScreen() {
     } catch {
       return null;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.memberId, refreshKey]);
 
   const barcodeSvg = useMemo(() => {
@@ -62,6 +97,7 @@ export default function MemberCodeScreen() {
     } catch {
       return null;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.memberId, refreshKey]);
 
   // If no user, we shouldn't really be here, but handle it gracefully
@@ -90,6 +126,9 @@ export default function MemberCodeScreen() {
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+    if (user?.memberId) {
+      syncMutation.mutate({ memberId: user.memberId });
+    }
   };
 
   const handleAddToWallet = async () => {
@@ -239,18 +278,33 @@ export default function MemberCodeScreen() {
         </View>
 
         <View style={styles.balanceCard}>
+          {(menusafeQuery.isLoading || syncMutation.isPending) && (
+            <View style={styles.syncingOverlay}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.syncingText}>{t('common.syncing') || 'Syncing...'}</Text>
+            </View>
+          )}
           <View style={styles.balanceItem}>
             <Text style={styles.balanceLabel}>{t('memberCode.balance')}</Text>
-            <Text style={styles.balanceValue}>${user.balance.toFixed(2)}</Text>
+            <Text style={styles.balanceValue}>${displayBalance.toFixed(2)}</Text>
           </View>
           <View style={styles.balanceDivider} />
           <View style={styles.balanceItem}>
             <Text style={styles.balanceLabel}>{t('memberCode.points')}</Text>
             <Text style={[styles.balanceValue, { color: Colors.primary }]}>
-              {user.points}
+              {displayPoints}
             </Text>
           </View>
         </View>
+
+        {menusafeQuery.isError && (
+          <View style={styles.syncErrorBanner}>
+            <AlertCircle size={14} color={Colors.warning} />
+            <Text style={styles.syncErrorText}>
+              {t('memberCode.syncError') || 'Could not sync with MenuSafe'}
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -471,6 +525,38 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: Colors.text,
+  },
+  syncingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  syncingText: {
+    color: Colors.text,
+    fontSize: 12,
+  },
+  syncErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  syncErrorText: {
+    color: Colors.warning,
+    fontSize: 12,
   },
   errorContainer: {
     backgroundColor: Colors.surface,
