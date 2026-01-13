@@ -8,15 +8,23 @@ import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
 
 const COUPONS_STORAGE_PREFIX = 'coupons_v1';
 
-function getDefaultClaimedCoupons(userTier: (typeof couponCatalog)[number]['tier']): UserCoupon[] {
-  const now = new Date().toISOString();
-  const claimed: UserCoupon[] = [{ couponId: 'c1', status: 'available', claimedAt: now }];
+function getDefaultClaimedCoupons(
+  userTier: (typeof couponCatalog)[number]['tier'],
+  claimedAt: string = new Date().toISOString()
+): UserCoupon[] {
+  const claimed: UserCoupon[] = [{ couponId: 'c1', status: 'available', claimedAt }];
 
   if (isTierAtLeast(userTier, 'gold')) {
-    claimed.push({ couponId: 'c3', status: 'available', claimedAt: now });
+    claimed.push({ couponId: 'c3', status: 'available', claimedAt });
+  }
+  if (isTierAtLeast(userTier, 'diamond')) {
+    claimed.push({ couponId: 'c4', status: 'available', claimedAt });
   }
   if (isTierAtLeast(userTier, 'platinum')) {
-    claimed.push({ couponId: 'c5', status: 'available', claimedAt: now });
+    claimed.push({ couponId: 'c5', status: 'available', claimedAt });
+  }
+  if (isTierAtLeast(userTier, 'blackGold')) {
+    claimed.push({ couponId: 'c6', status: 'available', claimedAt });
   }
 
   return claimed;
@@ -94,7 +102,17 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     try {
       const stored = await AsyncStorage.getItem(storageKey);
       const parsed = safeParseCoupons(stored);
-      const initial = parsed ?? getDefaultClaimedCoupons(effectiveTier);
+      const claimedAt = new Date().toISOString();
+      const defaults = getDefaultClaimedCoupons(effectiveTier, claimedAt);
+
+      let initial = parsed ?? defaults;
+      if (parsed) {
+        const existing = new Set(initial.map((c) => c.couponId));
+        const missingDefaults = defaults.filter((c) => !existing.has(c.couponId));
+        if (missingDefaults.length > 0) {
+          initial = [...missingDefaults, ...initial];
+        }
+      }
 
       const now = new Date();
       const normalized = initial.map((c) => {

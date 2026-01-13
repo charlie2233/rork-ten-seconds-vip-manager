@@ -36,12 +36,16 @@ export interface AuthState {
 
 export type CouponStatus = 'available' | 'used' | 'expired';
 
+export type AppLocale = 'zh' | 'en' | 'es';
+
+export type LocalizedString = Record<AppLocale, string>;
+
 export interface CouponDefinition {
   id: string;
-  title: string;
-  description: string;
-  discountText: string;
-  minSpendText?: string;
+  title: LocalizedString;
+  description: LocalizedString;
+  discountText: LocalizedString;
+  minSpendText?: LocalizedString;
   validFrom: string; // ISO date
   validTo: string; // ISO date
   tier: User['tier'];

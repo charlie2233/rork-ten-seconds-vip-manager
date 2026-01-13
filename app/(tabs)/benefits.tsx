@@ -12,6 +12,7 @@ import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
 import { getTierFromBalance } from '@/lib/tier';
+import { getLocalizedString } from '@/lib/localized';
 
 type SegmentKey = CouponStatus;
 
@@ -29,7 +30,7 @@ export default function CouponsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { claimedCoupons, offers, claimCoupon } = useCoupons();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
@@ -135,13 +136,13 @@ export default function CouponsScreen() {
                         { backgroundColor: `${definition.themeColor ?? Colors.primary}22` },
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.couponValue,
-                          { color: definition.themeColor ?? Colors.primary },
-                        ]}
-                      >
-                        {definition.discountText}
+                    <Text
+                      style={[
+                        styles.couponValue,
+                        { color: definition.themeColor ?? Colors.primary },
+                      ]}
+                    >
+                        {getLocalizedString(definition.discountText, locale)}
                       </Text>
                     </View>
                   </View>
@@ -149,7 +150,7 @@ export default function CouponsScreen() {
                   <View style={styles.couponContent}>
                     <View style={styles.couponHeader}>
                       <Text style={styles.couponTitle} numberOfLines={1}>
-                        {definition.title}
+                        {getLocalizedString(definition.title, locale)}
                       </Text>
                       {status !== 'available' && (
                         <View style={styles.statusPill}>
@@ -158,7 +159,7 @@ export default function CouponsScreen() {
                       )}
                     </View>
                     <Text style={styles.couponDesc} numberOfLines={2}>
-                      {definition.description}
+                      {getLocalizedString(definition.description, locale)}
                     </Text>
                     <View style={styles.couponMetaRow}>
                       <Text style={styles.couponMetaText}>
@@ -183,10 +184,12 @@ export default function CouponsScreen() {
                   <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
                   <View style={styles.offerTextBlock}>
                     <Text style={styles.offerTitle} numberOfLines={1}>
-                      {definition.title}
+                      {getLocalizedString(definition.title, locale)}
                     </Text>
                     <Text style={styles.offerDesc} numberOfLines={1}>
-                      {definition.minSpendText ?? definition.description}
+                      {definition.minSpendText
+                        ? getLocalizedString(definition.minSpendText, locale)
+                        : getLocalizedString(definition.description, locale)}
                     </Text>
                   </View>
                 </View>

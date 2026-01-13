@@ -20,12 +20,13 @@ import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { CouponStatus } from '@/types';
 import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
+import { getLocalizedString } from '@/lib/localized';
 
 export default function CouponDetailScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { getCoupon, claimCoupon, markCouponUsed } = useCoupons();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [copied, setCopied] = useState(false);
 
@@ -175,8 +176,10 @@ export default function CouponDetailScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleBlock}>
-              <Text style={styles.couponTitle}>{definition.title}</Text>
-              <Text style={styles.couponDesc}>{definition.description}</Text>
+              <Text style={styles.couponTitle}>{getLocalizedString(definition.title, locale)}</Text>
+              <Text style={styles.couponDesc}>
+                {getLocalizedString(definition.description, locale)}
+              </Text>
             </View>
             {status !== 'available' && (
               <View style={styles.statusPill}>
@@ -190,7 +193,9 @@ export default function CouponDetailScreen() {
               {t('coupons.validTo', { date: definition.validTo })}
             </Text>
             {definition.minSpendText ? (
-              <Text style={styles.metaText}>{definition.minSpendText}</Text>
+              <Text style={styles.metaText}>
+                {getLocalizedString(definition.minSpendText, locale)}
+              </Text>
             ) : null}
           </View>
         </View>

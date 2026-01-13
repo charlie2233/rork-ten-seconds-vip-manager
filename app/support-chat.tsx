@@ -24,6 +24,7 @@ import { trpcClient } from '@/lib/trpc';
 import { storeLocations } from '@/mocks/data';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { getTierFromBalance } from '@/lib/tier';
+import { getLocalizedString } from '@/lib/localized';
 
 const QUICK_QUESTIONS = [
   'support.quick.balance',
@@ -34,7 +35,7 @@ const QUICK_QUESTIONS = [
 
 export default function SupportChatScreen() {
   const insets = useSafeAreaInsets();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { user } = useAuth();
   const { claimedCoupons, offers } = useCoupons();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -107,8 +108,8 @@ export default function SupportChatScreen() {
 
           const normalized = claimed.map((c) => ({
             id: c.definition.id,
-            title: c.definition.title,
-            discountText: c.definition.discountText,
+            title: getLocalizedString(c.definition.title, locale),
+            discountText: getLocalizedString(c.definition.discountText, locale),
             validTo: c.definition.validTo,
             status: c.state.status === 'used' ? 'used' : c.isExpired ? 'expired' : 'available',
           }));
@@ -126,7 +127,7 @@ export default function SupportChatScreen() {
             coupons: filtered,
             offers: currentOffers.map((o) => ({
               id: o.definition.id,
-              title: o.definition.title,
+              title: getLocalizedString(o.definition.title, locale),
               tier: o.definition.tier,
               unlocked: o.isUnlocked,
             })),
@@ -156,7 +157,7 @@ export default function SupportChatScreen() {
         },
       },
     };
-  }, [user?.id, user?.memberId]);
+  }, [locale, user?.id, user?.memberId]);
 
   const { messages, sendMessage, status } = useRorkAgent({
     tools,
@@ -187,6 +188,27 @@ export default function SupportChatScreen() {
   }, [t, sendMessage]);
 
   const visibleMessages = messages.filter(m => m.role !== 'system');
+
+  const normalizeBubbleContent = useCallback(
+    (content: React.ReactNode, role: 'assistant' | 'user') => {
+      return React.Children.map(content, (child) => {
+        if (typeof child === 'string' || typeof child === 'number') {
+          return (
+            <Text
+              style={[
+                styles.messageText,
+                role === 'assistant' ? styles.botText : styles.userText,
+              ]}
+            >
+              {String(child)}
+            </Text>
+          );
+        }
+        return child;
+      });
+    },
+    []
+  );
 
   const renderToolOutput = (output: unknown) => {
     if (typeof output === 'string') return output;
@@ -322,8 +344,10 @@ export default function SupportChatScreen() {
           )}
 
           {visibleMessages.map((message) => {
-            const content = renderMessageContent(message);
-            if (!content) return null;
+            const rawContent = renderMessageContent(message);
+            if (!rawContent) return null;
+            const role = message.role === 'assistant' ? 'assistant' : 'user';
+            const content = normalizeBubbleContent(rawContent, role);
             return (
               <View
                 key={message.id}
