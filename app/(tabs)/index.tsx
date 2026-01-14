@@ -469,14 +469,17 @@ const styles = StyleSheet.create({
   },
   memberIdSection: {
     flex: 1,
+    minWidth: 0,
   },
   barcodeContainer: {
     marginTop: 8,
     backgroundColor: 'white',
     borderRadius: 10,
-    padding: 10,
-    width: 190,
-    height: 56,
+    padding: 8,
+    width: '100%',
+    maxWidth: 170,
+    height: 44,
+    overflow: 'hidden',
   },
   barcodeError: {
     fontSize: 10,

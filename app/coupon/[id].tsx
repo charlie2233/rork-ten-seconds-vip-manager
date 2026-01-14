@@ -5,11 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Check, ChevronLeft, Copy, Lock } from 'lucide-react-native';
+import { Check, ChevronLeft, Copy, Lock, Sparkles } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
@@ -26,13 +28,16 @@ export default function CouponDetailScreen() {
   const { user } = useAuth();
   const { getCoupon, claimCoupon, markCouponUsed } = useCoupons();
   const { t } = useI18n();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, claim } = useLocalSearchParams<{ id: string; claim?: string }>();
   const [copied, setCopied] = useState(false);
+  const [redeemedVisible, setRedeemedVisible] = useState(false);
 
   const { definition, state } = useMemo(() => {
-    if (!id) return { definition: null, state: null };
-    return getCoupon(id);
-  }, [id, getCoupon]);
+    const couponId = Array.isArray(id) ? id[0] : id;
+    const claimId = Array.isArray(claim) ? claim[0] : claim;
+    if (!couponId) return { definition: null, state: null };
+    return getCoupon(couponId, claimId);
+  }, [claim, getCoupon, id]);
 
   const qrSvg = useMemo(() => {
     if (!definition?.code) return null;
@@ -153,6 +158,13 @@ export default function CouponDetailScreen() {
           : '';
 
   const canRedeem = status === 'available';
+
+  const redeemNow = async () => {
+    if (!state) return;
+    await markCouponUsed(state.id);
+    setRedeemedVisible(true);
+    setTimeout(() => setRedeemedVisible(false), 1500);
+  };
 
   return (
     <View style={styles.container}>
@@ -277,7 +289,7 @@ export default function CouponDetailScreen() {
           <TouchableOpacity
             style={[styles.primaryButton, !canRedeem && styles.primaryButtonDisabled]}
             disabled={!canRedeem}
-            onPress={() => markCouponUsed(definition.id)}
+            onPress={() => void redeemNow()}
             activeOpacity={0.8}
           >
             {canRedeem ? (
@@ -290,6 +302,27 @@ export default function CouponDetailScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <Modal
+        visible={redeemedVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRedeemedVisible(false)}
+      >
+        <View style={styles.redeemedOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRedeemedVisible(false)} />
+          <View style={styles.redeemedCard}>
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              style={styles.redeemedIcon}
+            >
+              <Sparkles size={26} color={Colors.background} />
+            </LinearGradient>
+            <Text style={styles.redeemedTitle}>{t('couponDetail.redeemedTitle')}</Text>
+            <Text style={styles.redeemedSubtitle}>{t('couponDetail.redeemedMessage')}</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -485,5 +518,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800' as const,
     letterSpacing: 1,
+  },
+  redeemedOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  redeemedCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: Colors.surface,
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  redeemedIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  redeemedTitle: {
+    fontSize: 18,
+    fontWeight: '800' as const,
+    color: Colors.text,
+    marginBottom: 6,
+  },
+  redeemedSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

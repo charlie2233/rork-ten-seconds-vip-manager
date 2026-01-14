@@ -1,13 +1,48 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User } from '@/types';
+import { PointsRecord, User } from '@/types';
 import { mockUser } from '@/mocks/data';
 import { getTierFromBalance } from '@/lib/tier';
 import { calculatePointsEarned } from '@/lib/points';
 
 const AUTH_STORAGE_KEY = 'auth_user';
 const GUEST_STORAGE_KEY = 'auth_guest_mode';
+const POINTS_HISTORY_STORAGE_PREFIX = 'points_history_v1';
+
+function safeParsePointsHistory(value: string | null): PointsRecord[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    const out: PointsRecord[] = [];
+    for (const raw of parsed) {
+      if (!raw || typeof raw !== 'object') continue;
+      const rec = raw as any;
+      if (typeof rec.id !== 'string') continue;
+      if (typeof rec.delta !== 'number' || !Number.isFinite(rec.delta)) continue;
+      if (typeof rec.date !== 'string') continue;
+      if (typeof rec.balance !== 'number' || !Number.isFinite(rec.balance)) continue;
+
+      out.push({
+        id: rec.id,
+        delta: rec.delta,
+        date: rec.date,
+        balance: rec.balance,
+        description: typeof rec.description === 'string' ? rec.description : undefined,
+        couponId: typeof rec.couponId === 'string' ? rec.couponId : undefined,
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function makePointsRecordId() {
+  return `pt_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
+}
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const queryClient = useQueryClient();
@@ -51,6 +86,35 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const user = authQuery.data ?? null;
   const isAuthenticated = !!user;
   const isGuest = guestQuery.data ?? false;
+
+  const pointsHistoryQuery = useQuery({
+    queryKey: ['points_history', user?.id ?? 'none'],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      try {
+        const stored = await AsyncStorage.getItem(`${POINTS_HISTORY_STORAGE_PREFIX}:${user.id}`);
+        return safeParsePointsHistory(stored);
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!user?.id,
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  const appendPointsRecord = async (entry: PointsRecord) => {
+    if (!user?.id) return;
+    const queryKey = ['points_history', user.id] as const;
+    const current = queryClient.getQueryData<PointsRecord[]>(queryKey) ?? [];
+    const next = [entry, ...current].slice(0, 200);
+    queryClient.setQueryData(queryKey, next);
+    try {
+      await AsyncStorage.setItem(`${POINTS_HISTORY_STORAGE_PREFIX}:${user.id}`, JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+  };
 
   const loginMutation = useMutation({
     mutationFn: async ({ memberId, password }: { memberId: string; password: string }) => {
@@ -123,6 +187,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated,
     isLoading,
     isGuest,
+    pointsHistory: pointsHistoryQuery.data ?? [],
     isLoggingIn: loginMutation.isPending,
     loginError: loginMutation.error?.message || null,
     login,
@@ -142,7 +207,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         // ignore
       }
     },
-    spendPoints: async (points: number) => {
+    spendPoints: async (
+      points: number,
+      meta?: { couponId?: string; description?: string }
+    ) => {
       const cost = Math.max(0, Math.floor(Number.isFinite(points) ? points : 0));
       if (cost <= 0) return true;
 
@@ -159,6 +227,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       } catch {
         // ignore
       }
+
+      const entry: PointsRecord = {
+        id: makePointsRecordId(),
+        delta: -cost,
+        couponId: meta?.couponId,
+        description: meta?.description,
+        date: new Date().toISOString(),
+        balance: next.points ?? 0,
+      };
+      await appendPointsRecord(entry);
       return true;
     },
     applyTopUp: async (amount: number, bonus: number = 0) => {
@@ -186,6 +264,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
       } catch {
         // ignore
+      }
+
+      if (pointsEarned > 0) {
+        const entry: PointsRecord = {
+          id: makePointsRecordId(),
+          delta: pointsEarned,
+          description: `Top-up bonus: +${pointsEarned} pts`,
+          date: new Date().toISOString(),
+          balance: next.points ?? 0,
+        };
+        await appendPointsRecord(entry);
       }
 
       return { pointsEarned, balance: nextBalance, tier: nextTier };

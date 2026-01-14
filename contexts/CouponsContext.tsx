@@ -16,15 +16,30 @@ const TIER_UPGRADE_GIFTS: Partial<Record<(typeof couponCatalog)[number]['tier'],
   blackGold: ['c7'],
 };
 
+function makeCouponInstanceId(couponId: string, claimedAtIso: string, suffix?: number): string {
+  const cleaned = claimedAtIso ? claimedAtIso.replace(/[^0-9]/g, '') : `${Date.now()}`;
+  return `${couponId}_${cleaned}${suffix === undefined ? '' : `_${suffix}`}`;
+}
+
+function createCouponInstance(couponId: string, claimedAtIso?: string): UserCoupon {
+  const claimedAt = claimedAtIso ?? new Date().toISOString();
+  return {
+    id: makeCouponInstanceId(couponId, claimedAt),
+    couponId,
+    status: 'available',
+    claimedAt,
+  };
+}
+
 function getDefaultClaimedCoupons(userTier: (typeof couponCatalog)[number]['tier']): UserCoupon[] {
   const now = new Date().toISOString();
-  const claimed: UserCoupon[] = [{ couponId: 'c1', status: 'available', claimedAt: now }];
+  const claimed: UserCoupon[] = [createCouponInstance('c1', now)];
 
   if (isTierAtLeast(userTier, 'gold')) {
-    claimed.push({ couponId: 'c3', status: 'available', claimedAt: now });
+    claimed.push(createCouponInstance('c3', now));
   }
   if (isTierAtLeast(userTier, 'platinum')) {
-    claimed.push({ couponId: 'c5', status: 'available', claimedAt: now });
+    claimed.push(createCouponInstance('c5', now));
   }
 
   return claimed;
@@ -35,16 +50,27 @@ function safeParseCoupons(value: string | null): UserCoupon[] | null {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) return null;
-    const isValid = parsed.every((c) => {
-      return (
-        c &&
-        typeof c === 'object' &&
-        typeof (c as any).couponId === 'string' &&
-        (c as any).status &&
-        ['available', 'used', 'expired'].includes((c as any).status)
-      );
-    });
-    return isValid ? (parsed as UserCoupon[]) : null;
+
+    const next: UserCoupon[] = [];
+    for (let i = 0; i < parsed.length; i += 1) {
+      const raw = parsed[i] as any;
+      if (!raw || typeof raw !== 'object') return null;
+
+      const couponId = raw.couponId;
+      const status = raw.status;
+      const claimedAt = typeof raw.claimedAt === 'string' ? raw.claimedAt : new Date().toISOString();
+
+      if (typeof couponId !== 'string') return null;
+      if (!['available', 'used', 'expired'].includes(status)) return null;
+
+      const id =
+        typeof raw.id === 'string' ? raw.id : makeCouponInstanceId(couponId, claimedAt, i);
+      const usedAt = typeof raw.usedAt === 'string' ? raw.usedAt : undefined;
+
+      next.push({ id, couponId, status, claimedAt, usedAt });
+    }
+
+    return next;
   } catch {
     return null;
   }
@@ -82,7 +108,6 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
   const persist = useCallback(
     async (next: UserCoupon[]) => {
       if (!storageKey) return;
-      setCoupons(next);
       try {
         await AsyncStorage.setItem(storageKey, JSON.stringify(next));
       } catch {
@@ -133,12 +158,12 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
           gifts.push(...(TIER_UPGRADE_GIFTS[tier] ?? []));
         }
 
-        if (gifts.length > 0) {
+      if (gifts.length > 0) {
           const existing = new Set(nextCoupons.map((c) => c.couponId));
           const grantNow = new Date().toISOString();
           const additions = gifts
             .filter((id) => !existing.has(id))
-            .map((couponId) => ({ couponId, status: 'available' as CouponStatus, claimedAt: grantNow }));
+            .map((couponId) => createCouponInstance(couponId, grantNow));
           if (additions.length > 0) nextCoupons = [...additions, ...nextCoupons];
         }
 
@@ -165,9 +190,16 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     };
   }, [hydrate]);
 
-  const claimedById = useMemo(() => {
-    const map = new Map<string, UserCoupon>();
-    for (const c of coupons) map.set(c.couponId, c);
+  const instancesByCouponId = useMemo(() => {
+    const map = new Map<string, UserCoupon[]>();
+    for (const c of coupons) {
+      const existing = map.get(c.couponId);
+      if (existing) {
+        existing.push(c);
+      } else {
+        map.set(c.couponId, [c]);
+      }
+    }
     return map;
   }, [coupons]);
 
@@ -178,33 +210,58 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
       if (!definition) return;
       if (!isTierAtLeast(effectiveTier, definition.tier)) return;
 
-      if (claimedById.has(couponId)) return;
+      const now = new Date();
+      const existingInstances = instancesByCouponId.get(couponId) ?? [];
+      const isRepeatable = definition.repeatable !== false;
+
+      if (!isRepeatable && existingInstances.length > 0) return;
+
+      const hasUsableInstance = existingInstances.some((c) => {
+        if (c.status !== 'available') return false;
+        return !isExpired(definition, now);
+      });
+      if (hasUsableInstance) return;
 
       const cost = Math.max(0, Math.floor(definition.costPoints ?? 0));
       if (cost > 0) {
-        const ok = await spendPoints(cost);
+        const ok = await spendPoints(cost, { couponId });
         if (!ok) return;
       }
 
       setCoupons((current) => {
-        if (current.some((c) => c.couponId === couponId)) return current;
+        const currentInstances = current.filter((c) => c.couponId === couponId);
+        if (!isRepeatable && currentInstances.length > 0) return current;
+
+        const nowInner = new Date();
+        const alreadyHasUsable = currentInstances.some((c) => {
+          if (c.status !== 'available') return false;
+          return !isExpired(definition, nowInner);
+        });
+        if (alreadyHasUsable) return current;
+
+        const claimedAt = new Date().toISOString();
         const next: UserCoupon[] = [
-          { couponId, status: 'available', claimedAt: new Date().toISOString() },
+          {
+            id: makeCouponInstanceId(couponId, claimedAt),
+            couponId,
+            status: 'available',
+            claimedAt,
+          },
           ...current,
         ];
         void persist(next);
         return next;
       });
     },
-    [claimedById, effectiveTier, persist, spendPoints, storageKey, user]
+    [effectiveTier, instancesByCouponId, persist, spendPoints, storageKey, user]
   );
 
   const markCouponUsed = useCallback(
-    async (couponId: string) => {
+    async (couponInstanceId: string) => {
       if (!user || !storageKey) return;
       setCoupons((current) => {
         const next = current.map((c) => {
-          if (c.couponId !== couponId) return c;
+          if (c.id !== couponInstanceId) return c;
           if (c.status !== 'available') return c;
           return { ...c, status: 'used' as CouponStatus, usedAt: new Date().toISOString() };
         });
@@ -230,19 +287,40 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     if (!user) {
       return couponCatalog.map((definition) => ({ definition, isUnlocked: false }));
     }
+    const now = new Date();
     return couponCatalog
-      .filter((definition) => !claimedById.has(definition.id))
+      .filter((definition) => {
+        const instances = instancesByCouponId.get(definition.id) ?? [];
+        if (definition.repeatable === false) {
+          return instances.length === 0;
+        }
+        const hasUsable = instances.some((c) => {
+          if (c.status !== 'available') return false;
+          return !isExpired(definition, now);
+        });
+        return !hasUsable;
+      })
       .map((definition) => ({
         definition,
         isUnlocked: isTierAtLeast(effectiveTier, definition.tier),
       }));
-  }, [claimedById, effectiveTier, user]);
+  }, [effectiveTier, instancesByCouponId, user]);
 
-  const getCoupon = useCallback((couponId: string) => {
+  const getCoupon = useCallback((couponId: string, couponInstanceId?: string | null) => {
     const definition = couponCatalog.find((c) => c.id === couponId) ?? null;
-    const state = claimedById.get(couponId) ?? null;
+    if (!definition) return { definition: null, state: null };
+
+    const instances = instancesByCouponId.get(couponId) ?? [];
+    const now = new Date();
+    const state =
+      (couponInstanceId
+        ? coupons.find((c) => c.id === couponInstanceId && c.couponId === couponId) ?? null
+        : instances.find((c) => c.status === 'available' && !isExpired(definition, now)) ??
+          instances[0] ??
+          null);
+
     return { definition, state };
-  }, [claimedById]);
+  }, [coupons, instancesByCouponId]);
 
   return {
     isLoading,

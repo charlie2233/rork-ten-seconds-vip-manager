@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleProp,
   StyleSheet,
+  TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
@@ -82,16 +83,18 @@ export default function ImageCarousel({
     return images.map((img, i) => {
       const isActive = i === activeIndex;
       return (
-        <View
+        <TouchableOpacity
           key={`dot-${img.key}`}
-          style={[
-            styles.dot,
-            isActive && styles.dotActive,
-          ]}
-        />
+          style={styles.dotButton}
+          onPress={() => scrollToIndex(i, true)}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+        >
+          <View style={[styles.dot, isActive && styles.dotActive]} />
+        </TouchableOpacity>
       );
     });
-  }, [activeIndex, images]);
+  }, [activeIndex, images, scrollToIndex]);
 
   if (count === 0) return null;
 
@@ -102,6 +105,7 @@ export default function ImageCarousel({
           ref={scrollRef}
           horizontal
           pagingEnabled
+          nestedScrollEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={onMomentumScrollEnd}
           scrollEventThrottle={16}
@@ -144,6 +148,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
+  dotButton: {
+    padding: 4,
+  },
   dot: {
     width: 6,
     height: 6,
@@ -155,4 +162,3 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
 });
-

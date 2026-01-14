@@ -19,6 +19,15 @@ export interface Transaction {
   balance: number;
 }
 
+export interface PointsRecord {
+  id: string;
+  delta: number;
+  description?: string;
+  couponId?: string;
+  date: string; // ISO datetime
+  balance: number;
+}
+
 export interface Benefit {
   id: string;
   title: string;
@@ -43,6 +52,7 @@ export interface CouponDefinition {
   discountText: string;
   minSpendText?: string;
   costPoints?: number;
+  repeatable?: boolean;
   validFrom: string; // ISO date
   validTo: string; // ISO date
   tier: User['tier'];
@@ -51,6 +61,7 @@ export interface CouponDefinition {
 }
 
 export interface UserCoupon {
+  id: string;
   couponId: string;
   status: CouponStatus;
   claimedAt: string; // ISO datetime

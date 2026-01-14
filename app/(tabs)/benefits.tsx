@@ -152,10 +152,10 @@ export default function CouponsScreen() {
 
                 return (
                   <TouchableOpacity
-                    key={definition.id}
+                    key={state.id}
                     style={styles.couponCard}
                     activeOpacity={0.8}
-                    onPress={() => router.push(`/coupon/${definition.id}`)}
+                    onPress={() => router.push(`/coupon/${definition.id}?claim=${state.id}`)}
                   >
                     <View style={styles.couponLeft}>
                       <View

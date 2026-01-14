@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,21 +8,22 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowDownLeft, ArrowUpRight, Gift, RotateCcw } from 'lucide-react-native';
+import { ArrowDownLeft, ArrowUpRight, RotateCcw, Sparkles } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Transaction } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
 import LanguageToggle from '@/components/LanguageToggle';
+import { couponCatalog } from '@/mocks/data';
 
-type FilterType = 'all' | 'deposit' | 'spend' | 'bonus';
+type FilterType = 'all' | 'deposit' | 'spend' | 'points';
 
 const filterOptions: { key: FilterType; labelKey: string }[] = [
   { key: 'all', labelKey: 'transactions.filter.all' },
   { key: 'deposit', labelKey: 'transactions.filter.deposit' },
   { key: 'spend', labelKey: 'transactions.filter.spend' },
-  { key: 'bonus', labelKey: 'transactions.filter.bonus' },
+  { key: 'points', labelKey: 'transactions.filter.points' },
 ];
 
 const getTransactionIcon = (type: Transaction['type']) => {
@@ -31,8 +32,6 @@ const getTransactionIcon = (type: Transaction['type']) => {
       return ArrowDownLeft;
     case 'spend':
       return ArrowUpRight;
-    case 'bonus':
-      return Gift;
     case 'refund':
       return RotateCcw;
     default:
@@ -46,8 +45,6 @@ const getTransactionColor = (type: Transaction['type']) => {
       return Colors.success;
     case 'spend':
       return Colors.text;
-    case 'bonus':
-      return Colors.primary;
     case 'refund':
       return Colors.warning;
     default:
@@ -55,9 +52,16 @@ const getTransactionColor = (type: Transaction['type']) => {
   }
 };
 
+function parseDateLike(value: string): number {
+  const direct = Date.parse(value);
+  if (Number.isFinite(direct)) return direct;
+  const normalized = Date.parse(value.replace(' ', 'T'));
+  return Number.isFinite(normalized) ? normalized : 0;
+}
+
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, pointsHistory } = useAuth();
   const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
@@ -67,19 +71,58 @@ export default function TransactionsScreen() {
   );
   const transactions = transactionsQuery.data ?? [];
 
-  const filteredTransactions = transactions.filter((tx) => {
+  const billingTransactions = transactions.filter((tx) => tx.type !== 'bonus');
+
+  const filteredTransactions = billingTransactions.filter((tx) => {
     if (activeFilter === 'all') return true;
+    if (activeFilter === 'points') return false;
     return tx.type === activeFilter;
   });
 
   const totalDeposit = transactions
-    .filter((tx) => tx.type === 'deposit' || tx.type === 'bonus')
+    .filter((tx) => tx.type === 'deposit')
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const totalSpend = Math.abs(
     transactions
       .filter((tx) => tx.type === 'spend')
       .reduce((sum, tx) => sum + tx.amount, 0)
+  );
+
+  const pointsItems = useMemo(() => {
+    const local = (pointsHistory ?? []).map((r) => ({
+      id: r.id,
+      delta: r.delta,
+      couponId: r.couponId,
+      description: r.description,
+      date: r.date,
+      balance: r.balance,
+      source: 'local' as const,
+    }));
+
+    const bonus = transactions
+      .filter((tx) => tx.type === 'bonus')
+      .map((tx) => ({
+        id: `bonus_${tx.id}`,
+        delta: Math.round(tx.amount),
+        description: tx.description,
+        date: tx.date,
+        source: 'bonus' as const,
+      }));
+
+    return [...local, ...bonus].sort((a, b) => parseDateLike(b.date) - parseDateLike(a.date));
+  }, [pointsHistory, transactions]);
+
+  const renderPointsDescription = useCallback(
+    (item: (typeof pointsItems)[number]) => {
+      if (item.couponId) {
+        const def = couponCatalog.find((c) => c.id === item.couponId) ?? null;
+        const title = def ? t(def.title) : item.couponId;
+        return t('points.record.couponRedeem', { coupon: title });
+      }
+      return item.description ?? t('points.record.adjust');
+    },
+    [t]
   );
 
   return (
@@ -154,6 +197,57 @@ export default function TransactionsScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>{t('transactions.loginRequired')}</Text>
             </View>
+          ) : activeFilter === 'points' ? (
+            pointsItems.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>{t('points.empty')}</Text>
+              </View>
+            ) : (
+              pointsItems.map((item, index) => (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.transactionItem,
+                    index === pointsItems.length - 1 && styles.lastItem,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.transactionIcon,
+                      { backgroundColor: `${Colors.primary}15` },
+                    ]}
+                  >
+                    <Sparkles size={20} color={Colors.primary} />
+                  </View>
+
+                  <View style={styles.transactionContent}>
+                    <Text style={styles.transactionDesc} numberOfLines={1}>
+                      {renderPointsDescription(item)}
+                    </Text>
+                    <Text style={styles.transactionDate}>{item.date}</Text>
+                  </View>
+
+                  <View style={styles.transactionRight}>
+                    <Text
+                      style={[
+                        styles.transactionAmount,
+                        item.delta >= 0 ? styles.positiveAmount : styles.negativeAmount,
+                      ]}
+                    >
+                      {item.delta >= 0 ? '+' : ''}
+                      {Math.abs(item.delta)} pts
+                    </Text>
+                    {'balance' in item && typeof item.balance === 'number' ? (
+                      <Text style={styles.transactionBalance}>
+                        {t('points.balancePrefix')}: {item.balance.toLocaleString()} pts
+                      </Text>
+                    ) : (
+                      <Text style={styles.transactionBalance} />
+                    )}
+                  </View>
+                </View>
+              ))
+            )
           ) : transactionsQuery.isLoading ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>{t('common.loading')}</Text>
