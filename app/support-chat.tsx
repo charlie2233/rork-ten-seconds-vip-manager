@@ -51,7 +51,7 @@ export default function SupportChatScreen() {
     return {
       get_member_summary: {
         description:
-          'Get the current member account summary (balance, points, tier) from the VIP system.',
+          'Get the current member account summary (balance, points, tier). Balance is read from MenuSafe, points are managed by our app, and tier is derived from balance.',
         zodSchema: z.object({
           memberId: z.string().min(1).optional(),
         }),
@@ -61,13 +61,16 @@ export default function SupportChatScreen() {
           if (!resolvedMemberId) {
             throw new Error('User is not logged in (missing memberId).');
           }
+          if (memberId && user?.memberId && memberId !== user.memberId) {
+            throw new Error('Only the logged-in memberId is supported.');
+          }
 
           const result = await trpcClient.menusafe.getLatestBalance.query({
             memberId: resolvedMemberId,
           });
 
           const balance = result?.balance ?? 0;
-          const points = result?.points ?? 0;
+          const points = user?.points ?? 0;
           const tier = getTierFromBalance(balance);
 
           return JSON.stringify({
@@ -156,7 +159,7 @@ export default function SupportChatScreen() {
         },
       },
     };
-  }, [user?.id, user?.memberId]);
+  }, [user?.id, user?.memberId, user?.points]);
 
   const { messages, sendMessage, status } = useRorkAgent({
     tools,

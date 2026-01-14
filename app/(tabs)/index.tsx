@@ -56,7 +56,7 @@ export default function HomeScreen() {
 
   // Use latest polled balance if available, otherwise fall back to stored user balance
   const displayBalance = latestBalance?.balance ?? user?.balance ?? 0;
-  const displayPoints = latestBalance?.points ?? user?.points ?? 0;
+  const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const tier = tierInfo[effectiveTier];
 

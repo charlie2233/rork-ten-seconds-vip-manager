@@ -146,6 +146,7 @@ export default function RechargeScreen() {
             />
           </View>
           <Text style={styles.minHint}>{t('recharge.minHint')}</Text>
+          <Text style={styles.storeOnlyHint}>{t('recharge.storeOnlyHint')}</Text>
         </View>
 
         {(selectedAmount || customAmount) && (
@@ -355,6 +356,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textMuted,
     marginTop: 8,
+  },
+  storeOnlyHint: {
+    fontSize: 12,
+    color: Colors.warning,
+    marginTop: 6,
+    fontWeight: '600' as const,
   },
   summaryCard: {
     backgroundColor: Colors.surface,

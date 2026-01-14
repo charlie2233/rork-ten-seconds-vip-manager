@@ -107,12 +107,13 @@ export default function ProfileScreen() {
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.ok'),
-              onPress: async () => {
+          onPress: async () => {
             try {
               const result = await migrationService.syncUser(user.memberId);
+              const balance = Number(result.balance ?? 0);
               Alert.alert(
                 t('profile.migration.success'),
-                `${t('home.balance')}: $${result.balance}\n${t('home.points')}: ${result.points}`
+                `${t('home.balance')}: $${balance.toFixed(2)}`
               );
               // In a real app, you would refresh the user context here
             } catch {

@@ -32,7 +32,6 @@ export default function MemberCodeScreen() {
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [syncedBalance, setSyncedBalance] = useState<number | null>(null);
-  const [syncedPoints, setSyncedPoints] = useState<number | null>(null);
 
   const menusafeQuery = trpc.menusafe.getLatestBalance.useQuery(
     { memberId: user?.memberId || '' },
@@ -43,26 +42,14 @@ export default function MemberCodeScreen() {
     }
   );
 
-  const syncMutation = trpc.menusafe.syncData.useMutation({
-    onSuccess: (data) => {
-      console.log('[MemberCode] Synced from MenuSafe:', data);
-      setSyncedBalance(data.balance);
-      setSyncedPoints(data.points);
-    },
-    onError: (error) => {
-      console.error('[MemberCode] Sync failed:', error);
-    },
-  });
-
   useEffect(() => {
     if (menusafeQuery.data) {
       setSyncedBalance(menusafeQuery.data.balance);
-      setSyncedPoints(menusafeQuery.data.points);
     }
   }, [menusafeQuery.data]);
 
   const displayBalance = syncedBalance ?? user?.balance ?? 0;
-  const displayPoints = syncedPoints ?? user?.points ?? 0;
+  const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
 
   const qrSvg = useMemo(() => {
@@ -127,10 +114,8 @@ export default function MemberCodeScreen() {
   };
 
   const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-    if (user?.memberId) {
-      syncMutation.mutate({ memberId: user.memberId });
-    }
+    setRefreshKey((prev) => prev + 1);
+    if (user?.memberId) menusafeQuery.refetch();
   };
 
   const handleAddToWallet = async () => {
@@ -280,7 +265,7 @@ export default function MemberCodeScreen() {
         </View>
 
         <View style={styles.balanceCard}>
-          {(menusafeQuery.isLoading || syncMutation.isPending) && (
+          {menusafeQuery.isFetching && (
             <View style={styles.syncingOverlay}>
               <ActivityIndicator size="small" color={Colors.primary} />
               <Text style={styles.syncingText}>{t('common.syncing') || 'Syncing...'}</Text>
