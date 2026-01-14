@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,7 +29,7 @@ const RECHARGE_OPTIONS = [
 
 export default function RechargeScreen() {
   const insets = useSafeAreaInsets();
-  const { user, applyTopUp } = useAuth();
+  const { user } = useAuth();
   const { t } = useI18n();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
@@ -51,29 +50,7 @@ export default function RechargeScreen() {
   const pointsEarned = rechargeAmount ? calculatePointsEarned(rechargeAmount, tierAfter) : 0;
 
   const handleRecharge = () => {
-    if (!rechargeAmount || rechargeAmount < 50) {
-      Alert.alert(t('recharge.error'), t('recharge.minAmount'));
-      return;
-    }
-    Alert.alert(
-      t('recharge.confirmTitle'),
-      t('recharge.confirmMessage', { amount: rechargeAmount.toString() }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.ok'),
-          onPress: () =>
-            void (async () => {
-              const result = user ? await applyTopUp(rechargeAmount, totalBonus) : null;
-              Alert.alert(
-                t('recharge.success'),
-                t('recharge.successMessage', { points: result?.pointsEarned ?? 0 })
-              );
-              router.back();
-            })(),
-        },
-      ]
-    );
+    router.push('/locations');
   };
 
   return (
@@ -207,12 +184,8 @@ export default function RechargeScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
-          style={[
-            styles.rechargeButton,
-            (!selectedAmount && !customAmount) && styles.rechargeButtonDisabled,
-          ]}
+          style={styles.rechargeButton}
           onPress={handleRecharge}
-          disabled={!selectedAmount && !customAmount}
           activeOpacity={0.8}
         >
           <LinearGradient
@@ -462,9 +435,6 @@ const styles = StyleSheet.create({
   rechargeButton: {
     borderRadius: 14,
     overflow: 'hidden',
-  },
-  rechargeButtonDisabled: {
-    opacity: 0.5,
   },
   rechargeGradient: {
     height: 56,
