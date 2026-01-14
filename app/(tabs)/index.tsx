@@ -14,13 +14,14 @@ import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn } from 'lucide-re
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
 import { useAuth } from '@/contexts/AuthContext';
-import { storeLocations, tierInfo } from '@/mocks/data';
+import { storeLocations } from '@/mocks/data';
 import { trpc } from '@/lib/trpc';
 import { getTierFromBalance } from '@/lib/tier';
 import Colors from '@/constants/colors';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import { getVipCardTheme } from '@/lib/vipCardTheme';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -58,7 +59,7 @@ export default function HomeScreen() {
   const displayBalance = latestBalance?.balance ?? user?.balance ?? 0;
   const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
-  const tier = tierInfo[effectiveTier];
+  const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
 
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
@@ -109,10 +110,10 @@ export default function HomeScreen() {
 
         <View style={styles.cardContainer}>
           <LinearGradient
-            colors={['#2D2D2D', '#1F1F1F', '#171717']}
+            colors={cardTheme.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.vipCard}
+            style={[styles.vipCard, { borderColor: cardTheme.borderColor }]}
           >
             <Animated.View
               style={[
@@ -121,7 +122,7 @@ export default function HomeScreen() {
               ]}
             >
               <LinearGradient
-                colors={['transparent', 'rgba(255,255,255,0.05)', 'transparent']}
+                colors={['transparent', cardTheme.shimmer, 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
@@ -130,28 +131,30 @@ export default function HomeScreen() {
 
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
-                <Text style={styles.brandName}>十秒到</Text>
-                <Text style={styles.storeAddress} numberOfLines={1}>
+                <Text style={[styles.brandName, { color: cardTheme.accent }]}>十秒到</Text>
+                <Text style={[styles.storeAddress, { color: cardTheme.textSecondary }]} numberOfLines={1}>
                   {storeAddress}
                 </Text>
-                <Text style={[styles.tierName, { color: tier.color }]}>
+                <Text style={[styles.tierName, { color: cardTheme.accent }]}>
                   {t(`tier.${effectiveTier}`)}
                 </Text>
               </View>
               <TouchableOpacity 
-                style={styles.qrButton}
+                style={[styles.qrButton, { backgroundColor: cardTheme.qrBackground, borderColor: cardTheme.borderColor }]}
                 onPress={() => router.push('/member-code')}
                 activeOpacity={0.7}
               >
-                <QrCode size={28} color={Colors.primary} />
+                <QrCode size={28} color={cardTheme.accent} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.balanceContainer}>
-              <Text style={styles.balanceLabel}>{t('home.balance')}</Text>
+              <Text style={[styles.balanceLabel, { color: cardTheme.textSecondary }]}>
+                {t('home.balance')}
+              </Text>
               <View style={styles.balanceRow}>
-                <Text style={styles.currencySymbol}>$</Text>
-                <Text style={styles.balanceAmount}>
+                <Text style={[styles.currencySymbol, { color: cardTheme.text }]}>$</Text>
+                <Text style={[styles.balanceAmount, { color: cardTheme.text }]}>
                   {displayBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                 </Text>
               </View>
@@ -159,14 +162,20 @@ export default function HomeScreen() {
 
             <View style={styles.cardFooter}>
               <View style={styles.memberIdSection}>
-                <Text style={styles.memberIdLabel}>{t('home.memberId')}</Text>
-                <Text style={styles.memberId}>{user?.memberId ?? ''}</Text>
+                <Text style={[styles.memberIdLabel, { color: cardTheme.textMuted }]}>
+                  {t('home.memberId')}
+                </Text>
+                <Text style={[styles.memberId, { color: cardTheme.textSecondary }]}>
+                  {user?.memberId ?? ''}
+                </Text>
                 {user ? (
                   <View style={styles.barcodeContainer}>
                     {barcodeSvg ? (
                       <SvgXml xml={barcodeSvg} width="100%" height="100%" />
                     ) : (
-                      <Text style={styles.barcodeError}>{t('home.barcodeFailed')}</Text>
+                      <Text style={[styles.barcodeError, { color: cardTheme.textMuted }]}>
+                        {t('home.barcodeFailed')}
+                      </Text>
                     )}
                   </View>
                 ) : (
@@ -174,20 +183,26 @@ export default function HomeScreen() {
                     style={styles.loginPrompt}
                     onPress={() => router.push('/login')}
                   >
-                    <LogIn size={12} color={Colors.primary} />
-                    <Text style={styles.loginPromptText}>{t('home.loginToShowBarcode')}</Text>
+                    <LogIn size={12} color={cardTheme.accent} />
+                    <Text style={[styles.loginPromptText, { color: cardTheme.accent }]}>
+                      {t('home.loginToShowBarcode')}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
               <View style={styles.pointsContainer}>
-                <Text style={styles.pointsLabel}>{t('home.points')}</Text>
-                <Text style={styles.pointsValue}>{displayPoints.toLocaleString()}</Text>
+                <Text style={[styles.pointsLabel, { color: cardTheme.textMuted }]}>
+                  {t('home.points')}
+                </Text>
+                <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
+                  {displayPoints.toLocaleString()}
+                </Text>
               </View>
             </View>
 
             <View style={styles.cardDecoration}>
-              <View style={[styles.decorCircle, styles.decorCircle1]} />
-              <View style={[styles.decorCircle, styles.decorCircle2]} />
+              <View style={[styles.decorCircle, styles.decorCircle1, { borderColor: cardTheme.decorationBorder }]} />
+              <View style={[styles.decorCircle, styles.decorCircle2, { borderColor: cardTheme.decorationBorder }]} />
             </View>
           </LinearGradient>
         </View>
@@ -353,7 +368,7 @@ const styles = StyleSheet.create({
     padding: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(201, 169, 98, 0.3)',
+    borderColor: Colors.border,
   },
   shimmer: {
     position: 'absolute',
@@ -382,21 +397,20 @@ const styles = StyleSheet.create({
   },
   storeAddress: {
     marginTop: 4,
-    color: Colors.textSecondary,
     fontSize: 11,
     fontWeight: '600' as const,
   },
   tierName: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    marginTop: 4,
-    letterSpacing: 1,
+    fontSize: 16,
+    fontWeight: '800' as const,
+    marginTop: 10,
+    letterSpacing: 0.4,
   },
   qrButton: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: 'rgba(201, 169, 98, 0.1)',
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -405,7 +419,6 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
     marginBottom: 4,
   },
   balanceRow: {
@@ -415,13 +428,11 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: Colors.text,
     marginRight: 4,
   },
   balanceAmount: {
     fontSize: 36,
     fontWeight: '700' as const,
-    color: Colors.text,
     letterSpacing: 1,
   },
   cardFooter: {
@@ -431,12 +442,10 @@ const styles = StyleSheet.create({
   },
   memberIdLabel: {
     fontSize: 10,
-    color: Colors.textMuted,
     marginBottom: 2,
   },
   memberId: {
     fontSize: 14,
-    color: Colors.textSecondary,
     fontWeight: '500' as const,
     letterSpacing: 1,
   },
@@ -445,13 +454,11 @@ const styles = StyleSheet.create({
   },
   pointsLabel: {
     fontSize: 10,
-    color: Colors.textMuted,
     marginBottom: 2,
   },
   pointsValue: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.primary,
   },
   memberIdSection: {
     flex: 1,
@@ -466,7 +473,6 @@ const styles = StyleSheet.create({
   },
   barcodeError: {
     fontSize: 10,
-    color: Colors.textMuted,
   },
   loginPrompt: {
     flexDirection: 'row',
@@ -481,7 +487,6 @@ const styles = StyleSheet.create({
   },
   loginPromptText: {
     fontSize: 11,
-    color: Colors.primary,
     fontWeight: '500' as const,
   },
   cardDecoration: {
@@ -498,7 +503,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: 'rgba(201, 169, 98, 0.1)',
   },
   decorCircle1: {
     width: 200,

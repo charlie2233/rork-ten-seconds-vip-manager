@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
+import { calculatePointsEarned, getPointsPerDollar } from '@/lib/points';
+import { getTierFromBalance } from '@/lib/tier';
 
 const RECHARGE_OPTIONS = [
   { amount: 100, bonus: 0 },
@@ -28,35 +30,51 @@ const RECHARGE_OPTIONS = [
 
 export default function RechargeScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, applyTopUp } = useAuth();
   const { t } = useI18n();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
 
+  const parsedCustomAmount = useMemo(() => {
+    const parsed = Number.parseInt(customAmount, 10);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, [customAmount]);
+
+  const rechargeAmount = selectedAmount ?? parsedCustomAmount;
+  const selectedOption = RECHARGE_OPTIONS.find((o) => o.amount === selectedAmount);
+  const totalBonus = selectedOption?.bonus || 0;
+
+  const balanceBefore = user?.balance ?? 0;
+  const balanceAfter = rechargeAmount ? balanceBefore + rechargeAmount + totalBonus : balanceBefore;
+  const tierAfter = getTierFromBalance(balanceAfter);
+  const pointsRate = getPointsPerDollar(tierAfter);
+  const pointsEarned = rechargeAmount ? calculatePointsEarned(rechargeAmount, tierAfter) : 0;
+
   const handleRecharge = () => {
-    const amount = selectedAmount || parseInt(customAmount, 10);
-    if (!amount || amount < 50) {
+    if (!rechargeAmount || rechargeAmount < 50) {
       Alert.alert(t('recharge.error'), t('recharge.minAmount'));
       return;
     }
     Alert.alert(
       t('recharge.confirmTitle'),
-      t('recharge.confirmMessage', { amount: amount.toString() }),
+      t('recharge.confirmMessage', { amount: rechargeAmount.toString() }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.ok'),
-          onPress: () => {
-            Alert.alert(t('recharge.success'), t('recharge.successMessage'));
-            router.back();
-          },
+          onPress: () =>
+            void (async () => {
+              const result = user ? await applyTopUp(rechargeAmount, totalBonus) : null;
+              Alert.alert(
+                t('recharge.success'),
+                t('recharge.successMessage', { points: result?.pointsEarned ?? 0 })
+              );
+              router.back();
+            })(),
         },
       ]
     );
   };
-
-  const selectedOption = RECHARGE_OPTIONS.find((o) => o.amount === selectedAmount);
-  const totalBonus = selectedOption?.bonus || 0;
 
   return (
     <View style={styles.container}>
@@ -147,6 +165,9 @@ export default function RechargeScreen() {
           </View>
           <Text style={styles.minHint}>{t('recharge.minHint')}</Text>
           <Text style={styles.storeOnlyHint}>{t('recharge.storeOnlyHint')}</Text>
+          <Text style={styles.pointsRateHint}>
+            {t('recharge.pointsRateHint', { tier: t(`tier.${tierAfter}`), rate: pointsRate })}
+          </Text>
         </View>
 
         {(selectedAmount || customAmount) && (
@@ -166,6 +187,12 @@ export default function RechargeScreen() {
                 <Text style={styles.summaryBonusValue}>+${totalBonus}</Text>
               </View>
             )}
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>{t('recharge.pointsEarned')}</Text>
+              <Text style={[styles.summaryValue, { color: Colors.primary }]}>
+                +{pointsEarned.toLocaleString()}
+              </Text>
+            </View>
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>{t('recharge.totalCredit')}</Text>
               <Text style={styles.totalValue}>
@@ -360,6 +387,12 @@ const styles = StyleSheet.create({
   storeOnlyHint: {
     fontSize: 12,
     color: Colors.warning,
+    marginTop: 6,
+    fontWeight: '600' as const,
+  },
+  pointsRateHint: {
+    fontSize: 12,
+    color: Colors.textSecondary,
     marginTop: 6,
     fontWeight: '600' as const,
   },

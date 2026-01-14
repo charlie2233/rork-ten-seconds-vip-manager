@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User } from '@/types';
 import { mockUser } from '@/mocks/data';
+import { getTierFromBalance } from '@/lib/tier';
+import { calculatePointsEarned } from '@/lib/points';
 
 const AUTH_STORAGE_KEY = 'auth_user';
 const GUEST_STORAGE_KEY = 'auth_guest_mode';
@@ -139,6 +141,35 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       } catch {
         // ignore
       }
+    },
+    applyTopUp: async (amount: number, bonus: number = 0) => {
+      const paidAmount = Number.isFinite(amount) ? amount : 0;
+      const bonusAmount = Number.isFinite(bonus) ? bonus : 0;
+
+      const current = queryClient.getQueryData<User | null>(['auth']);
+      if (!current) {
+        return { pointsEarned: 0, balance: 0, tier: 'silver' as const };
+      }
+
+      const nextBalance = (current.balance ?? 0) + paidAmount + bonusAmount;
+      const nextTier = getTierFromBalance(nextBalance);
+      const pointsEarned = calculatePointsEarned(paidAmount, nextTier);
+
+      const next: User = {
+        ...current,
+        balance: nextBalance,
+        points: (current.points ?? 0) + pointsEarned,
+        tier: nextTier,
+      };
+
+      queryClient.setQueryData(['auth'], next);
+      try {
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+
+      return { pointsEarned, balance: nextBalance, tier: nextTier };
     },
   };
 });
