@@ -8,13 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
-import ImageCarousel from '@/components/ImageCarousel';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
 import { getTierFromBalance } from '@/lib/tier';
-import { getLocalizedString } from '@/lib/localized';
-import { COUPON_BANNERS } from '@/constants/banners';
 
 type SegmentKey = CouponStatus;
 
@@ -32,7 +29,7 @@ export default function CouponsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { claimedCoupons, offers, claimCoupon } = useCoupons();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
@@ -90,8 +87,6 @@ export default function CouponsScreen() {
           </View>
         </View>
 
-        <ImageCarousel images={COUPON_BANNERS} autoPlay intervalMs={3200} style={styles.carousel} />
-
         <View style={styles.segmentContainer}>
           {SEGMENTS.map((segment) => {
             const isActive = activeSegment === segment.key;
@@ -140,13 +135,13 @@ export default function CouponsScreen() {
                         { backgroundColor: `${definition.themeColor ?? Colors.primary}22` },
                       ]}
                     >
-                    <Text
-                      style={[
-                        styles.couponValue,
-                        { color: definition.themeColor ?? Colors.primary },
-                      ]}
-                    >
-                        {getLocalizedString(definition.discountText, locale)}
+                      <Text
+                        style={[
+                          styles.couponValue,
+                          { color: definition.themeColor ?? Colors.primary },
+                        ]}
+                      >
+                        {definition.discountText}
                       </Text>
                     </View>
                   </View>
@@ -154,7 +149,7 @@ export default function CouponsScreen() {
                   <View style={styles.couponContent}>
                     <View style={styles.couponHeader}>
                       <Text style={styles.couponTitle} numberOfLines={1}>
-                        {getLocalizedString(definition.title, locale)}
+                        {definition.title}
                       </Text>
                       {status !== 'available' && (
                         <View style={styles.statusPill}>
@@ -163,7 +158,7 @@ export default function CouponsScreen() {
                       )}
                     </View>
                     <Text style={styles.couponDesc} numberOfLines={2}>
-                      {getLocalizedString(definition.description, locale)}
+                      {definition.description}
                     </Text>
                     <View style={styles.couponMetaRow}>
                       <Text style={styles.couponMetaText}>
@@ -188,12 +183,10 @@ export default function CouponsScreen() {
                   <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
                   <View style={styles.offerTextBlock}>
                     <Text style={styles.offerTitle} numberOfLines={1}>
-                      {getLocalizedString(definition.title, locale)}
+                      {definition.title}
                     </Text>
                     <Text style={styles.offerDesc} numberOfLines={1}>
-                      {definition.minSpendText
-                        ? getLocalizedString(definition.minSpendText, locale)
-                        : getLocalizedString(definition.description, locale)}
+                      {definition.minSpendText ?? definition.description}
                     </Text>
                   </View>
                 </View>
@@ -242,9 +235,6 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
-  },
-  carousel: {
-    marginBottom: 18,
   },
   headerTop: {
     flexDirection: 'row',

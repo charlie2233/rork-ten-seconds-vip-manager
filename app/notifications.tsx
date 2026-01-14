@@ -28,8 +28,7 @@ const MOCK_NOTIFICATIONS = [
     type: 'promo',
     titleKey: 'notifications.item.promo.title',
     descKey: 'notifications.item.promo.desc',
-    timeKey: 'time.hoursAgo',
-    timeParams: { hours: '2' },
+    time: '2小时前',
     read: false,
   },
   {
@@ -37,7 +36,7 @@ const MOCK_NOTIFICATIONS = [
     type: 'transaction',
     titleKey: 'notifications.item.transaction.title',
     descKey: 'notifications.item.transaction.desc',
-    timeKey: 'time.yesterday',
+    time: '昨天',
     read: true,
   },
   {
@@ -45,8 +44,7 @@ const MOCK_NOTIFICATIONS = [
     type: 'system',
     titleKey: 'notifications.item.system.title',
     descKey: 'notifications.item.system.desc',
-    timeKey: 'time.daysAgo',
-    timeParams: { days: '3' },
+    time: '3天前',
     read: true,
   },
 ];
@@ -144,9 +142,7 @@ export default function NotificationsScreen() {
                   <Text style={styles.notificationDesc} numberOfLines={2}>
                     {t(notification.descKey)}
                   </Text>
-                  <Text style={styles.notificationTime}>
-                    {t(notification.timeKey, notification.timeParams)}
-                  </Text>
+                  <Text style={styles.notificationTime}>{notification.time}</Text>
                 </TouchableOpacity>
               ))}
             </View>

@@ -135,7 +135,7 @@ export default function MemberCodeScreen() {
 
   const handleAddToWallet = async () => {
     if (Platform.OS !== 'ios') {
-      Alert.alert(t('common.error'), t('memberCode.walletIosOnly'));
+      Alert.alert(t('common.error'), 'Apple Wallet is only available on iOS');
       return;
     }
 
@@ -149,11 +149,11 @@ export default function MemberCodeScreen() {
         await Linking.openURL(passUrl);
       } else {
         // Fallback or explain
-        Alert.alert(t('memberCode.walletTitle'), t('memberCode.walletOpenFailed'));
+        Alert.alert("Wallet Pass", "Could not open the pass. Please check your internet connection.");
       }
     } catch (err) {
       console.error(err);
-      Alert.alert(t('common.error'), t('memberCode.walletAddFailed'));
+      Alert.alert("Error", "Failed to add pass to wallet.");
     }
   };
 
@@ -272,7 +272,7 @@ export default function MemberCodeScreen() {
                 end={{ x: 0, y: 1 }}
               >
                 <Wallet size={20} color="#FFF" style={{ marginRight: 8 }} />
-                <Text style={styles.walletButtonText}>{t('memberCode.addToWallet')}</Text>
+                <Text style={styles.walletButtonText}>Add to Apple Wallet</Text>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -283,7 +283,7 @@ export default function MemberCodeScreen() {
           {(menusafeQuery.isLoading || syncMutation.isPending) && (
             <View style={styles.syncingOverlay}>
               <ActivityIndicator size="small" color={Colors.primary} />
-              <Text style={styles.syncingText}>{t('common.syncing')}</Text>
+              <Text style={styles.syncingText}>{t('common.syncing') || 'Syncing...'}</Text>
             </View>
           )}
           <View style={styles.balanceItem}>
@@ -303,7 +303,7 @@ export default function MemberCodeScreen() {
           <View style={styles.syncErrorBanner}>
             <AlertCircle size={14} color={Colors.warning} />
             <Text style={styles.syncErrorText}>
-              {t('memberCode.syncError')}
+              {t('memberCode.syncError') || 'Could not sync with MenuSafe'}
             </Text>
           </View>
         )}

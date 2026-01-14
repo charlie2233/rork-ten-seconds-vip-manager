@@ -21,30 +21,16 @@ import Colors from '@/constants/colors';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
-import { getIntlLocale } from '@/lib/localized';
-import { getTransactionDescription } from '@/lib/transactions';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
 
-const VIP_CARD_GRADIENTS: Record<
-  keyof typeof tierInfo,
-  [string, string, string]
-> = {
-  silver: ['#2C2C2C', '#1A1A1A', '#111111'],
-  gold: ['#2D2D2D', '#1F1F1F', '#171717'],
-  diamond: ['#122C3D', '#0B1F2C', '#08131D'],
-  platinum: ['#2B2B2F', '#1B1C1F', '#141414'],
-  blackGold: ['#1A120A', '#0F0B07', '#090705'],
-};
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
-  const numberLocale = getIntlLocale(locale);
 
   useEffect(() => {
     const shimmer = Animated.loop(
@@ -73,18 +59,6 @@ export default function HomeScreen() {
   const displayPoints = latestBalance?.points ?? user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const tier = tierInfo[effectiveTier];
-  const cardAccent = tier.color;
-  const cardTheme = useMemo(() => {
-    const gradient = VIP_CARD_GRADIENTS[effectiveTier] ?? VIP_CARD_GRADIENTS.silver;
-    return {
-      gradient,
-      accent: cardAccent,
-      borderColor: `${cardAccent}66`,
-      accentBackground: `${cardAccent}1A`,
-      decorBorderColor: `${cardAccent}26`,
-      shimmerColor: `${cardAccent}14`,
-    };
-  }, [cardAccent, effectiveTier]);
 
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
@@ -135,10 +109,10 @@ export default function HomeScreen() {
 
         <View style={styles.cardContainer}>
           <LinearGradient
-            colors={cardTheme.gradient}
+            colors={['#2D2D2D', '#1F1F1F', '#171717']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.vipCard, { borderColor: cardTheme.borderColor }]}
+            style={styles.vipCard}
           >
             <Animated.View
               style={[
@@ -147,7 +121,7 @@ export default function HomeScreen() {
               ]}
             >
               <LinearGradient
-                colors={['transparent', cardTheme.shimmerColor, 'transparent']}
+                colors={['transparent', 'rgba(255,255,255,0.05)', 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
@@ -156,32 +130,29 @@ export default function HomeScreen() {
 
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
-                <Text style={[styles.brandName, { color: cardTheme.accent }]}>{t('brand.name')}</Text>
+                <Text style={styles.brandName}>十秒到</Text>
                 <Text style={styles.storeAddress} numberOfLines={1}>
                   {storeAddress}
                 </Text>
-                <Text style={[styles.tierName, { color: cardTheme.accent }]}>
+                <Text style={[styles.tierName, { color: tier.color }]}>
                   {t(`tier.${effectiveTier}`)}
                 </Text>
               </View>
               <TouchableOpacity 
-                style={[
-                  styles.qrButton,
-                  { backgroundColor: cardTheme.accentBackground, borderColor: cardTheme.borderColor },
-                ]}
+                style={styles.qrButton}
                 onPress={() => router.push('/member-code')}
                 activeOpacity={0.7}
               >
-                <QrCode size={28} color={cardTheme.accent} />
+                <QrCode size={28} color={Colors.primary} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.balanceContainer}>
               <Text style={styles.balanceLabel}>{t('home.balance')}</Text>
               <View style={styles.balanceRow}>
-                <Text style={[styles.currencySymbol, { color: cardTheme.accent }]}>$</Text>
+                <Text style={styles.currencySymbol}>$</Text>
                 <Text style={styles.balanceAmount}>
-                  {displayBalance.toLocaleString(numberLocale, { minimumFractionDigits: 2 })}
+                  {displayBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                 </Text>
               </View>
             </View>
@@ -200,39 +171,23 @@ export default function HomeScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity 
-                    style={[styles.loginPrompt, { backgroundColor: cardTheme.accentBackground }]}
+                    style={styles.loginPrompt}
                     onPress={() => router.push('/login')}
                   >
-                    <LogIn size={12} color={cardTheme.accent} />
-                    <Text style={[styles.loginPromptText, { color: cardTheme.accent }]}>
-                      {t('home.loginToShowBarcode')}
-                    </Text>
+                    <LogIn size={12} color={Colors.primary} />
+                    <Text style={styles.loginPromptText}>{t('home.loginToShowBarcode')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
               <View style={styles.pointsContainer}>
                 <Text style={styles.pointsLabel}>{t('home.points')}</Text>
-                <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
-                  {displayPoints.toLocaleString(numberLocale)}
-                </Text>
+                <Text style={styles.pointsValue}>{displayPoints.toLocaleString()}</Text>
               </View>
             </View>
 
             <View style={styles.cardDecoration}>
-              <View
-                style={[
-                  styles.decorCircle,
-                  styles.decorCircle1,
-                  { borderColor: cardTheme.decorBorderColor },
-                ]}
-              />
-              <View
-                style={[
-                  styles.decorCircle,
-                  styles.decorCircle2,
-                  { borderColor: cardTheme.decorBorderColor },
-                ]}
-              />
+              <View style={[styles.decorCircle, styles.decorCircle1]} />
+              <View style={[styles.decorCircle, styles.decorCircle2]} />
             </View>
           </LinearGradient>
         </View>
@@ -316,7 +271,7 @@ export default function HomeScreen() {
                   >
                     <View style={styles.transactionLeft}>
                       <Text style={styles.transactionDesc} numberOfLines={1}>
-                        {getTransactionDescription(transaction.description, t)}
+                        {transaction.description}
                       </Text>
                       <Text style={styles.transactionDate}>{transaction.date}</Text>
                     </View>
@@ -432,18 +387,16 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   tierName: {
-    fontSize: 15,
-    fontWeight: '800' as const,
-    marginTop: 10,
-    letterSpacing: 0.3,
+    fontSize: 12,
+    fontWeight: '600' as const,
+    marginTop: 4,
+    letterSpacing: 1,
   },
   qrButton: {
     width: 48,
     height: 48,
     borderRadius: 12,
     backgroundColor: 'rgba(201, 169, 98, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(201, 169, 98, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },

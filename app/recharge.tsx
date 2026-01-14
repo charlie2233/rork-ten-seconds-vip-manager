@@ -16,7 +16,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
-import { getIntlLocale } from '@/lib/localized';
 
 const RECHARGE_OPTIONS = [
   { amount: 100, bonus: 0 },
@@ -30,10 +29,9 @@ const RECHARGE_OPTIONS = [
 export default function RechargeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
-  const numberLocale = getIntlLocale(locale);
 
   const handleRecharge = () => {
     const amount = selectedAmount || parseInt(customAmount, 10);
@@ -91,7 +89,7 @@ export default function RechargeScreen() {
             <View>
               <Text style={styles.balanceLabel}>{t('recharge.currentBalance')}</Text>
               <Text style={styles.balanceValue}>
-                ${(user?.balance ?? 0).toLocaleString(numberLocale, { minimumFractionDigits: 2 })}
+                ${(user?.balance ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
               </Text>
             </View>
           </LinearGradient>
