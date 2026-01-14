@@ -42,6 +42,7 @@ export interface CouponDefinition {
   description: string;
   discountText: string;
   minSpendText?: string;
+  costPoints?: number;
   validFrom: string; // ISO date
   validTo: string; // ISO date
   tier: User['tier'];

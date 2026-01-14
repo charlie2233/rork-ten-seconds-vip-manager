@@ -42,6 +42,8 @@ export default function CouponsScreen() {
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const availablePoints = user?.points ?? 0;
+
   useEffect(() => {
     setIsExpanded(false);
   }, [activeSegment]);
@@ -102,6 +104,12 @@ export default function CouponsScreen() {
                 {t(formatTierKey(effectiveTier))}
               </Text>
             </View>
+            {user ? (
+              <View style={styles.pointsBadge}>
+                <Text style={styles.pointsBadgeLabel}>{t('home.points')}</Text>
+                <Text style={styles.pointsBadgeValue}>{availablePoints.toLocaleString()}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -232,16 +240,34 @@ export default function CouponsScreen() {
                   </View>
                 </View>
 
-                {isUnlocked ? (
-                  <TouchableOpacity
-                    style={styles.claimButton}
-                    onPress={() => claimCoupon(definition.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Check size={16} color={Colors.background} />
-                    <Text style={styles.claimText}>{t('coupons.claim')}</Text>
-                  </TouchableOpacity>
-                ) : (
+                {isUnlocked ? (() => {
+                  const cost = Math.max(0, Math.floor(definition.costPoints ?? 0));
+                  const missing = Math.max(0, cost - availablePoints);
+                  const canAfford = cost === 0 || missing === 0;
+                  const buttonLabel = !canAfford
+                    ? t('coupons.needMorePoints', { count: missing })
+                    : cost > 0
+                      ? t('coupons.redeemForPoints', { points: cost })
+                      : t('coupons.claim');
+
+                  return (
+                    <TouchableOpacity
+                      style={[styles.claimButton, !canAfford && styles.claimButtonDisabled]}
+                      disabled={!canAfford}
+                      onPress={() => void claimCoupon(definition.id)}
+                      activeOpacity={0.8}
+                    >
+                      {canAfford ? (
+                        <Check size={16} color={Colors.background} />
+                      ) : (
+                        <Lock size={14} color={Colors.textMuted} />
+                      )}
+                      <Text style={[styles.claimText, !canAfford && styles.claimTextDisabled]}>
+                        {buttonLabel}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })() : (
                   <View style={styles.lockedBadge}>
                     <Lock size={14} color={Colors.textMuted} />
                     <Text style={styles.lockedText}>
@@ -310,6 +336,7 @@ const styles = StyleSheet.create({
   tierRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   tierBadge: {
     paddingHorizontal: 12,
@@ -322,6 +349,27 @@ const styles = StyleSheet.create({
   tierText: {
     fontSize: 12,
     fontWeight: '600' as const,
+  },
+  pointsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  pointsBadgeLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '600' as const,
+  },
+  pointsBadgeValue: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: '800' as const,
   },
   segmentContainer: {
     flexDirection: 'row',
@@ -502,10 +550,18 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     backgroundColor: Colors.primary,
   },
+  claimButtonDisabled: {
+    backgroundColor: Colors.backgroundLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   claimText: {
     color: Colors.background,
     fontSize: 12,
     fontWeight: '700' as const,
+  },
+  claimTextDisabled: {
+    color: Colors.textMuted,
   },
   lockedBadge: {
     flexDirection: 'row',

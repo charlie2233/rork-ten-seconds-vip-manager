@@ -132,6 +132,10 @@ export default function CouponDetailScreen() {
 
   const effectiveTier = getTierFromBalance(user.balance);
   const isUnlocked = isTierAtLeast(effectiveTier, definition.tier);
+  const costPoints = Math.max(0, Math.floor(definition.costPoints ?? 0));
+  const availablePoints = user.points ?? 0;
+  const missingPoints = Math.max(0, costPoints - availablePoints);
+  const canAfford = costPoints === 0 || missingPoints === 0;
 
   const copyToClipboard = async () => {
     await Clipboard.setStringAsync(definition.code);
@@ -238,17 +242,35 @@ export default function CouponDetailScreen() {
               </Text>
             </View>
           )}
+
+          {status === 'unclaimed' && isUnlocked && !canAfford && costPoints > 0 && (
+            <View style={styles.lockRow}>
+              <Lock size={16} color={Colors.textMuted} />
+              <Text style={styles.lockText}>
+                {t('coupons.needMorePoints', { count: missingPoints })}
+              </Text>
+            </View>
+          )}
         </View>
 
         {status === 'unclaimed' ? (
           <TouchableOpacity
-            style={[styles.primaryButton, !isUnlocked && styles.primaryButtonDisabled]}
-            disabled={!isUnlocked}
-            onPress={() => claimCoupon(definition.id)}
+            style={[
+              styles.primaryButton,
+              (!isUnlocked || !canAfford) && styles.primaryButtonDisabled,
+            ]}
+            disabled={!isUnlocked || !canAfford}
+            onPress={() => void claimCoupon(definition.id)}
             activeOpacity={0.8}
           >
             <Text style={styles.primaryButtonText}>
-              {isUnlocked ? t('coupons.claim') : t('coupons.locked')}
+              {!isUnlocked
+                ? t('coupons.locked')
+                : !canAfford
+                  ? t('coupons.needMorePoints', { count: missingPoints })
+                  : costPoints > 0
+                    ? t('coupons.redeemForPoints', { points: costPoints })
+                    : t('coupons.claim')}
             </Text>
           </TouchableOpacity>
         ) : (

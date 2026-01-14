@@ -106,6 +106,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.claim': '领取',
     'coupons.claimed': '已领取',
     'coupons.locked': '未解锁',
+    'coupons.redeemForPoints': '兑换 {points} 积分',
+    'coupons.needMorePoints': '还差 {count} 积分',
     'coupons.requiresTier': '需 {tier}',
     'coupons.validTo': '有效期至 {date}',
     'coupons.showMore': '展开更多（{count}）',
@@ -140,6 +142,11 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupon.c6.description': '钻石会员专属礼遇（到店出示核销）',
     'coupon.c6.discountText': 'VIP',
     'coupon.c6.minSpendText': '到店可用',
+
+    'coupon.c7.title': '黑金升级礼',
+    'coupon.c7.description': '黑金会员升级赠礼：到店消费立减$10',
+    'coupon.c7.discountText': '$10',
+    'coupon.c7.minSpendText': '无门槛',
 
     'couponDetail.title': '卡券详情',
     'couponDetail.redeemHint': '到店核销时出示二维码/条形码',
@@ -435,6 +442,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.claim': 'Claim',
     'coupons.claimed': 'Claimed',
     'coupons.locked': 'Locked',
+    'coupons.redeemForPoints': 'Redeem {points} pts',
+    'coupons.needMorePoints': 'Need {count} more pts',
     'coupons.requiresTier': 'Requires {tier}',
     'coupons.validTo': 'Valid until {date}',
     'coupons.showMore': 'Show {count} more',
@@ -469,6 +478,11 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupon.c6.description': 'Diamond member perk (show to redeem in store)',
     'coupon.c6.discountText': 'VIP',
     'coupon.c6.minSpendText': 'In-store only',
+
+    'coupon.c7.title': 'Black Gold upgrade gift',
+    'coupon.c7.description': '$10 off in store (upgrade gift)',
+    'coupon.c7.discountText': '$10',
+    'coupon.c7.minSpendText': 'No minimum',
 
     'couponDetail.title': 'Coupon Details',
     'couponDetail.redeemHint': 'Show QR/barcode to redeem in store',
@@ -764,6 +778,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.claim': 'Obtener',
     'coupons.claimed': 'Obtenido',
     'coupons.locked': 'Bloqueado',
+    'coupons.redeemForPoints': 'Canjear {points} pts',
+    'coupons.needMorePoints': 'Faltan {count} pts',
     'coupons.requiresTier': 'Requiere {tier}',
     'coupons.validTo': 'Válido hasta {date}',
     'coupons.showMore': 'Ver {count} más',
@@ -798,6 +814,11 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupon.c6.description': 'Beneficio para miembros Diamante (muestra para canjear en tienda)',
     'coupon.c6.discountText': 'VIP',
     'coupon.c6.minSpendText': 'Solo en tienda',
+
+    'coupon.c7.title': 'Regalo de Oro negro',
+    'coupon.c7.description': '$10 de descuento en tienda (regalo por subir de nivel)',
+    'coupon.c7.discountText': '$10',
+    'coupon.c7.minSpendText': 'Sin mínimo',
 
     'couponDetail.title': 'Detalle del cupón',
     'couponDetail.redeemHint': 'Muestra el QR/código de barras para canjear en tienda',

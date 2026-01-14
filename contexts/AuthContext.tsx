@@ -142,6 +142,25 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         // ignore
       }
     },
+    spendPoints: async (points: number) => {
+      const cost = Math.max(0, Math.floor(Number.isFinite(points) ? points : 0));
+      if (cost <= 0) return true;
+
+      const current = queryClient.getQueryData<User | null>(['auth']);
+      if (!current) return false;
+
+      const currentPoints = current.points ?? 0;
+      if (currentPoints < cost) return false;
+
+      const next: User = { ...current, points: currentPoints - cost };
+      queryClient.setQueryData(['auth'], next);
+      try {
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return true;
+    },
     applyTopUp: async (amount: number, bonus: number = 0) => {
       const paidAmount = Number.isFinite(amount) ? amount : 0;
       const bonusAmount = Number.isFinite(bonus) ? bonus : 0;
