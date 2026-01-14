@@ -108,6 +108,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.locked': '未解锁',
     'coupons.requiresTier': '需 {tier}',
     'coupons.validTo': '有效期至 {date}',
+    'coupons.showMore': '展开更多（{count}）',
+    'coupons.showLess': '收起',
 
     'coupon.c1.title': '满$100减$20',
     'coupon.c1.description': '到店消费满$100立减$20',
@@ -435,6 +437,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.locked': 'Locked',
     'coupons.requiresTier': 'Requires {tier}',
     'coupons.validTo': 'Valid until {date}',
+    'coupons.showMore': 'Show {count} more',
+    'coupons.showLess': 'Show less',
 
     'coupon.c1.title': '$20 off $100',
     'coupon.c1.description': 'Get $20 off in-store orders of $100+',
@@ -762,6 +766,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.locked': 'Bloqueado',
     'coupons.requiresTier': 'Requiere {tier}',
     'coupons.validTo': 'Válido hasta {date}',
+    'coupons.showMore': 'Ver {count} más',
+    'coupons.showLess': 'Ver menos',
 
     'coupon.c1.title': '$20 de descuento en $100',
     'coupon.c1.description': 'Obtén $20 de descuento en compras en tienda de $100 o más',

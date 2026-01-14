@@ -1,19 +1,28 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, ChevronRight, Lock, Ticket, Wallet } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, Ticket, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import ImageCarousel from '@/components/ImageCarousel';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
 import { getTierFromBalance } from '@/lib/tier';
 
 type SegmentKey = CouponStatus;
+
+const COUPON_BANNERS = [
+  { key: 'classic', source: require('../../banners/banner-classic.jpg') },
+  { key: 'spicy', source: require('../../banners/banner-spicy.jpg') },
+  { key: 'golden', source: require('../../banners/banner-golden.jpg') },
+];
+
+const MAX_VISIBLE_COUPONS = 3;
 
 const SEGMENTS: { key: SegmentKey; labelKey: string }[] = [
   { key: 'available', labelKey: 'coupons.segment.available' },
@@ -31,6 +40,11 @@ export default function CouponsScreen() {
   const { claimedCoupons, offers, claimCoupon } = useCoupons();
   const { t } = useI18n();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [activeSegment]);
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
   const currentTier = tierInfo[effectiveTier];
@@ -42,6 +56,10 @@ export default function CouponsScreen() {
       return effective === activeSegment;
     });
   }, [activeSegment, claimedCoupons]);
+
+  const hasMoreCoupons = segmentedCoupons.length > MAX_VISIBLE_COUPONS;
+  const visibleCoupons = isExpanded ? segmentedCoupons : segmentedCoupons.slice(0, MAX_VISIBLE_COUPONS);
+  const remainingCount = Math.max(0, segmentedCoupons.length - MAX_VISIBLE_COUPONS);
 
   const emptyKey =
     activeSegment === 'available'
@@ -87,6 +105,8 @@ export default function CouponsScreen() {
           </View>
         </View>
 
+        <ImageCarousel images={COUPON_BANNERS} height={170} style={styles.bannerCarousel} />
+
         <View style={styles.segmentContainer}>
           {SEGMENTS.map((segment) => {
             const isActive = activeSegment === segment.key;
@@ -111,65 +131,86 @@ export default function CouponsScreen() {
               <Text style={styles.emptyText}>{t(emptyKey)}</Text>
             </View>
           ) : (
-            segmentedCoupons.map(({ definition, state, isExpired }) => {
-              const status: CouponStatus =
-                state.status === 'used' ? 'used' : isExpired ? 'expired' : 'available';
-              const statusLabel =
-                status === 'used'
-                  ? t('couponDetail.used')
-                  : status === 'expired'
-                    ? t('couponDetail.expired')
-                    : '';
+            <>
+              {visibleCoupons.map(({ definition, state, isExpired }) => {
+                const status: CouponStatus =
+                  state.status === 'used' ? 'used' : isExpired ? 'expired' : 'available';
+                const statusLabel =
+                  status === 'used'
+                    ? t('couponDetail.used')
+                    : status === 'expired'
+                      ? t('couponDetail.expired')
+                      : '';
 
-              return (
-                <TouchableOpacity
-                  key={definition.id}
-                  style={styles.couponCard}
-                  activeOpacity={0.8}
-                  onPress={() => router.push(`/coupon/${definition.id}`)}
-                >
-                  <View style={styles.couponLeft}>
-                    <View
-                      style={[
-                        styles.couponValueBox,
-                        { backgroundColor: `${definition.themeColor ?? Colors.primary}22` },
-                      ]}
-                    >
-                      <Text
+                return (
+                  <TouchableOpacity
+                    key={definition.id}
+                    style={styles.couponCard}
+                    activeOpacity={0.8}
+                    onPress={() => router.push(`/coupon/${definition.id}`)}
+                  >
+                    <View style={styles.couponLeft}>
+                      <View
                         style={[
-                          styles.couponValue,
-                          { color: definition.themeColor ?? Colors.primary },
+                          styles.couponValueBox,
+                          { backgroundColor: `${definition.themeColor ?? Colors.primary}22` },
                         ]}
                       >
-                        {t(definition.discountText)}
-                      </Text>
+                        <Text
+                          style={[
+                            styles.couponValue,
+                            { color: definition.themeColor ?? Colors.primary },
+                          ]}
+                        >
+                          {t(definition.discountText)}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
 
-                  <View style={styles.couponContent}>
-                    <View style={styles.couponHeader}>
-                      <Text style={styles.couponTitle} numberOfLines={1}>
-                        {t(definition.title)}
+                    <View style={styles.couponContent}>
+                      <View style={styles.couponHeader}>
+                        <Text style={styles.couponTitle} numberOfLines={1}>
+                          {t(definition.title)}
+                        </Text>
+                        {status !== 'available' && (
+                          <View style={styles.statusPill}>
+                            <Text style={styles.statusText}>{statusLabel}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.couponDesc} numberOfLines={2}>
+                        {t(definition.description)}
                       </Text>
-                      {status !== 'available' && (
-                        <View style={styles.statusPill}>
-                          <Text style={styles.statusText}>{statusLabel}</Text>
-                        </View>
-                      )}
+                      <View style={styles.couponMetaRow}>
+                        <Text style={styles.couponMetaText}>
+                          {t('coupons.validTo', { date: definition.validTo })}
+                        </Text>
+                        <ChevronRight size={18} color={Colors.textMuted} />
+                      </View>
                     </View>
-                    <Text style={styles.couponDesc} numberOfLines={2}>
-                      {t(definition.description)}
-                    </Text>
-                    <View style={styles.couponMetaRow}>
-                      <Text style={styles.couponMetaText}>
-                        {t('coupons.validTo', { date: definition.validTo })}
-                      </Text>
-                      <ChevronRight size={18} color={Colors.textMuted} />
-                    </View>
-                  </View>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {hasMoreCoupons ? (
+                <TouchableOpacity
+                  style={styles.expandButton}
+                  onPress={() => setIsExpanded((prev) => !prev)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.expandText}>
+                    {isExpanded
+                      ? t('coupons.showLess')
+                      : t('coupons.showMore', { count: remainingCount })}
+                  </Text>
+                  {isExpanded ? (
+                    <ChevronUp size={18} color={Colors.textSecondary} />
+                  ) : (
+                    <ChevronDown size={18} color={Colors.textSecondary} />
+                  )}
                 </TouchableOpacity>
-              );
-            })
+              ) : null}
+            </>
           )}
         </View>
 
@@ -235,6 +276,9 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
+  },
+  bannerCarousel: {
+    marginBottom: 18,
   },
   headerTop: {
     flexDirection: 'row',
@@ -306,6 +350,25 @@ const styles = StyleSheet.create({
   },
   couponList: {
     marginBottom: 16,
+  },
+  expandButton: {
+    marginTop: 12,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  expandText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: Colors.textSecondary,
+    letterSpacing: 0.3,
   },
   emptyState: {
     backgroundColor: Colors.surface,
