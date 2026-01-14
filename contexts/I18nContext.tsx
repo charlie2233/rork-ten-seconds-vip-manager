@@ -109,6 +109,36 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.requiresTier': '需 {tier}',
     'coupons.validTo': '有效期至 {date}',
 
+    'coupon.c1.title': '满$100减$20',
+    'coupon.c1.description': '到店消费满$100立减$20',
+    'coupon.c1.discountText': '$20',
+    'coupon.c1.minSpendText': '满$100可用',
+
+    'coupon.c2.title': '全场9折券',
+    'coupon.c2.description': '全场菜品享9折优惠（不含酒水）',
+    'coupon.c2.discountText': '9折',
+    'coupon.c2.minSpendText': '无门槛',
+
+    'coupon.c3.title': '满$200减$50',
+    'coupon.c3.description': '到店消费满$200立减$50',
+    'coupon.c3.discountText': '$50',
+    'coupon.c3.minSpendText': '满$200可用',
+
+    'coupon.c4.title': '会员日双倍积分',
+    'coupon.c4.description': '每周三到店消费积分翻倍',
+    'coupon.c4.discountText': 'x2',
+    'coupon.c4.minSpendText': '会员日可用',
+
+    'coupon.c5.title': '包间抵扣券',
+    'coupon.c5.description': 'VIP包间消费抵扣$100',
+    'coupon.c5.discountText': '$100',
+    'coupon.c5.minSpendText': '包间可用',
+
+    'coupon.c6.title': '钻石专属礼',
+    'coupon.c6.description': '钻石会员专属礼遇（到店出示核销）',
+    'coupon.c6.discountText': 'VIP',
+    'coupon.c6.minSpendText': '到店可用',
+
     'couponDetail.title': '卡券详情',
     'couponDetail.redeemHint': '到店核销时出示二维码/条形码',
     'couponDetail.markUsed': '标记为已使用',
@@ -404,6 +434,36 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.requiresTier': 'Requires {tier}',
     'coupons.validTo': 'Valid until {date}',
 
+    'coupon.c1.title': '$20 off $100',
+    'coupon.c1.description': 'Get $20 off in-store orders of $100+',
+    'coupon.c1.discountText': '$20',
+    'coupon.c1.minSpendText': 'Min. spend $100',
+
+    'coupon.c2.title': '10% off storewide',
+    'coupon.c2.description': '10% off all items (excluding alcohol)',
+    'coupon.c2.discountText': '10% OFF',
+    'coupon.c2.minSpendText': 'No minimum',
+
+    'coupon.c3.title': '$50 off $200',
+    'coupon.c3.description': 'Get $50 off in-store orders of $200+',
+    'coupon.c3.discountText': '$50',
+    'coupon.c3.minSpendText': 'Min. spend $200',
+
+    'coupon.c4.title': 'Double points (Member Day)',
+    'coupon.c4.description': 'Earn double points every Wednesday in store',
+    'coupon.c4.discountText': 'x2',
+    'coupon.c4.minSpendText': 'Wednesdays only',
+
+    'coupon.c5.title': 'VIP private room credit',
+    'coupon.c5.description': '$100 credit for VIP private room dining',
+    'coupon.c5.discountText': '$100',
+    'coupon.c5.minSpendText': 'Private room only',
+
+    'coupon.c6.title': 'Diamond member gift',
+    'coupon.c6.description': 'Diamond member perk (show to redeem in store)',
+    'coupon.c6.discountText': 'VIP',
+    'coupon.c6.minSpendText': 'In-store only',
+
     'couponDetail.title': 'Coupon Details',
     'couponDetail.redeemHint': 'Show QR/barcode to redeem in store',
     'couponDetail.markUsed': 'Mark as used',
@@ -698,6 +758,36 @@ const MESSAGES: Record<Locale, Messages> = {
     'coupons.locked': 'Bloqueado',
     'coupons.requiresTier': 'Requiere {tier}',
     'coupons.validTo': 'Válido hasta {date}',
+
+    'coupon.c1.title': '$20 de descuento en $100',
+    'coupon.c1.description': 'Obtén $20 de descuento en compras en tienda de $100 o más',
+    'coupon.c1.discountText': '$20',
+    'coupon.c1.minSpendText': 'Mín. compra $100',
+
+    'coupon.c2.title': '10% de descuento en todo',
+    'coupon.c2.description': '10% de descuento en todos los platos (sin alcohol)',
+    'coupon.c2.discountText': '10% OFF',
+    'coupon.c2.minSpendText': 'Sin mínimo',
+
+    'coupon.c3.title': '$50 de descuento en $200',
+    'coupon.c3.description': 'Obtén $50 de descuento en compras en tienda de $200 o más',
+    'coupon.c3.discountText': '$50',
+    'coupon.c3.minSpendText': 'Mín. compra $200',
+
+    'coupon.c4.title': 'Puntos dobles (miércoles)',
+    'coupon.c4.description': 'Gana el doble de puntos cada miércoles en tienda',
+    'coupon.c4.discountText': 'x2',
+    'coupon.c4.minSpendText': 'Solo miércoles',
+
+    'coupon.c5.title': 'Crédito sala VIP',
+    'coupon.c5.description': 'Crédito de $100 para consumo en sala VIP',
+    'coupon.c5.discountText': '$100',
+    'coupon.c5.minSpendText': 'Solo sala VIP',
+
+    'coupon.c6.title': 'Regalo para Diamante',
+    'coupon.c6.description': 'Beneficio para miembros Diamante (muestra para canjear en tienda)',
+    'coupon.c6.discountText': 'VIP',
+    'coupon.c6.minSpendText': 'Solo en tienda',
 
     'couponDetail.title': 'Detalle del cupón',
     'couponDetail.redeemHint': 'Muestra el QR/código de barras para canjear en tienda',

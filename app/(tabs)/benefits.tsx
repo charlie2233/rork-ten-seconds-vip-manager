@@ -141,7 +141,7 @@ export default function CouponsScreen() {
                           { color: definition.themeColor ?? Colors.primary },
                         ]}
                       >
-                        {definition.discountText}
+                        {t(definition.discountText)}
                       </Text>
                     </View>
                   </View>
@@ -149,7 +149,7 @@ export default function CouponsScreen() {
                   <View style={styles.couponContent}>
                     <View style={styles.couponHeader}>
                       <Text style={styles.couponTitle} numberOfLines={1}>
-                        {definition.title}
+                        {t(definition.title)}
                       </Text>
                       {status !== 'available' && (
                         <View style={styles.statusPill}>
@@ -158,7 +158,7 @@ export default function CouponsScreen() {
                       )}
                     </View>
                     <Text style={styles.couponDesc} numberOfLines={2}>
-                      {definition.description}
+                      {t(definition.description)}
                     </Text>
                     <View style={styles.couponMetaRow}>
                       <Text style={styles.couponMetaText}>
@@ -183,10 +183,10 @@ export default function CouponsScreen() {
                   <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
                   <View style={styles.offerTextBlock}>
                     <Text style={styles.offerTitle} numberOfLines={1}>
-                      {definition.title}
+                      {t(definition.title)}
                     </Text>
                     <Text style={styles.offerDesc} numberOfLines={1}>
-                      {definition.minSpendText ?? definition.description}
+                      {t(definition.minSpendText ?? definition.description)}
                     </Text>
                   </View>
                 </View>

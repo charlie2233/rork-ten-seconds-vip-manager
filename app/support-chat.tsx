@@ -110,8 +110,8 @@ export default function SupportChatScreen() {
 
           const normalized = claimed.map((c) => ({
             id: c.definition.id,
-            title: c.definition.title,
-            discountText: c.definition.discountText,
+            title: t(c.definition.title),
+            discountText: t(c.definition.discountText),
             validTo: c.definition.validTo,
             status: c.state.status === 'used' ? 'used' : c.isExpired ? 'expired' : 'available',
           }));
@@ -129,7 +129,7 @@ export default function SupportChatScreen() {
             coupons: filtered,
             offers: currentOffers.map((o) => ({
               id: o.definition.id,
-              title: o.definition.title,
+              title: t(o.definition.title),
               tier: o.definition.tier,
               unlocked: o.isUnlocked,
             })),
@@ -159,7 +159,7 @@ export default function SupportChatScreen() {
         },
       },
     };
-  }, [user?.id, user?.memberId, user?.points]);
+  }, [t, user?.id, user?.memberId, user?.points]);
 
   const { messages, sendMessage, status } = useRorkAgent({
     tools,

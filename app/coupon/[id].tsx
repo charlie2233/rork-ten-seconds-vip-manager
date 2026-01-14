@@ -175,8 +175,8 @@ export default function CouponDetailScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleBlock}>
-              <Text style={styles.couponTitle}>{definition.title}</Text>
-              <Text style={styles.couponDesc}>{definition.description}</Text>
+              <Text style={styles.couponTitle}>{t(definition.title)}</Text>
+              <Text style={styles.couponDesc}>{t(definition.description)}</Text>
             </View>
             {status !== 'available' && (
               <View style={styles.statusPill}>
@@ -190,7 +190,7 @@ export default function CouponDetailScreen() {
               {t('coupons.validTo', { date: definition.validTo })}
             </Text>
             {definition.minSpendText ? (
-              <Text style={styles.metaText}>{definition.minSpendText}</Text>
+              <Text style={styles.metaText}>{t(definition.minSpendText)}</Text>
             ) : null}
           </View>
         </View>
