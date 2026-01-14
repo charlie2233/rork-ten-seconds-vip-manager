@@ -156,7 +156,7 @@ export const couponCatalog: CouponDefinition[] = [
     validFrom: '2026-01-01',
     validTo: '2026-02-28',
     tier: 'silver',
-    code: 'SSD-20OFF-100',
+    code: 'SSD-20PCT-25',
     themeColor: '#C9A962',
   },
   {
@@ -171,6 +171,19 @@ export const couponCatalog: CouponDefinition[] = [
     tier: 'silver',
     code: 'SSD-10PCT',
     themeColor: '#D4393A',
+  },
+  {
+    id: 'c8',
+    title: 'coupon.c8.title',
+    description: 'coupon.c8.description',
+    discountText: 'coupon.c8.discountText',
+    minSpendText: 'coupon.c8.minSpendText',
+    costPoints: 1000,
+    validFrom: '2026-01-01',
+    validTo: '2026-03-31',
+    tier: 'silver',
+    code: 'SSD-RAINY-20PCT',
+    themeColor: '#4A90E2',
   },
   {
     id: 'c3',
@@ -208,7 +221,7 @@ export const couponCatalog: CouponDefinition[] = [
     validFrom: '2026-01-01',
     validTo: '2026-06-30',
     tier: 'platinum',
-    code: 'SSD-ROOM-100',
+    code: 'SSD-FREEDRINK',
     themeColor: '#8E7CC3',
   },
   {

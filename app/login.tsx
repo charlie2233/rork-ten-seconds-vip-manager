@@ -39,6 +39,7 @@ export default function LoginScreen() {
     setErrorKey(null);
     try {
       await login(memberId, password);
+      router.replace('/');
     } catch (e: any) {
       const key =
         typeof e?.message === 'string' && e.message.startsWith('auth.')
