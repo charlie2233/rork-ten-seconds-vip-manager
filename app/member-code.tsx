@@ -33,6 +33,8 @@ export default function MemberCodeScreen() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [syncedBalance, setSyncedBalance] = useState<number | null>(null);
 
+  const memberCode = useMemo(() => (user?.memberId ?? '').trim(), [user?.memberId]);
+
   const menusafeQuery = trpc.menusafe.getLatestBalance.useQuery(
     { memberId: user?.memberId || '' },
     {
@@ -53,11 +55,11 @@ export default function MemberCodeScreen() {
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
 
   const qrSvg = useMemo(() => {
-    if (!user?.memberId) return null;
+    if (!memberCode) return null;
     try {
       return bwipjs.toSVG({
         bcid: 'qrcode',
-        text: user.memberId,
+        text: memberCode,
         scale: 4,
         includetext: false,
         backgroundcolor: 'FFFFFF',
@@ -68,16 +70,16 @@ export default function MemberCodeScreen() {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.memberId, refreshKey]);
+  }, [memberCode, refreshKey]);
 
   const barcodeSvg = useMemo(() => {
-    if (!user?.memberId) return null;
+    if (!memberCode) return null;
     try {
       return bwipjs.toSVG({
         bcid: 'code128',
-        text: user.memberId,
-        scale: 3,
-        height: 10,
+        text: memberCode,
+        scale: 4,
+        height: 14,
         includetext: false,
         backgroundcolor: 'FFFFFF',
         paddingwidth: 10,
@@ -87,7 +89,7 @@ export default function MemberCodeScreen() {
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.memberId, refreshKey]);
+  }, [memberCode, refreshKey]);
 
   // If no user, we shouldn't really be here, but handle it gracefully
   if (!user) {
@@ -108,7 +110,7 @@ export default function MemberCodeScreen() {
   }
 
   const copyToClipboard = async () => {
-    await Clipboard.setStringAsync(user.memberId);
+    await Clipboard.setStringAsync(memberCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -127,7 +129,7 @@ export default function MemberCodeScreen() {
     try {
       // In production, this URL points to your actual backend
       // e.g. https://api.rork.com/api/pass/VIP123
-      const passUrl = `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'http://localhost:3000'}/api/pass/${user.memberId}`;
+      const passUrl = `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'http://localhost:3000'}/api/pass/${memberCode}`;
       
       const supported = await Linking.canOpenURL(passUrl);
       if (supported) {
@@ -192,6 +194,7 @@ export default function MemberCodeScreen() {
                     xml={qrSvg}
                     width="100%"
                     height="100%"
+                    preserveAspectRatio="xMidYMid meet"
                   />
                 ) : (
                   <View style={styles.codeError}>
@@ -207,6 +210,7 @@ export default function MemberCodeScreen() {
                     xml={barcodeSvg}
                     width="100%"
                     height="100%"
+                    preserveAspectRatio="xMidYMid meet"
                   />
                 ) : (
                   <View style={styles.codeError}>
@@ -223,7 +227,7 @@ export default function MemberCodeScreen() {
             >
               <Text style={styles.memberIdLabel}>{t('memberCode.memberCardNo')}</Text>
               <View style={styles.memberIdValueContainer}>
-                <Text style={styles.memberIdValue}>{user.memberId}</Text>
+                <Text style={styles.memberIdValue}>{memberCode}</Text>
                 {copied ? (
                   <Check size={16} color={Colors.success} style={styles.copyIcon} />
                 ) : (
@@ -405,7 +409,7 @@ const styles = StyleSheet.create({
   },
   barcodeWrapper: {
     width: '100%',
-    height: 60,
+    height: 84,
   },
   barcode: {
     width: '100%',

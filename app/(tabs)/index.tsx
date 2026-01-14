@@ -67,23 +67,25 @@ export default function HomeScreen() {
   );
   const recentTransactions = recentTransactionsQuery.data ?? [];
 
+  const memberCode = useMemo(() => (user?.memberId ?? '').trim(), [user?.memberId]);
+
   const barcodeSvg = useMemo(() => {
-    if (!user?.memberId) return null;
+    if (!memberCode) return null;
     try {
       return bwipjs.toSVG({
         bcid: 'code128',
-        text: user.memberId,
-        scale: 2,
-        height: 8,
+        text: memberCode,
+        scale: 3,
+        height: 12,
         includetext: false,
         backgroundcolor: 'FFFFFF',
-        paddingwidth: 4,
-        paddingheight: 4,
+        paddingwidth: 8,
+        paddingheight: 8,
       });
     } catch {
       return null;
     }
-  }, [user?.memberId]);
+  }, [memberCode]);
 
   const shimmerTranslate = shimmerAnim.interpolate({
     inputRange: [0, 1],
@@ -166,12 +168,17 @@ export default function HomeScreen() {
                   {t('home.memberId')}
                 </Text>
                 <Text style={[styles.memberId, { color: cardTheme.textSecondary }]}>
-                  {user?.memberId ?? ''}
+                  {memberCode}
                 </Text>
                 {user ? (
                   <View style={styles.barcodeContainer}>
                     {barcodeSvg ? (
-                      <SvgXml xml={barcodeSvg} width="100%" height="100%" />
+                      <SvgXml
+                        xml={barcodeSvg}
+                        width="100%"
+                        height="100%"
+                        preserveAspectRatio="xMidYMid meet"
+                      />
                     ) : (
                       <Text style={[styles.barcodeError, { color: cardTheme.textMuted }]}>
                         {t('home.barcodeFailed')}
@@ -466,10 +473,10 @@ const styles = StyleSheet.create({
   barcodeContainer: {
     marginTop: 8,
     backgroundColor: 'white',
-    borderRadius: 6,
-    padding: 6,
-    width: 140,
-    height: 36,
+    borderRadius: 10,
+    padding: 10,
+    width: 190,
+    height: 56,
   },
   barcodeError: {
     fontSize: 10,
