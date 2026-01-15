@@ -161,13 +161,19 @@ export default function MemberCodeScreen() {
         onPress={() => router.back()}
       />
 
-      <View style={[styles.content, { paddingTop: insets.top + 20 }]}>
-        <View style={styles.headerTop}>
-          <LanguageToggle />
-          <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-            <X size={24} color={Colors.text} />
-          </TouchableOpacity>
-        </View>
+      <View style={[styles.topBar, { top: insets.top + 16 }]}>
+        <LanguageToggle />
+        <TouchableOpacity
+          style={styles.closePill}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <X size={18} color={Colors.text} />
+          <Text style={styles.closePillText}>{t('common.close')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
 
         <Text style={styles.title}>{t('memberCode.title')}</Text>
 
@@ -313,17 +319,19 @@ const styles = StyleSheet.create({
   closeOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
+  topBar: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    zIndex: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 40,
   },
   title: {
     fontSize: 20,
@@ -331,13 +339,23 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 24,
   },
-  closeButton: {
-    width: 40,
+  closePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.surface,
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 12,
     justifyContent: 'center',
+  },
+  closePillText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
   card: {
     borderRadius: 24,
