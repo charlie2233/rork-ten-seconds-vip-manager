@@ -62,8 +62,9 @@ function parseDateLike(value: string): number {
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const { user, pointsHistory } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
   const transactionsQuery = trpc.transactions.list.useQuery(
     { userId: user?.id, limit: 50 },
@@ -120,7 +121,8 @@ export default function TransactionsScreen() {
         const title = def ? t(def.title) : item.couponId;
         return t('points.record.couponRedeem', { coupon: title });
       }
-      return item.description ?? t('points.record.adjust');
+      if (item.description) return t(item.description);
+      return t('points.record.adjust');
     },
     [t]
   );
@@ -235,11 +237,12 @@ export default function TransactionsScreen() {
                       ]}
                     >
                       {item.delta >= 0 ? '+' : ''}
-                      {Math.abs(item.delta)} pts
+                      {Math.abs(item.delta).toLocaleString(numberLocale)} {t('points.unit')}
                     </Text>
                     {'balance' in item && typeof item.balance === 'number' ? (
                       <Text style={styles.transactionBalance}>
-                        {t('points.balancePrefix')}: {item.balance.toLocaleString()} pts
+                        {t('points.balancePrefix')}: {item.balance.toLocaleString(numberLocale)}{' '}
+                        {t('points.unit')}
                       </Text>
                     ) : (
                       <Text style={styles.transactionBalance} />

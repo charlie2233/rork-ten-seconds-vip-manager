@@ -29,9 +29,10 @@ const CARD_WIDTH = width - 48;
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
+  const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
   useEffect(() => {
     const shimmer = Animated.loop(
@@ -133,7 +134,9 @@ export default function HomeScreen() {
 
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
-                <Text style={[styles.brandName, { color: cardTheme.accent }]}>十秒到</Text>
+                <Text style={[styles.brandName, { color: cardTheme.accent }]}>
+                  {t('brand.shortName')}
+                </Text>
                 <Text style={[styles.storeAddress, { color: cardTheme.textSecondary }]} numberOfLines={1}>
                   {storeAddress}
                 </Text>
@@ -157,7 +160,10 @@ export default function HomeScreen() {
               <View style={styles.balanceRow}>
                 <Text style={[styles.currencySymbol, { color: cardTheme.text }]}>$</Text>
                 <Text style={[styles.balanceAmount, { color: cardTheme.text }]}>
-                  {displayBalance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                  {displayBalance.toLocaleString(numberLocale, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
             </View>
@@ -202,7 +208,7 @@ export default function HomeScreen() {
                   {t('home.points')}
                 </Text>
                 <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
-                  {displayPoints.toLocaleString()}
+                  {displayPoints.toLocaleString(numberLocale)}
                 </Text>
               </View>
             </View>

@@ -87,7 +87,7 @@ export default function RegisterScreen() {
             colors={[Colors.primary, Colors.primaryDark]}
             style={styles.logoGradient}
           >
-            <Text style={styles.logoText}>十秒到</Text>
+            <Text style={styles.logoText}>{t('brand.shortName')}</Text>
           </LinearGradient>
         </View>
 

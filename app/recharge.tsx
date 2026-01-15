@@ -30,9 +30,10 @@ const RECHARGE_OPTIONS = [
 export default function RechargeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
+  const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
   const parsedCustomAmount = useMemo(() => {
     const parsed = Number.parseInt(customAmount, 10);
@@ -84,7 +85,10 @@ export default function RechargeScreen() {
             <View>
               <Text style={styles.balanceLabel}>{t('recharge.currentBalance')}</Text>
               <Text style={styles.balanceValue}>
-                ${(user?.balance ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                ${(user?.balance ?? 0).toLocaleString(numberLocale, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </Text>
             </View>
           </LinearGradient>
@@ -167,7 +171,7 @@ export default function RechargeScreen() {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>{t('recharge.pointsEarned')}</Text>
               <Text style={[styles.summaryValue, { color: Colors.primary }]}>
-                +{pointsEarned.toLocaleString()}
+                +{pointsEarned.toLocaleString(numberLocale)}
               </Text>
             </View>
             <View style={[styles.summaryRow, styles.totalRow]}>

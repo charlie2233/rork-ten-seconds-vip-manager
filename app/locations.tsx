@@ -81,7 +81,7 @@ export default function LocationsScreen() {
 
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.storeName}>{location.name}</Text>
+            <Text style={styles.storeName}>{t(location.name)}</Text>
             <View style={styles.headerButtons}>
               {location.onlineOrderUrl ? (
                 <TouchableOpacity style={styles.orderButton} onPress={openOnlineOrder} activeOpacity={0.8}>
@@ -312,4 +312,3 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 });
-

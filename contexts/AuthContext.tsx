@@ -270,7 +270,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const entry: PointsRecord = {
           id: makePointsRecordId(),
           delta: pointsEarned,
-          description: `Top-up bonus: +${pointsEarned} pts`,
+          description: 'points.record.topUpBonus',
           date: new Date().toISOString(),
           balance: next.points ?? 0,
         };

@@ -163,7 +163,7 @@ export default function ProfileScreen() {
                 </Text>
               </LinearGradient>
               <View style={[styles.tierBadge, { backgroundColor: tier.color }]}>
-                <Text style={styles.tierBadgeText}>VIP</Text>
+                <Text style={styles.tierBadgeText}>{t('common.vip')}</Text>
               </View>
             </View>
 

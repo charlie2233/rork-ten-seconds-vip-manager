@@ -257,7 +257,7 @@ export const couponCatalog: CouponDefinition[] = [
 export const storeLocations: StoreLocation[] = [
   {
     id: 'irvine-campus-plaza',
-    name: 'Ten Seconds Yunnan Rice Noodles',
+    name: 'brand.fullName',
     address: '4535 Campus Dr, Irvine, CA 92612',
     place: 'Campus Plaza',
     website: 'https://10ricenoodle.com',

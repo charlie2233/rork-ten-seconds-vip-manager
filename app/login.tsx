@@ -86,7 +86,7 @@ export default function LoginScreen() {
               colors={[Colors.primary, Colors.primaryDark]}
               style={styles.logoGradient}
             >
-              <Text style={styles.logoText}>十秒到</Text>
+              <Text style={styles.logoText}>{t('brand.shortName')}</Text>
             </LinearGradient>
           </View>
           <Text style={styles.subtitle}>{t('auth.subtitle')}</Text>

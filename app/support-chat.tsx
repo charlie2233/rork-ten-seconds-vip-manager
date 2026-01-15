@@ -148,7 +148,7 @@ export default function SupportChatScreen() {
           )}`;
 
           return JSON.stringify({
-            name: location.name,
+            name: t(location.name),
             address: location.address,
             place: location.place,
             website: location.website,
