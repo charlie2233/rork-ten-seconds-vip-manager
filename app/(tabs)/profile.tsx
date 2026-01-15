@@ -110,7 +110,7 @@ export default function ProfileScreen() {
           onPress: async () => {
             try {
               const result = await migrationService.syncUser(user.memberId);
-              const balance = Number(result.balance ?? 0);
+              const balance = Number(result?.balance ?? 0);
               Alert.alert(
                 t('profile.migration.success'),
                 `${t('home.balance')}: $${balance.toFixed(2)}`
