@@ -1,11 +1,15 @@
 import { Tabs } from "expo-router";
 import { Home, Gift, Receipt, User } from "lucide-react-native";
 import React from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useI18n } from "@/contexts/I18nContext";
 
 export default function TabLayout() {
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
+  const tabBarBottomPadding = Math.max(14, insets.bottom);
+  const tabBarHeight = 74 + tabBarBottomPadding;
 
   return (
     <Tabs
@@ -13,17 +17,20 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
+        tabBarShowLabel: true,
+        tabBarLabelPosition: "below-icon",
         tabBarStyle: {
           backgroundColor: Colors.background,
           borderTopColor: Colors.border,
           borderTopWidth: 1,
-          paddingTop: 8,
-          height: 88,
+          paddingTop: 10,
+          paddingBottom: tabBarBottomPadding,
+          height: tabBarHeight,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500' as const,
-          marginTop: 4,
+          marginTop: 3,
         },
       }}
     >
