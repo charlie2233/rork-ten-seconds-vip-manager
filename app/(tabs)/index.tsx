@@ -146,7 +146,7 @@ export default function HomeScreen() {
               </View>
               <TouchableOpacity 
                 style={[styles.qrButton, { backgroundColor: cardTheme.qrBackground, borderColor: cardTheme.borderColor }]}
-                onPress={() => router.push('/member-code')}
+                onPress={() => (user ? router.push('/member-code') : router.push('/login'))}
                 activeOpacity={0.7}
               >
                 <QrCode size={28} color={cardTheme.accent} />
@@ -257,7 +257,7 @@ export default function HomeScreen() {
           <TouchableOpacity 
             style={styles.actionButton} 
             activeOpacity={0.7}
-            onPress={() => router.push('/member-code')}
+            onPress={() => (user ? router.push('/member-code') : router.push('/login'))}
           >
             <View style={[styles.actionIcon, { backgroundColor: 'rgba(255, 152, 0, 0.15)' }]}>
               <QrCode size={22} color={Colors.warning} />
@@ -502,8 +502,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   loginPromptText: {
-    fontSize: 11,
-    fontWeight: '500' as const,
+    fontSize: 13,
+    fontWeight: '700' as const,
   },
   cardDecoration: {
     position: 'absolute',

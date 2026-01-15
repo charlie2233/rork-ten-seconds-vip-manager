@@ -31,6 +31,7 @@ export default function CouponDetailScreen() {
   const { id, claim } = useLocalSearchParams<{ id: string; claim?: string }>();
   const [copied, setCopied] = useState(false);
   const [redeemedVisible, setRedeemedVisible] = useState(false);
+  const [claimedVisible, setClaimedVisible] = useState(false);
 
   const { definition, state } = useMemo(() => {
     const couponId = Array.isArray(id) ? id[0] : id;
@@ -39,12 +40,22 @@ export default function CouponDetailScreen() {
     return getCoupon(couponId, claimId);
   }, [claim, getCoupon, id]);
 
+  const redeemCode = (() => {
+    if (!definition || !state) return null;
+    if (state.status !== 'available') return null;
+    const expiresAt = new Date(definition.validTo);
+    const isExpired =
+      Number.isFinite(expiresAt.valueOf()) && new Date().valueOf() > expiresAt.valueOf();
+    if (isExpired) return null;
+    return state.id;
+  })();
+
   const qrSvg = useMemo(() => {
-    if (!definition?.code) return null;
+    if (!redeemCode) return null;
     try {
       return bwipjs.toSVG({
         bcid: 'qrcode',
-        text: definition.code,
+        text: redeemCode,
         scale: 4,
         includetext: false,
         backgroundcolor: 'FFFFFF',
@@ -54,14 +65,14 @@ export default function CouponDetailScreen() {
     } catch {
       return null;
     }
-  }, [definition?.code]);
+  }, [redeemCode]);
 
   const barcodeSvg = useMemo(() => {
-    if (!definition?.code) return null;
+    if (!redeemCode) return null;
     try {
       return bwipjs.toSVG({
         bcid: 'code128',
-        text: definition.code,
+        text: redeemCode,
         scale: 3,
         height: 10,
         includetext: false,
@@ -72,7 +83,7 @@ export default function CouponDetailScreen() {
     } catch {
       return null;
     }
-  }, [definition?.code]);
+  }, [redeemCode]);
 
   if (!user) {
     return (
@@ -143,7 +154,8 @@ export default function CouponDetailScreen() {
   const canAfford = costPoints === 0 || missingPoints === 0;
 
   const copyToClipboard = async () => {
-    await Clipboard.setStringAsync(definition.code);
+    if (!redeemCode) return;
+    await Clipboard.setStringAsync(redeemCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -157,7 +169,26 @@ export default function CouponDetailScreen() {
           ? t('couponDetail.notClaimed')
           : '';
 
-  const canRedeem = status === 'available';
+  const canRedeem = status === 'available' && !!redeemCode;
+
+  const lockedHint =
+    status === 'used'
+      ? t('couponDetail.usedHint')
+      : status === 'expired'
+        ? t('couponDetail.expiredHint')
+        : status === 'unclaimed'
+          ? !isUnlocked
+            ? t('coupons.requiresTier', { tier: t(`tier.${definition.tier}`) })
+            : !canAfford && costPoints > 0
+              ? t('coupons.needMorePoints', { count: missingPoints })
+              : t('couponDetail.claimToGetCode')
+          : '';
+
+  const claimNow = async () => {
+    await claimCoupon(definition.id);
+    setClaimedVisible(true);
+    setTimeout(() => setClaimedVisible(false), 1500);
+  };
 
   const redeemNow = async () => {
     if (!state) return;
@@ -212,39 +243,53 @@ export default function CouponDetailScreen() {
         </View>
 
         <View style={styles.codeCard}>
-          <Text style={styles.hintText}>{t('couponDetail.redeemHint')}</Text>
+          {canRedeem ? (
+            <>
+              <Text style={styles.hintText}>{t('couponDetail.redeemHint')}</Text>
 
-          <View style={styles.qrBox}>
-            {qrSvg ? (
-              <SvgXml xml={qrSvg} width="100%" height="100%" />
-            ) : (
-              <View style={styles.codeError}>
-                <Text style={styles.codeErrorText}>{t('code.qrFailed')}</Text>
+              <View style={styles.qrBox}>
+                {qrSvg ? (
+                  <SvgXml xml={qrSvg} width="100%" height="100%" />
+                ) : (
+                  <View style={styles.codeError}>
+                    <Text style={styles.codeErrorText}>{t('code.qrFailed')}</Text>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
 
-          <View style={styles.barcodeBox}>
-            {barcodeSvg ? (
-              <SvgXml xml={barcodeSvg} width="100%" height="100%" />
-            ) : (
-              <View style={styles.codeError}>
-                <Text style={styles.codeErrorText}>{t('code.barcodeFailed')}</Text>
+              <View style={styles.barcodeBox}>
+                {barcodeSvg ? (
+                  <SvgXml xml={barcodeSvg} width="100%" height="100%" />
+                ) : (
+                  <View style={styles.codeError}>
+                    <Text style={styles.codeErrorText}>{t('code.barcodeFailed')}</Text>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
 
-          <TouchableOpacity style={styles.codeRow} onPress={copyToClipboard} activeOpacity={0.7}>
-            <Text style={styles.codeLabel}>{t('couponDetail.codeLabel')}</Text>
-            <View style={styles.codeValueContainer}>
-              <Text style={styles.codeValue}>{definition.code}</Text>
-              {copied ? (
-                <Check size={16} color={Colors.success} />
-              ) : (
-                <Copy size={16} color={Colors.textMuted} />
-              )}
+              <TouchableOpacity style={styles.codeRow} onPress={copyToClipboard} activeOpacity={0.7}>
+                <Text style={styles.codeLabel}>{t('couponDetail.codeLabel')}</Text>
+                <View style={styles.codeValueContainer}>
+                  <Text style={styles.codeValue} numberOfLines={1} ellipsizeMode="middle">
+                    {redeemCode ?? ''}
+                  </Text>
+                  {copied ? (
+                    <Check size={16} color={Colors.success} />
+                  ) : (
+                    <Copy size={16} color={Colors.textMuted} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.codeLockedBox}>
+              <View style={styles.codeLockedIcon}>
+                <Lock size={18} color={Colors.textMuted} />
+              </View>
+              <Text style={styles.codeLockedTitle}>{statusLabel}</Text>
+              <Text style={styles.codeLockedText}>{lockedHint}</Text>
             </View>
-          </TouchableOpacity>
+          )}
 
           {status === 'unclaimed' && !isUnlocked && (
             <View style={styles.lockRow}>
@@ -265,19 +310,19 @@ export default function CouponDetailScreen() {
           )}
         </View>
 
-        {status === 'unclaimed' ? (
-          <TouchableOpacity
-            style={[
-              styles.primaryButton,
-              (!isUnlocked || !canAfford) && styles.primaryButtonDisabled,
-            ]}
-            disabled={!isUnlocked || !canAfford}
-            onPress={() => void claimCoupon(definition.id)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.primaryButtonText}>
-              {!isUnlocked
-                ? t('coupons.locked')
+	        {status === 'unclaimed' ? (
+	          <TouchableOpacity
+	            style={[
+	              styles.primaryButton,
+	              (!isUnlocked || !canAfford) && styles.primaryButtonDisabled,
+	            ]}
+	            disabled={!isUnlocked || !canAfford}
+	            onPress={() => void claimNow()}
+	            activeOpacity={0.8}
+	          >
+	            <Text style={styles.primaryButtonText}>
+	              {!isUnlocked
+	                ? t('coupons.locked')
                 : !canAfford
                   ? t('coupons.needMorePoints', { count: missingPoints })
                   : costPoints > 0
@@ -308,10 +353,10 @@ export default function CouponDetailScreen() {
         transparent
         animationType="fade"
         onRequestClose={() => setRedeemedVisible(false)}
-      >
-        <View style={styles.redeemedOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRedeemedVisible(false)} />
-          <View style={styles.redeemedCard}>
+	      >
+	        <View style={styles.redeemedOverlay}>
+	          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRedeemedVisible(false)} />
+	          <View style={styles.redeemedCard}>
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}
               style={styles.redeemedIcon}
@@ -319,12 +364,35 @@ export default function CouponDetailScreen() {
               <Sparkles size={26} color={Colors.background} />
             </LinearGradient>
             <Text style={styles.redeemedTitle}>{t('couponDetail.redeemedTitle')}</Text>
-            <Text style={styles.redeemedSubtitle}>{t('couponDetail.redeemedMessage')}</Text>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
+	            <Text style={styles.redeemedSubtitle}>{t('couponDetail.redeemedMessage')}</Text>
+	          </View>
+	        </View>
+	      </Modal>
+
+	      <Modal
+	        visible={claimedVisible}
+	        transparent
+	        animationType="fade"
+	        onRequestClose={() => setClaimedVisible(false)}
+	      >
+	        <View style={styles.redeemedOverlay}>
+	          <Pressable style={StyleSheet.absoluteFill} onPress={() => setClaimedVisible(false)} />
+	          <View style={styles.redeemedCard}>
+	            <LinearGradient
+	              colors={[Colors.primary, Colors.primaryDark]}
+	              style={styles.redeemedIcon}
+	            >
+	              <Sparkles size={26} color={Colors.background} />
+	            </LinearGradient>
+	            <Text style={styles.redeemedTitle}>{t('couponDetail.claimedTitle')}</Text>
+	            <Text style={styles.redeemedSubtitle}>
+	              {t('couponDetail.claimedMessage', { coupon: t(definition.title) })}
+	            </Text>
+	          </View>
+	        </View>
+	      </Modal>
+	    </View>
+	  );
 }
 
 const styles = StyleSheet.create({
@@ -437,6 +505,36 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: 12,
     marginBottom: 12,
+  },
+  codeLockedBox: {
+    backgroundColor: Colors.backgroundLight,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 18,
+    alignItems: 'center',
+    gap: 8,
+  },
+  codeLockedIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  codeLockedTitle: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '800' as const,
+  },
+  codeLockedText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   qrBox: {
     width: 220,

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, Ticket, Wallet } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, Sparkles, Ticket, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
@@ -41,6 +41,7 @@ export default function CouponsScreen() {
   const { t } = useI18n();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [claimedCouponName, setClaimedCouponName] = useState<string | null>(null);
 
   const availablePoints = user?.points ?? 0;
 
@@ -250,13 +251,18 @@ export default function CouponsScreen() {
                       ? t('coupons.redeemForPoints', { points: cost })
                       : t('coupons.claim');
 
-                  return (
-                    <TouchableOpacity
-                      style={[styles.claimButton, !canAfford && styles.claimButtonDisabled]}
-                      disabled={!canAfford}
-                      onPress={() => void claimCoupon(definition.id)}
-                      activeOpacity={0.8}
-                    >
+	                  return (
+	                    <TouchableOpacity
+	                      style={[styles.claimButton, !canAfford && styles.claimButtonDisabled]}
+	                      disabled={!canAfford}
+	                      onPress={async () => {
+	                        await claimCoupon(definition.id);
+	                        const title = t(definition.title);
+	                        setClaimedCouponName(title);
+	                        setTimeout(() => setClaimedCouponName(null), 1500);
+	                      }}
+	                      activeOpacity={0.8}
+	                    >
                       {canAfford ? (
                         <Check size={16} color={Colors.background} />
                       ) : (
@@ -280,10 +286,33 @@ export default function CouponsScreen() {
           </View>
         )}
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
-    </View>
-  );
+	        <View style={{ height: 100 }} />
+	      </ScrollView>
+
+	      <Modal
+	        visible={!!claimedCouponName}
+	        transparent
+	        animationType="fade"
+	        onRequestClose={() => setClaimedCouponName(null)}
+	      >
+	        <View style={styles.claimedOverlay}>
+	          <Pressable style={StyleSheet.absoluteFill} onPress={() => setClaimedCouponName(null)} />
+	          <View style={styles.claimedCard}>
+	            <LinearGradient
+	              colors={[Colors.primary, Colors.primaryDark]}
+	              style={styles.claimedIcon}
+	            >
+	              <Sparkles size={26} color={Colors.background} />
+	            </LinearGradient>
+	            <Text style={styles.claimedTitle}>{t('couponDetail.claimedTitle')}</Text>
+	            <Text style={styles.claimedSubtitle}>
+	              {t('couponDetail.claimedMessage', { coupon: claimedCouponName ?? '' })}
+	            </Text>
+	          </View>
+	        </View>
+	      </Modal>
+	    </View>
+	  );
 }
 
 const styles = StyleSheet.create({
@@ -503,6 +532,43 @@ const styles = StyleSheet.create({
   },
   offersSection: {
     marginTop: 8,
+  },
+  claimedOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  claimedCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: Colors.surface,
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  claimedIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  claimedTitle: {
+    fontSize: 18,
+    fontWeight: '800' as const,
+    color: Colors.text,
+    marginBottom: 6,
+  },
+  claimedSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   sectionTitle: {
     fontSize: 16,

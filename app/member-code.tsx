@@ -95,15 +95,39 @@ export default function MemberCodeScreen() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <TouchableOpacity 
-          style={styles.closeButtonOverlay} 
+        <View style={styles.backdrop} />
+
+        <LinearGradient
+          colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
+          style={StyleSheet.absoluteFill}
+        />
+
+        <TouchableOpacity
+          style={styles.closeOverlay}
+          activeOpacity={1}
           onPress={() => router.back()}
         />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{t('memberCode.pleaseLoginFirst')}</Text>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>{t('common.back')}</Text>
+
+        <View style={[styles.topBar, { top: insets.top + 16 }]}>
+          <LanguageToggle />
+          <TouchableOpacity
+            style={styles.closePill}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <X size={18} color={Colors.text} />
+            <Text style={styles.closePillText}>{t('common.close')}</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.content}>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorTitle}>{t('memberCode.pleaseLoginFirst')}</Text>
+            <Text style={styles.errorSubtitle}>{t('memberCode.loginHint')}</Text>
+            <TouchableOpacity onPress={() => router.push('/login')} style={styles.loginButton}>
+              <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -572,21 +596,35 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 16,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  errorText: {
+  errorTitle: {
     color: Colors.text,
-    marginBottom: 16,
+    fontSize: 20,
+    fontWeight: '800' as const,
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  closeButtonOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  errorSubtitle: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 18,
   },
-  backButton: {
-    padding: 12,
+  loginButton: {
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 12,
     backgroundColor: Colors.primary,
-    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  backButtonText: {
+  loginButtonText: {
     color: Colors.background,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
 });
