@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { ChevronLeft, Clock, Globe, MapPin, Phone } from 'lucide-react-native';
+import { ChevronLeft, Clock, Globe, MapPin, Phone, ShoppingBag } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import LanguageToggle from '@/components/LanguageToggle';
 import { useI18n } from '@/contexts/I18nContext';
@@ -43,6 +43,11 @@ export default function LocationsScreen() {
     await Linking.openURL(location.website);
   };
 
+  const openOnlineOrder = async () => {
+    if (!location.onlineOrderUrl) return;
+    await Linking.openURL(location.onlineOrderUrl);
+  };
+
   const callStore = async () => {
     if (!location.phone) return;
     await Linking.openURL(toTelUrl(location.phone));
@@ -77,10 +82,18 @@ export default function LocationsScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.storeName}>{location.name}</Text>
-            <TouchableOpacity style={styles.mapButton} onPress={openMaps} activeOpacity={0.8}>
-              <MapPin size={16} color={Colors.background} />
-              <Text style={styles.mapButtonText}>{t('locations.openInMaps')}</Text>
-            </TouchableOpacity>
+            <View style={styles.headerButtons}>
+              {location.onlineOrderUrl ? (
+                <TouchableOpacity style={styles.orderButton} onPress={openOnlineOrder} activeOpacity={0.8}>
+                  <ShoppingBag size={16} color={Colors.background} />
+                  <Text style={styles.orderButtonText}>{t('locations.orderOnline')}</Text>
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity style={styles.mapButton} onPress={openMaps} activeOpacity={0.8}>
+                <MapPin size={16} color={Colors.background} />
+                <Text style={styles.mapButtonText}>{t('locations.openInMaps')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.infoRow}>
@@ -189,18 +202,35 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     gap: 12,
     marginBottom: 14,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   storeName: {
-    flex: 1,
     fontSize: 18,
     fontWeight: '800' as const,
     color: Colors.text,
     lineHeight: 22,
+  },
+  orderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: 17,
+    backgroundColor: Colors.secondary,
+    flex: 1,
+  },
+  orderButtonText: {
+    color: Colors.background,
+    fontSize: 12,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
   mapButton: {
     flexDirection: 'row',
@@ -210,6 +240,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 17,
     backgroundColor: Colors.primary,
+    flex: 1,
   },
   mapButtonText: {
     color: Colors.background,

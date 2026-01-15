@@ -81,6 +81,7 @@ export interface StoreLocation {
   address: string;
   place?: string;
   website?: string;
+  onlineOrderUrl?: string;
   phone?: string;
   hours: StoreHours[];
 }

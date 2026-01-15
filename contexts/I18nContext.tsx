@@ -94,6 +94,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'weekday.sun': '周日',
 
     'locations.title': '门店地址',
+    'locations.orderOnline': '在线点餐',
     'locations.openInMaps': '打开地图',
     'locations.address': '地址',
     'locations.locatedAt': '位于：{place}',
@@ -443,6 +444,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'weekday.sun': 'Sun',
 
     'locations.title': 'Location',
+    'locations.orderOnline': 'Order Online',
     'locations.openInMaps': 'Maps',
     'locations.address': 'Address',
     'locations.locatedAt': 'Located at {place}',

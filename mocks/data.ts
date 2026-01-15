@@ -257,10 +257,11 @@ export const couponCatalog: CouponDefinition[] = [
 export const storeLocations: StoreLocation[] = [
   {
     id: 'irvine-campus-plaza',
-    name: 'Ten Seconds Yunnan Rice Noodle',
+    name: 'Ten Seconds Yunnan Rice Noodles',
     address: '4535 Campus Dr, Irvine, CA 92612',
     place: 'Campus Plaza',
     website: 'https://10ricenoodle.com',
+    onlineOrderUrl: 'https://order.mealkeyway.com/customer/release/index?mid=7a354f62443977636a39652f303750487357394737673d3d&utm_source=google&integrate_type=formal&rwg_token=AFd1xnEK4BJtQZSWBrD6kucZerTYmHzGtcwyCcEN9Zdl6mLlzeh_JurxcHEIkP5gFlZxih3eL5tjp3Ed9c8lN1tlXbd7cdrSyw%3D%3D#/main',
     phone: '(949) 527-1009',
     hours: [
       { day: 'mon', time: '11:00 AM - 1:30 AM' },
