@@ -18,6 +18,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import LanguageToggle from '@/components/LanguageToggle';
+import ChatMarkdown from '@/components/ChatMarkdown';
 import { useRorkAgent } from '@rork-ai/toolkit-sdk';
 import { z } from 'zod';
 import { trpcClient } from '@/lib/trpc';
@@ -208,15 +209,11 @@ export default function SupportChatScreen() {
           
           if (part.type === 'text' && typeof part.text === 'string' && part.text.trim()) {
             return (
-              <Text
+              <ChatMarkdown
                 key={`${message.id}-${i}`}
-                style={[
-                  styles.messageText,
-                  message.role === 'assistant' ? styles.botText : styles.userText,
-                ]}
-              >
-                {part.text}
-              </Text>
+                text={part.text}
+                variant={message.role === 'assistant' ? 'assistant' : 'user'}
+              />
             );
           }
           if (part.type === 'tool') {
@@ -259,14 +256,10 @@ export default function SupportChatScreen() {
     
     if ('content' in message && typeof message.content === 'string' && message.content.trim()) {
       return (
-        <Text
-          style={[
-            styles.messageText,
-            message.role === 'assistant' ? styles.botText : styles.userText,
-          ]}
-        >
-          {message.content}
-        </Text>
+        <ChatMarkdown
+          text={message.content}
+          variant={message.role === 'assistant' ? 'assistant' : 'user'}
+        />
       );
     }
     
