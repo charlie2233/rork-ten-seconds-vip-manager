@@ -10,10 +10,11 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, RefreshCw, Copy, Check, Wallet, AlertCircle, Sparkles, Crown, Star } from 'lucide-react-native';
+import { X, RefreshCw, Copy, Check, Wallet, AlertCircle, Sparkles, Crown, Star, Gem } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SvgXml } from 'react-native-svg';
@@ -27,6 +28,7 @@ import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = Math.min(width - 48, 400);
 
 export default function MemberCodeScreen() {
   const insets = useSafeAreaInsets();
@@ -35,43 +37,63 @@ export default function MemberCodeScreen() {
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [syncedBalance, setSyncedBalance] = useState<number | null>(null);
+  
+  // Animation values
   const shimmerAnim = useRef(new Animated.Value(0)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
+  const tiltAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
   const memberCode = useMemo(() => (user?.memberId ?? '').trim(), [user?.memberId]);
 
   useEffect(() => {
-    const shimmer = Animated.loop(
-      Animated.timing(shimmerAnim, {
-        toValue: 1,
-        duration: 2500,
-        useNativeDriver: true,
-      })
-    );
-    shimmer.start();
+    // Entrance animation
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
 
-    const glow = Animated.loop(
+    // Continuous shimmer effect
+    const shimmerLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(glowAnim, {
+        Animated.timing(shimmerAnim, {
           toValue: 1,
-          duration: 1500,
+          duration: 3000,
+          easing: Easing.linear,
           useNativeDriver: true,
         }),
-        Animated.timing(glowAnim, {
+        Animated.delay(1000),
+      ])
+    );
+    shimmerLoop.start();
+
+    // Subtle breathing/tilt effect
+    const tiltLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(tiltAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(tiltAnim, {
           toValue: 0,
-          duration: 1500,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
     );
-    glow.start();
+    tiltLoop.start();
 
     return () => {
-      shimmer.stop();
-      glow.stop();
+      shimmerLoop.stop();
+      tiltLoop.stop();
     };
-  }, [shimmerAnim, glowAnim]);
+  }, [shimmerAnim, tiltAnim, scaleAnim]);
 
   const menusafeQuery = trpc.menusafe.getLatestBalance.useQuery(
     { memberId: user?.memberId || '' },
@@ -95,20 +117,20 @@ export default function MemberCodeScreen() {
 
   const shimmerTranslate = shimmerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-width, width],
+    outputRange: [-CARD_WIDTH * 1.5, CARD_WIDTH * 1.5],
   });
 
-  const glowOpacity = glowAnim.interpolate({
+  const cardRotateY = tiltAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
+    outputRange: ['-1deg', '1deg'],
   });
 
   const getTierIcon = () => {
     switch (effectiveTier) {
-      case 'blackGold': return <Crown size={14} color={cardTheme.accent} />;
-      case 'diamond': return <Sparkles size={14} color={cardTheme.accent} />;
-      case 'platinum': return <Star size={14} color={cardTheme.accent} />;
-      default: return null;
+      case 'blackGold': return <Crown size={16} color={cardTheme.accent} fill={cardTheme.accent} fillOpacity={0.2} />;
+      case 'diamond': return <Gem size={16} color={cardTheme.accent} fill={cardTheme.accent} fillOpacity={0.2} />;
+      case 'platinum': return <Star size={16} color={cardTheme.accent} fill={cardTheme.accent} fillOpacity={0.2} />;
+      default: return <Sparkles size={16} color={cardTheme.accent} />;
     }
   };
 
@@ -121,8 +143,8 @@ export default function MemberCodeScreen() {
         scale: 4,
         includetext: false,
         backgroundcolor: 'FFFFFF',
-        paddingwidth: 10,
-        paddingheight: 10,
+        paddingwidth: 0,
+        paddingheight: 0,
       });
     } catch {
       return null;
@@ -137,11 +159,11 @@ export default function MemberCodeScreen() {
         bcid: 'code128',
         text: memberCode,
         scale: 4,
-        height: 14,
+        height: 12,
         includetext: false,
         backgroundcolor: 'FFFFFF',
-        paddingwidth: 10,
-        paddingheight: 10,
+        paddingwidth: 0,
+        paddingheight: 0,
       });
     } catch {
       return null;
@@ -152,39 +174,23 @@ export default function MemberCodeScreen() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <View style={styles.backdrop} />
-
         <LinearGradient
-          colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.95)']}
+          colors={['#1a1a1a', '#000000']}
           style={StyleSheet.absoluteFill}
         />
-
-        <TouchableOpacity
-          style={styles.closeOverlay}
-          activeOpacity={1}
-          onPress={() => router.back()}
-        />
-
-        <View style={[styles.topBar, { top: insets.top + 16 }]}>
-          <LanguageToggle />
+        <View style={[styles.topBar, { top: insets.top + 10 }]}>
           <TouchableOpacity
-            style={styles.closePill}
+            style={styles.closeButton}
             onPress={() => router.back()}
-            activeOpacity={0.8}
           >
-            <X size={18} color={Colors.text} />
-            <Text style={styles.closePillText}>{t('common.close')}</Text>
+            <X size={24} color="#FFF" />
           </TouchableOpacity>
         </View>
-
-        <View style={styles.content}>
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>{t('memberCode.pleaseLoginFirst')}</Text>
-            <Text style={styles.errorSubtitle}>{t('memberCode.loginHint')}</Text>
-            <TouchableOpacity onPress={() => router.push('/login')} style={styles.loginButton}>
-              <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.centerContent}>
+          <Text style={styles.errorText}>{t('memberCode.pleaseLoginFirst')}</Text>
+          <TouchableOpacity onPress={() => router.push('/login')} style={styles.loginButton}>
+            <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -209,7 +215,6 @@ export default function MemberCodeScreen() {
 
     try {
       const passUrl = `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'http://localhost:3000'}/api/pass/${memberCode}`;
-      
       const supported = await Linking.canOpenURL(passUrl);
       if (supported) {
         await Linking.openURL(passUrl);
@@ -224,215 +229,200 @@ export default function MemberCodeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.backdrop} />
-      
+      {/* Dynamic Background based on tier */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.98)']}
+        colors={cardTheme.gradient}
         style={StyleSheet.absoluteFill}
-      />
-
-      <TouchableOpacity 
-        style={styles.closeOverlay} 
-        activeOpacity={1} 
-        onPress={() => router.back()}
-      />
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        locations={[0, 0.5, 1]}
+      >
+        <View style={[styles.backdropOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]} />
+      </LinearGradient>
 
       <View style={[styles.topBar, { top: insets.top + 16 }]}>
         <LanguageToggle />
         <TouchableOpacity
-          style={styles.closePill}
+          style={[styles.closePill, { borderColor: 'rgba(255,255,255,0.2)', backgroundColor: 'rgba(0,0,0,0.3)' }]}
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
-          <X size={18} color={Colors.text} />
-          <Text style={styles.closePillText}>{t('common.close')}</Text>
+          <X size={18} color="#FFF" />
+          <Text style={[styles.closePillText, { color: '#FFF' }]}>{t('common.close')}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>{t('memberCode.title')}</Text>
-
-        <View style={styles.cardContainer}>
-          <Animated.View style={[styles.cardGlow, { 
-            opacity: glowOpacity,
-            shadowColor: cardTheme.glowColor,
-            backgroundColor: cardTheme.glowColor,
-          }]} />
+        <Animated.View style={[
+          styles.cardWrapper,
+          { 
+            transform: [
+              { scale: scaleAnim },
+              { perspective: 1000 },
+              { rotateY: cardRotateY }
+            ]
+          }
+        ]}>
           
-          <LinearGradient
-            colors={cardTheme.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.card, { borderColor: cardTheme.borderColor }]}
-          >
+          {/* Main Card */}
+          <View style={[
+              styles.cardContainer,
+              { 
+                borderColor: cardTheme.borderColor,
+                backgroundColor: cardTheme.gradient[0] // Fallback
+              }
+            ]}>
+            
+            {/* Card Background Gradient */}
             <LinearGradient
-              colors={cardTheme.overlayGradient}
+              colors={cardTheme.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.cardOverlay}
+              style={StyleSheet.absoluteFill}
             />
 
+            {/* Decorative Patterns */}
+            <View style={styles.cardPattern}>
+               <View style={[styles.circleDecor, { borderColor: cardTheme.decorationBorder, width: 300, height: 300, top: -100, right: -100 }]} />
+               <View style={[styles.circleDecor, { borderColor: cardTheme.decorationBorder, width: 200, height: 200, bottom: -50, left: -50 }]} />
+            </View>
+
+            {/* Shimmer Effect */}
             <Animated.View
               style={[
-                styles.shimmer,
-                { transform: [{ translateX: shimmerTranslate }, { rotate: '15deg' }] },
+                styles.shimmerLayer,
+                { transform: [{ translateX: shimmerTranslate }, { rotate: '25deg' }] },
               ]}
             >
               <LinearGradient
                 colors={['transparent', cardTheme.shimmerIntense, 'transparent']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
                 style={StyleSheet.absoluteFill}
               />
             </Animated.View>
 
-            <View style={styles.cardHeader}>
-              <View style={styles.userInfo}>
-                <LinearGradient
-                  colors={cardTheme.chipGradient}
-                  style={styles.avatar}
-                >
-                  <Text style={styles.avatarText}>{user.name.charAt(0)}</Text>
-                </LinearGradient>
+            {/* Content Layer */}
+            <View style={styles.cardContent}>
+              
+              {/* Card Header */}
+              <View style={styles.cardHeader}>
                 <View>
-                  <Text style={[styles.userName, { color: cardTheme.text }]}>{user.name}</Text>
-                  <View style={styles.tierBadgeContainer}>
-                    <LinearGradient
-                      colors={cardTheme.tierBadgeGradient}
-                      style={styles.tierBadge}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      {getTierIcon()}
-                      <Text style={styles.tierBadgeText}>{t(`tier.${effectiveTier}`)}</Text>
-                    </LinearGradient>
+                  <Text style={[styles.appName, { color: cardTheme.textMuted }]}>VIP MEMBER</Text>
+                  <View style={styles.tierContainer}>
+                    {getTierIcon()}
+                    <Text style={[styles.tierName, { color: cardTheme.accent }]}>
+                      {t(`tier.${effectiveTier}`)}
+                    </Text>
                   </View>
                 </View>
-              </View>
-            </View>
-
-            <View style={styles.codeContainer}>
-              <View style={styles.qrCodeWrapper}>
-                {qrSvg ? (
-                  <SvgXml
-                    key={`qr-${refreshKey}`}
-                    xml={qrSvg}
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid meet"
-                  />
-                ) : (
-                  <View style={styles.codeError}>
-                    <Text style={styles.codeErrorText}>{t('code.qrFailed')}</Text>
-                  </View>
-                )}
+                {/* Chip Icon */}
+                <View style={styles.chipIcon}>
+                  <LinearGradient
+                    colors={cardTheme.chipGradient}
+                    style={styles.chipInner}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <View style={styles.chipLine1} />
+                    <View style={styles.chipLine2} />
+                  </LinearGradient>
+                </View>
               </View>
 
-              <View style={styles.barcodeWrapper}>
-                {barcodeSvg ? (
-                  <SvgXml
-                    key={`bar-${refreshKey}`}
-                    xml={barcodeSvg}
-                    width="100%"
-                    height="100%"
-                    preserveAspectRatio="xMidYMid meet"
-                  />
-                ) : (
-                  <View style={styles.codeError}>
-                    <Text style={styles.codeErrorText}>{t('code.barcodeFailed')}</Text>
-                  </View>
-                )}
+              {/* User Details */}
+              <View style={styles.userDetails}>
+                <Text style={[styles.userNameLabel, { color: cardTheme.textMuted }]}>{t('memberCode.member')}</Text>
+                <Text style={[styles.userName, { color: cardTheme.text, textShadowColor: cardTheme.glowColor, textShadowRadius: 10 }]}>
+                  {user.name}
+                </Text>
+              </View>
+
+              {/* QR Code Section - Ticket Style */}
+              <View style={styles.ticketSection}>
+                 <View style={styles.qrContainer}>
+                    {qrSvg ? (
+                      <SvgXml xml={qrSvg} width="100%" height="100%" />
+                    ) : (
+                      <ActivityIndicator color={Colors.primary} />
+                    )}
+                 </View>
+                 
+                 <View style={styles.barcodeSection}>
+                    {barcodeSvg && (
+                      <View style={styles.barcodeContainer}>
+                         <SvgXml xml={barcodeSvg} width="100%" height="100%" preserveAspectRatio="none" />
+                      </View>
+                    )}
+                    <TouchableOpacity 
+                      style={styles.codeTextContainer}
+                      onPress={copyToClipboard}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.codeText}>{memberCode}</Text>
+                      {copied ? <Check size={14} color={Colors.success} /> : <Copy size={14} color="#666" />}
+                    </TouchableOpacity>
+                 </View>
+              </View>
+
+              {/* Bottom Footer */}
+              <View style={styles.cardFooter}>
+                 <TouchableOpacity 
+                    style={styles.refreshBtn}
+                    onPress={handleRefresh}
+                 >
+                    <RefreshCw size={14} color={cardTheme.textMuted} />
+                    <Text style={[styles.refreshLabel, { color: cardTheme.textMuted }]}>
+                      {t('common.refresh')}
+                    </Text>
+                 </TouchableOpacity>
+                 <Text style={[styles.memberSince, { color: cardTheme.textMuted }]}>
+                    {t('profile.joinDate')}: {user.joinDate}
+                 </Text>
               </View>
             </View>
+          </View>
+        </Animated.View>
 
-            <TouchableOpacity 
-              style={styles.memberIdRow}
-              onPress={copyToClipboard}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.memberIdLabel, { color: cardTheme.textMuted }]}>{t('memberCode.memberCardNo')}</Text>
-              <View style={[styles.memberIdValueContainer, { 
-                backgroundColor: cardTheme.qrBackground,
-                borderColor: cardTheme.borderColor,
-              }]}>
-                <Text style={[styles.memberIdValue, { color: cardTheme.text }]}>{memberCode}</Text>
-                {copied ? (
-                  <Check size={16} color={Colors.success} style={styles.copyIcon} />
-                ) : (
-                  <Copy size={16} color={cardTheme.textMuted} style={styles.copyIcon} />
-                )}
-              </View>
-            </TouchableOpacity>
-
-            <View style={[styles.divider, { backgroundColor: cardTheme.decorationBorder }]} />
-
-            <View style={styles.tipsContainer}>
-              <Text style={[styles.tipsText, { color: cardTheme.textMuted }]}>{t('memberCode.showToCashier')}</Text>
-              <TouchableOpacity 
-                style={styles.refreshButton}
-                onPress={handleRefresh}
-              >
-                <RefreshCw size={14} color={cardTheme.accent} />
-                <Text style={[styles.refreshText, { color: cardTheme.accent }]}>{t('common.refresh')}</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.cardDecoration}>
-              <View style={[styles.decorCircle, styles.decorCircle1, { borderColor: cardTheme.decorationBorder }]} />
-              <View style={[styles.decorCircle, styles.decorCircle2, { borderColor: cardTheme.decorationBorder }]} />
-            </View>
-          </LinearGradient>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.walletButton}
-          onPress={handleAddToWallet}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#000000', '#1a1a1a']}
-            style={styles.walletButtonGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
+        {/* Action Buttons & Info */}
+        <View style={styles.actionContainer}>
+          <TouchableOpacity 
+            style={styles.walletButton}
+            onPress={handleAddToWallet}
+            activeOpacity={0.9}
           >
-            <Wallet size={20} color="#FFF" style={{ marginRight: 8 }} />
-            <Text style={styles.walletButtonText}>{t('memberCode.addToWallet')}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={['#111', '#333']}
+              style={styles.walletGradient}
+              start={{x:0, y:0}} end={{x:1, y:0}}
+            >
+              <Wallet size={20} color="#FFF" />
+              <Text style={styles.walletText}>{t('memberCode.addToWallet')}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        <View style={styles.balanceCard}>
-          {menusafeQuery.isFetching && (
-            <View style={styles.syncingOverlay}>
-              <ActivityIndicator size="small" color={Colors.primary} />
-              <Text style={styles.syncingText}>{t('common.syncing')}</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+               <Text style={styles.statLabel}>{t('memberCode.balance')}</Text>
+               <Text style={styles.statValue}>
+                 ${displayBalance.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+               </Text>
+               {menusafeQuery.isFetching && <ActivityIndicator size="small" color={Colors.primary} style={styles.loader} />}
             </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+               <Text style={styles.statLabel}>{t('memberCode.points')}</Text>
+               <Text style={styles.statValue}>{displayPoints.toLocaleString(numberLocale)}</Text>
+            </View>
+          </View>
+          
+          {menusafeQuery.isError && (
+             <View style={styles.errorBanner}>
+               <AlertCircle size={14} color="#FF6B6B" />
+               <Text style={styles.errorBannerText}>{t('memberCode.syncError')}</Text>
+             </View>
           )}
-          <View style={styles.balanceItem}>
-            <Text style={styles.balanceLabel}>{t('memberCode.balance')}</Text>
-            <Text style={styles.balanceValue}>
-              ${displayBalance.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Text>
-          </View>
-          <View style={styles.balanceDivider} />
-          <View style={styles.balanceItem}>
-            <Text style={styles.balanceLabel}>{t('memberCode.points')}</Text>
-            <View style={styles.pointsRow}>
-              <Sparkles size={14} color={Colors.primary} style={{ marginRight: 4 }} />
-              <Text style={[styles.balanceValue, { color: Colors.primary }]}>
-                {displayPoints.toLocaleString(numberLocale)}
-              </Text>
-            </View>
-          </View>
         </View>
-
-        {menusafeQuery.isError && (
-          <View style={styles.syncErrorBanner}>
-            <AlertCircle size={14} color={Colors.warning} />
-            <Text style={styles.syncErrorText}>
-              {t('memberCode.syncError')}
-            </Text>
-          </View>
-        )}
       </View>
     </View>
   );
@@ -441,369 +431,314 @@ export default function MemberCodeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-end',
+    backgroundColor: '#000',
   },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'black',
-  },
-  closeOverlay: {
+  backdropOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
   topBar: {
     position: 'absolute',
     left: 24,
     right: 24,
-    zIndex: 20,
+    zIndex: 50,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 20,
-    letterSpacing: 0.5,
   },
   closePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: Colors.border,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
   closePillText: {
-    color: Colors.text,
     fontSize: 12,
-    fontWeight: '700' as const,
-    letterSpacing: 0.5,
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+  },
+  cardWrapper: {
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 20,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 20,
   },
   cardContainer: {
-    marginBottom: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'hidden',
+    aspectRatio: 0.62, // Vertical card ratio
     position: 'relative',
   },
-  cardGlow: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    right: 8,
-    bottom: -8,
-    borderRadius: 28,
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.5,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 10,
-      },
-      default: {},
-    }),
-  },
-  card: {
-    borderRadius: 24,
-    padding: 24,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-  },
-  cardOverlay: {
+  cardPattern: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 24,
+    overflow: 'hidden',
   },
-  shimmer: {
+  circleDecor: {
     position: 'absolute',
-    top: -50,
+    borderRadius: 999,
+    borderWidth: 1,
+    opacity: 0.3,
+  },
+  shimmerLayer: {
+    position: 'absolute',
+    top: -100,
     left: 0,
     right: 0,
-    bottom: -50,
-    width: width * 0.5,
+    bottom: -100,
+    zIndex: 10,
+  },
+  cardContent: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'space-between',
+    zIndex: 20,
   },
   cardHeader: {
-    marginBottom: 20,
-    zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  userInfo: {
+  appName: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginBottom: 4,
+    opacity: 0.8,
+  },
+  tierContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  avatarText: {
-    fontSize: 22,
-    fontWeight: '700' as const,
-    color: '#1A1A1A',
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    marginBottom: 6,
-  },
-  tierBadgeContainer: {
-    alignSelf: 'flex-start',
-  },
-  tierBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  tierBadgeText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: '#1A1A1A',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  codeContainer: {
-    width: '100%',
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 20,
-    zIndex: 1,
-  },
-  qrCodeWrapper: {
-    width: 180,
-    height: 180,
-    marginBottom: 16,
-  },
-  codeError: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-  },
-  codeErrorText: {
-    color: '#111111',
-    fontSize: 12,
-    fontWeight: '600' as const,
-  },
-  barcodeWrapper: {
-    width: '100%',
-    height: 70,
-  },
-  memberIdRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 16,
-    zIndex: 1,
-  },
-  memberIdLabel: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  memberIdValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 100,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  memberIdValue: {
-    fontSize: 15,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    marginRight: 8,
-    letterSpacing: 1.5,
-    fontWeight: '600' as const,
+  tierName: {
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  copyIcon: {
-    opacity: 0.7,
-  },
-  divider: {
-    width: '100%',
-    height: 1,
-    marginBottom: 16,
-    zIndex: 1,
-  },
-  tipsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    zIndex: 1,
-  },
-  tipsText: {
-    fontSize: 12,
-    fontWeight: '500' as const,
-  },
-  refreshButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  refreshText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-  },
-  cardDecoration: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+  chipIcon: {
+    width: 45,
+    height: 34,
+    borderRadius: 6,
     overflow: 'hidden',
-    borderRadius: 24,
-    pointerEvents: 'none',
-  },
-  decorCircle: {
-    position: 'absolute',
-    borderRadius: 150,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  decorCircle1: {
-    width: 200,
-    height: 200,
-    top: -100,
-    right: -60,
+  chipInner: {
+    flex: 1,
+    position: 'relative',
+    justifyContent: 'center',
   },
-  decorCircle2: {
-    width: 150,
-    height: 150,
-    bottom: -75,
-    left: -50,
+  chipLine1: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '33%',
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  chipLine2: {
+    position: 'absolute',
+    left: '33%',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  userDetails: {
+    marginVertical: 20,
+  },
+  userNameLabel: {
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  ticketSection: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  qrContainer: {
+    width: 160,
+    height: 160,
+    marginBottom: 16,
+  },
+  barcodeSection: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 8,
+  },
+  barcodeContainer: {
+    width: '100%',
+    height: 40,
+    overflow: 'hidden',
+  },
+  codeTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+  },
+  codeText: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  refreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  refreshLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  memberSince: {
+    fontSize: 11,
+    opacity: 0.8,
+  },
+  actionContainer: {
+    width: '100%',
+    marginTop: 32,
+    gap: 16,
   },
   walletButton: {
-    marginBottom: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  walletButtonGradient: {
+  walletGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    backgroundColor: 'black',
+    gap: 10,
   },
-  walletButtonText: {
-    color: 'white',
+  walletText: {
+    color: '#FFF',
     fontSize: 16,
-    fontWeight: '600' as const,
+    fontWeight: '600',
   },
-  balanceCard: {
+  statsRow: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  balanceItem: {
+  statItem: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  balanceDivider: {
+  statDivider: {
     width: 1,
-    height: '100%',
-    backgroundColor: Colors.border,
+    height: '80%',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignSelf: 'center',
   },
-  balanceLabel: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginBottom: 8,
-    fontWeight: '600' as const,
-    letterSpacing: 0.5,
+  statLabel: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
     textTransform: 'uppercase',
+    marginBottom: 4,
+    fontWeight: '600',
   },
-  balanceValue: {
-    fontSize: 22,
-    fontWeight: '700' as const,
-    color: Colors.text,
+  statValue: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700',
   },
-  pointsRow: {
+  loader: {
+    marginTop: 4,
+  },
+  errorBanner: {
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  syncingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
-    flexDirection: 'row',
-    gap: 8,
-  },
-  syncingText: {
-    color: Colors.text,
-    fontSize: 12,
-  },
-  syncErrorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255, 193, 7, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 12,
+    padding: 8,
   },
-  syncErrorText: {
-    color: Colors.warning,
+  errorBannerText: {
+    color: '#FF6B6B',
     fontSize: 12,
   },
-  errorContainer: {
-    backgroundColor: Colors.surface,
-    padding: 24,
-    borderRadius: 16,
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    padding: 24,
   },
-  errorTitle: {
-    color: Colors.text,
-    fontSize: 20,
-    fontWeight: '800' as const,
+  errorText: {
+    color: '#FFF',
+    fontSize: 16,
+    marginBottom: 20,
     textAlign: 'center',
-    marginBottom: 10,
-  },
-  errorSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 18,
   },
   loginButton: {
-    height: 44,
-    paddingHorizontal: 18,
-    borderRadius: 12,
     backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   loginButtonText: {
-    color: Colors.background,
-    fontWeight: '700' as const,
+    color: '#000',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
 });

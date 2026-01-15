@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,15 +24,20 @@ import {
   Settings,
   MapPin,
   RefreshCw,
+  Crown,
+  Gem,
+  Star,
+  Sparkles,
+  QrCode,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { migrationService } from '@/lib/migration';
 import { getTierFromBalance } from '@/lib/tier';
+import { getVipCardTheme } from '@/lib/vipCardTheme';
 
 interface MenuItem {
   icon: typeof Bell;
@@ -77,7 +83,8 @@ export default function ProfileScreen() {
   const { t } = useI18n();
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
-  const tier = tierInfo[effectiveTier];
+  const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
+  
   const sections = user
     ? menuSections
     : menuSections.filter((section) => section.titleKey !== 'profile.section.migration');
@@ -115,7 +122,6 @@ export default function ProfileScreen() {
                 t('profile.migration.success'),
                 `${t('home.balance')}: $${balance.toFixed(2)}`
               );
-              // In a real app, you would refresh the user context here
             } catch {
               Alert.alert(t('forgot.error'), t('profile.migration.notFound'));
             }
@@ -123,6 +129,15 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  const getTierIcon = () => {
+    switch (effectiveTier) {
+      case 'blackGold': return <Crown size={16} color={cardTheme.accent} fill={cardTheme.accent} fillOpacity={0.2} />;
+      case 'diamond': return <Gem size={16} color={cardTheme.accent} fill={cardTheme.accent} fillOpacity={0.2} />;
+      case 'platinum': return <Star size={16} color={cardTheme.accent} fill={cardTheme.accent} fillOpacity={0.2} />;
+      default: return <Sparkles size={16} color={cardTheme.accent} />;
+    }
   };
 
   return (
@@ -137,53 +152,105 @@ export default function ProfileScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.languageRow}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('profile.title')}</Text>
           <LanguageToggle />
         </View>
 
-        <Text style={styles.title}>{t('profile.title')}</Text>
-
-        <TouchableOpacity
-          style={styles.profileCard}
-          activeOpacity={user ? 1 : 0.8}
-          disabled={!!user}
-          onPress={() => router.push('/login')}
-        >
-          <LinearGradient
-            colors={[Colors.surface, Colors.surfaceLight]}
-            style={styles.profileGradient}
+        {user ? (
+          <TouchableOpacity
+            style={[styles.profileCard, { 
+              shadowColor: cardTheme.glowColor,
+              borderColor: cardTheme.borderColor 
+            }]}
+            activeOpacity={0.9}
+            onPress={() => router.push('/member-code')}
           >
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={[Colors.primary, Colors.primaryDark]}
-                style={styles.avatarGradient}
-              >
-                <Text style={styles.avatarText}>
-                  {user ? user.name?.charAt(0) ?? '' : ''}
-                </Text>
-              </LinearGradient>
-              <View style={[styles.tierBadge, { backgroundColor: tier.color }]}>
-                <Text style={styles.tierBadgeText}>{t('common.vip')}</Text>
+            {/* Main Card Background */}
+            <LinearGradient
+              colors={cardTheme.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            
+            {/* Pattern Overlay */}
+            <View style={styles.cardPattern}>
+              <View style={[styles.circleDecor, { borderColor: cardTheme.decorationBorder, width: 200, height: 200, top: -80, right: -60 }]} />
+              <View style={[styles.circleDecor, { borderColor: cardTheme.decorationBorder, width: 140, height: 140, bottom: -40, left: -30 }]} />
+            </View>
+
+            {/* Shimmer Effect */}
+            <LinearGradient
+              colors={cardTheme.overlayGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                <View style={styles.avatarContainer}>
+                  <LinearGradient
+                    colors={cardTheme.chipGradient}
+                    style={styles.avatar}
+                  >
+                    <Text style={[styles.avatarText, { color: '#000' }]}>
+                      {user.name.charAt(0)}
+                    </Text>
+                  </LinearGradient>
+                  <View>
+                     <Text style={[styles.profileName, { color: cardTheme.text }]}>{user.name}</Text>
+                     <View style={styles.tierBadgeRow}>
+                        {getTierIcon()}
+                        <Text style={[styles.profileTier, { color: cardTheme.accent }]}>
+                          {t(`tier.${effectiveTier}`)}
+                        </Text>
+                     </View>
+                  </View>
+                </View>
+
+                <View style={[styles.qrButton, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                   <QrCode size={20} color={cardTheme.text} />
+                </View>
+              </View>
+
+              <View style={styles.cardFooter}>
+                 <View style={styles.memberIdContainer}>
+                    <Text style={[styles.memberIdLabel, { color: cardTheme.textMuted }]}>{t('memberCode.memberCardNo')}</Text>
+                    <Text style={[styles.memberIdValue, { color: cardTheme.text }]}>{user.memberId}</Text>
+                 </View>
+                 <View style={styles.tapHint}>
+                    <Text style={[styles.tapHintText, { color: cardTheme.accent }]}>{t('profile.tapToView')}</Text>
+                    <ChevronRight size={14} color={cardTheme.accent} />
+                 </View>
               </View>
             </View>
-
-            <View style={styles.profileInfo}>
-              {user ? (
-                <>
-                  <Text style={styles.profileName}>{user.name}</Text>
-                  <Text style={[styles.profileTier, { color: tier.color }]}>
-                    {t(`tier.${effectiveTier}`)}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.profileName}>{t('auth.login')}</Text>
-                  <Text style={styles.profileSignInHint}>{t('profile.signInHint')}</Text>
-                </>
-              )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.loginCard}
+            onPress={() => router.push('/login')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.loginContent}>
+              <View style={styles.loginIconContainer}>
+                <LogIn size={24} color={Colors.background} />
+              </View>
+              <View>
+                <Text style={styles.loginTitle}>{t('auth.login')}</Text>
+                <Text style={styles.loginSubtitle}>{t('profile.signInHint')}</Text>
+              </View>
+              <ChevronRight size={20} color={Colors.background} style={{ marginLeft: 'auto' }} />
             </View>
-          </LinearGradient>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
         {user ? (
           <View style={styles.infoCard}>
@@ -256,7 +323,7 @@ export default function ProfileScreen() {
           </View>
         ))}
 
-        {user ? (
+        {user && (
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
@@ -264,15 +331,6 @@ export default function ProfileScreen() {
           >
             <LogOut size={20} color={Colors.error} />
             <Text style={styles.logoutText}>{t('profile.logout')}</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.signInButton}
-            onPress={() => router.push('/login')}
-            activeOpacity={0.8}
-          >
-            <LogIn size={20} color={Colors.background} />
-            <Text style={styles.signInText}>{t('auth.login')}</Text>
           </TouchableOpacity>
         )}
 
@@ -295,74 +353,152 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
   },
-  languageRow: {
-    marginBottom: 16,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     color: Colors.text,
-    marginBottom: 24,
   },
   profileCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
-    marginBottom: 16,
-  },
-  profileGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
+    marginBottom: 24,
+    minHeight: 180,
     borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  cardPattern: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  circleDecor: {
+    position: 'absolute',
+    borderRadius: 999,
+    borderWidth: 1.5,
+    opacity: 0.3,
+  },
+  cardContent: {
+    padding: 24,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   avatarContainer: {
-    position: 'relative',
-    marginRight: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
-  avatarGradient: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  tierBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  profileTier: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  qrButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: '700' as const,
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 20,
+  },
+  memberIdContainer: {
+    gap: 4,
+  },
+  memberIdLabel: {
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  memberIdValue: {
+    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  tapHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tapHintText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  loginCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 24,
+    minHeight: 100,
+  },
+  loginContent: {
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loginIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     color: Colors.background,
+    marginBottom: 2,
   },
-  tierBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  tierBadgeText: {
-    fontSize: 10,
-    fontWeight: '700' as const,
-    color: Colors.background,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 22,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  profileTier: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-  },
-  profileSignInHint: {
+  loginSubtitle: {
     fontSize: 13,
-    fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: 'rgba(255,255,255,0.8)',
   },
   infoCard: {
     backgroundColor: Colors.surface,
@@ -392,7 +528,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     color: Colors.text,
-    fontWeight: '500' as const,
+    fontWeight: '500',
   },
   infoDivider: {
     height: 1,
@@ -459,22 +595,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     color: Colors.error,
-    fontWeight: '500' as const,
-  },
-  signInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-    marginBottom: 16,
-  },
-  signInText: {
-    fontSize: 16,
-    color: Colors.background,
-    fontWeight: '700' as const,
+    fontWeight: '500',
   },
   version: {
     textAlign: 'center',
