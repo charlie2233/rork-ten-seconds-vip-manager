@@ -70,7 +70,7 @@ export default function TransactionsScreen() {
     { userId: user?.id, limit: 50 },
     { enabled: !!user }
   );
-  const transactions = transactionsQuery.data ?? [];
+  const transactions = useMemo(() => transactionsQuery.data ?? [], [transactionsQuery.data]);
 
   const billingTransactions = transactions.filter((tx) => tx.type !== 'bonus');
 
@@ -109,6 +109,7 @@ export default function TransactionsScreen() {
         description: tx.description,
         date: tx.date,
         source: 'bonus' as const,
+        couponId: undefined as string | undefined,
       }));
 
     return [...local, ...bonus].sort((a, b) => parseDateLike(b.date) - parseDateLike(a.date));

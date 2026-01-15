@@ -7,16 +7,17 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn } from 'lucide-react-native';
+import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn, Sparkles, Crown, Star } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
 import { useAuth } from '@/contexts/AuthContext';
 import { storeLocations } from '@/mocks/data';
 import { trpc } from '@/lib/trpc';
-import { getTierFromBalance } from '@/lib/tier';
+import { getTierFromBalance, TIER_MIN_BALANCE, TIER_ORDER } from '@/lib/tier';
 import Colors from '@/constants/colors';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
@@ -25,12 +26,15 @@ import { getVipCardTheme } from '@/lib/vipCardTheme';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
+const CARD_HEIGHT = 240;
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { t, locale } = useI18n();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
   const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
@@ -38,29 +42,72 @@ export default function HomeScreen() {
     const shimmer = Animated.loop(
       Animated.timing(shimmerAnim, {
         toValue: 1,
-        duration: 2000,
+        duration: 2500,
         useNativeDriver: true,
       })
     );
     shimmer.start();
-    return () => shimmer.stop();
-  }, [shimmerAnim]);
 
-  // Auto-renew (refresh) balance from MenuSafe every 5 seconds when screen is focused
+    const glow = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    glow.start();
+
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.02,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+
+    return () => {
+      shimmer.stop();
+      glow.stop();
+      pulse.stop();
+    };
+  }, [shimmerAnim, glowAnim, pulseAnim]);
+
   const { data: latestBalance } = trpc.menusafe.getLatestBalance.useQuery(
     { memberId: user?.memberId ?? '' },
     { 
       enabled: !!user?.memberId,
-      refetchInterval: 5000, // Poll every 5 seconds
+      refetchInterval: 5000,
       refetchOnWindowFocus: true,
     }
   );
 
-  // Use latest polled balance if available, otherwise fall back to stored user balance
   const displayBalance = latestBalance?.balance ?? user?.balance ?? 0;
   const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
+
+  const currentTierIndex = TIER_ORDER.indexOf(effectiveTier);
+  const nextTier = currentTierIndex < TIER_ORDER.length - 1 ? TIER_ORDER[currentTierIndex + 1] : null;
+  const nextTierMin = nextTier ? TIER_MIN_BALANCE[nextTier] : null;
+  const currentTierMin = TIER_MIN_BALANCE[effectiveTier];
+  const progressToNext = nextTierMin 
+    ? Math.min(100, ((displayBalance - currentTierMin) / (nextTierMin - currentTierMin)) * 100)
+    : 100;
 
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
@@ -90,8 +137,22 @@ export default function HomeScreen() {
 
   const shimmerTranslate = shimmerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-CARD_WIDTH, CARD_WIDTH],
+    outputRange: [-CARD_WIDTH * 1.5, CARD_WIDTH * 1.5],
   });
+
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.8],
+  });
+
+  const getTierIcon = () => {
+    switch (effectiveTier) {
+      case 'blackGold': return <Crown size={16} color={cardTheme.accent} />;
+      case 'diamond': return <Sparkles size={16} color={cardTheme.accent} />;
+      case 'platinum': return <Star size={16} color={cardTheme.accent} />;
+      default: return null;
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -111,21 +172,50 @@ export default function HomeScreen() {
           <Text style={styles.userName}>{user?.name ?? ''}</Text>
         </View>
 
-        <View style={styles.cardContainer}>
+        <Animated.View style={[styles.cardContainer, { transform: [{ scale: pulseAnim }] }]}>
+          <Animated.View style={[styles.cardGlow, { 
+            opacity: glowOpacity,
+            shadowColor: cardTheme.glowColor,
+            backgroundColor: cardTheme.glowColor,
+          }]} />
+          
           <LinearGradient
             colors={cardTheme.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.vipCard, { borderColor: cardTheme.borderColor }]}
           >
+            <LinearGradient
+              colors={cardTheme.overlayGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardOverlay}
+            />
+
+            <View style={styles.patternContainer}>
+              {[...Array(6)].map((_, i) => (
+                <View 
+                  key={i} 
+                  style={[
+                    styles.patternLine,
+                    { 
+                      backgroundColor: cardTheme.patternColor,
+                      left: `${15 + i * 15}%`,
+                      transform: [{ rotate: '45deg' }],
+                    }
+                  ]} 
+                />
+              ))}
+            </View>
+
             <Animated.View
               style={[
                 styles.shimmer,
-                { transform: [{ translateX: shimmerTranslate }] },
+                { transform: [{ translateX: shimmerTranslate }, { rotate: '15deg' }] },
               ]}
             >
               <LinearGradient
-                colors={['transparent', cardTheme.shimmer, 'transparent']}
+                colors={['transparent', cardTheme.shimmerIntense, 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
@@ -134,27 +224,57 @@ export default function HomeScreen() {
 
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
-                <Text style={[styles.brandName, { color: cardTheme.accent }]}>
-                  {t('brand.shortName')}
-                </Text>
+                <View style={styles.brandRow}>
+                  <Text style={[styles.brandName, { color: cardTheme.accent }]}>
+                    {t('brand.shortName')}
+                  </Text>
+                  <View style={[styles.chipContainer]}>
+                    <LinearGradient
+                      colors={cardTheme.chipGradient}
+                      style={styles.chip}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <View style={styles.chipLines}>
+                        <View style={[styles.chipLine, { backgroundColor: 'rgba(0,0,0,0.15)' }]} />
+                        <View style={[styles.chipLine, { backgroundColor: 'rgba(0,0,0,0.15)' }]} />
+                        <View style={[styles.chipLine, { backgroundColor: 'rgba(0,0,0,0.15)' }]} />
+                      </View>
+                    </LinearGradient>
+                  </View>
+                </View>
                 <Text style={[styles.storeAddress, { color: cardTheme.textSecondary }]} numberOfLines={1}>
                   {storeAddress}
                 </Text>
-                <Text style={[styles.tierName, { color: cardTheme.accent }]}>
-                  {t(`tier.${effectiveTier}`)}
-                </Text>
+                
+                <View style={styles.tierBadgeContainer}>
+                  <LinearGradient
+                    colors={cardTheme.tierBadgeGradient}
+                    style={styles.tierBadge}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    {getTierIcon()}
+                    <Text style={styles.tierBadgeText}>
+                      {t(`tier.${effectiveTier}`)}
+                    </Text>
+                  </LinearGradient>
+                </View>
               </View>
               <TouchableOpacity 
-                style={[styles.qrButton, { backgroundColor: cardTheme.qrBackground, borderColor: cardTheme.borderColor }]}
-                onPress={() => (user ? router.push('/member-code') : router.push('/login'))}
+                style={[styles.qrButton, { 
+                  backgroundColor: cardTheme.qrBackground, 
+                  borderColor: cardTheme.borderColor,
+                }]}
+                onPress={() => router.push('/member-code')}
                 activeOpacity={0.7}
               >
-                <QrCode size={28} color={cardTheme.accent} />
+                <QrCode size={26} color={cardTheme.accent} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.balanceContainer}>
-              <Text style={[styles.balanceLabel, { color: cardTheme.textSecondary }]}>
+              <Text style={[styles.balanceLabel, { color: cardTheme.textMuted }]}>
                 {t('home.balance')}
               </Text>
               <View style={styles.balanceRow}>
@@ -166,6 +286,22 @@ export default function HomeScreen() {
                   })}
                 </Text>
               </View>
+              
+              {nextTier && (
+                <View style={styles.progressContainer}>
+                  <View style={[styles.progressTrack, { backgroundColor: cardTheme.patternColor }]}>
+                    <LinearGradient
+                      colors={cardTheme.chipGradient}
+                      style={[styles.progressFill, { width: `${progressToNext}%` }]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    />
+                  </View>
+                  <Text style={[styles.progressText, { color: cardTheme.textMuted }]}>
+                    ${(nextTierMin! - displayBalance).toFixed(0)} {t('home.toNextTier')}
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.cardFooter}>
@@ -193,7 +329,7 @@ export default function HomeScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity 
-                    style={styles.loginPrompt}
+                    style={[styles.loginPrompt, { backgroundColor: `${cardTheme.accent}15` }]}
                     onPress={() => router.push('/login')}
                   >
                     <LogIn size={12} color={cardTheme.accent} />
@@ -207,18 +343,22 @@ export default function HomeScreen() {
                 <Text style={[styles.pointsLabel, { color: cardTheme.textMuted }]}>
                   {t('home.points')}
                 </Text>
-                <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
-                  {displayPoints.toLocaleString(numberLocale)}
-                </Text>
+                <View style={styles.pointsValueRow}>
+                  <Sparkles size={14} color={cardTheme.accent} style={{ marginRight: 4 }} />
+                  <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
+                    {displayPoints.toLocaleString(numberLocale)}
+                  </Text>
+                </View>
               </View>
             </View>
 
             <View style={styles.cardDecoration}>
               <View style={[styles.decorCircle, styles.decorCircle1, { borderColor: cardTheme.decorationBorder }]} />
               <View style={[styles.decorCircle, styles.decorCircle2, { borderColor: cardTheme.decorationBorder }]} />
+              <View style={[styles.decorCircle, styles.decorCircle3, { borderColor: cardTheme.decorationBorder }]} />
             </View>
           </LinearGradient>
-        </View>
+        </Animated.View>
 
         <View style={styles.quickActions}>
           <TouchableOpacity 
@@ -226,9 +366,12 @@ export default function HomeScreen() {
             activeOpacity={0.7}
             onPress={() => router.push('/recharge')}
           >
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(201, 169, 98, 0.15)' }]}>
+            <LinearGradient
+              colors={['rgba(201, 169, 98, 0.2)', 'rgba(201, 169, 98, 0.08)']}
+              style={styles.actionIcon}
+            >
               <Wallet size={22} color={Colors.primary} />
-            </View>
+            </LinearGradient>
             <Text style={styles.actionText}>{t('home.action.recharge')}</Text>
           </TouchableOpacity>
           
@@ -237,9 +380,12 @@ export default function HomeScreen() {
             activeOpacity={0.7}
             onPress={() => router.push('/(tabs)/benefits')}
           >
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(212, 57, 58, 0.15)' }]}>
+            <LinearGradient
+              colors={['rgba(212, 57, 58, 0.2)', 'rgba(212, 57, 58, 0.08)']}
+              style={styles.actionIcon}
+            >
               <Gift size={22} color={Colors.secondary} />
-            </View>
+            </LinearGradient>
             <Text style={styles.actionText}>{t('home.action.coupons')}</Text>
           </TouchableOpacity>
           
@@ -248,9 +394,12 @@ export default function HomeScreen() {
             activeOpacity={0.7}
             onPress={() => router.push('/(tabs)/transactions')}
           >
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
+            <LinearGradient
+              colors={['rgba(76, 175, 80, 0.2)', 'rgba(76, 175, 80, 0.08)']}
+              style={styles.actionIcon}
+            >
               <TrendingUp size={22} color={Colors.success} />
-            </View>
+            </LinearGradient>
             <Text style={styles.actionText}>{t('home.action.transactions')}</Text>
           </TouchableOpacity>
           
@@ -259,9 +408,12 @@ export default function HomeScreen() {
             activeOpacity={0.7}
             onPress={() => (user ? router.push('/member-code') : router.push('/login'))}
           >
-            <View style={[styles.actionIcon, { backgroundColor: 'rgba(255, 152, 0, 0.15)' }]}>
+            <LinearGradient
+              colors={['rgba(255, 152, 0, 0.2)', 'rgba(255, 152, 0, 0.08)']}
+              style={styles.actionIcon}
+            >
               <QrCode size={22} color={Colors.warning} />
-            </View>
+            </LinearGradient>
             <Text style={styles.actionText}>{t('home.action.memberCode')}</Text>
           </TouchableOpacity>
         </View>
@@ -364,114 +516,225 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   greeting: {
-    fontSize: 18,
+    fontSize: 16,
     color: Colors.textSecondary,
     marginBottom: 4,
+    letterSpacing: 0.3,
   },
   userName: {
     fontSize: 28,
     fontWeight: '700' as const,
     color: Colors.text,
+    letterSpacing: 0.5,
   },
   cardContainer: {
-    marginBottom: 24,
+    marginBottom: 28,
+    position: 'relative',
+  },
+  cardGlow: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
+    bottom: -10,
+    borderRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.6,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 12,
+      },
+      default: {},
+    }),
   },
   vipCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 24,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    minHeight: CARD_HEIGHT,
+  },
+  cardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 24,
+  },
+  patternContainer: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+    borderRadius: 24,
+  },
+  patternLine: {
+    position: 'absolute',
+    width: 1,
+    height: '200%',
+    top: '-50%',
   },
   shimmer: {
     position: 'absolute',
-    top: 0,
+    top: -50,
     left: 0,
     right: 0,
-    bottom: 0,
-    width: CARD_WIDTH,
+    bottom: -50,
+    width: CARD_WIDTH * 0.6,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: 20,
+    zIndex: 1,
   },
   cardHeaderLeft: {
     flex: 1,
     paddingRight: 12,
     minWidth: 0,
   },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   brandName: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: Colors.primary,
-    letterSpacing: 2,
+    fontSize: 22,
+    fontWeight: '800' as const,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+  chipContainer: {
+    width: 36,
+    height: 26,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  chip: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 4,
+  },
+  chipLines: {
+    width: '60%',
+    gap: 3,
+  },
+  chipLine: {
+    height: 2,
+    borderRadius: 1,
   },
   storeAddress: {
-    marginTop: 4,
+    marginTop: 6,
     fontSize: 11,
-    fontWeight: '600' as const,
+    fontWeight: '500' as const,
+    opacity: 0.9,
   },
-  tierName: {
-    fontSize: 16,
-    fontWeight: '800' as const,
-    marginTop: 10,
-    letterSpacing: 0.4,
+  tierBadgeContainer: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  tierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 6,
+  },
+  tierBadgeText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#1A1A1A',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   qrButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   balanceContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
+    zIndex: 1,
   },
   balanceLabel: {
-    fontSize: 12,
+    fontSize: 11,
     marginBottom: 4,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    fontWeight: '600' as const,
   },
   balanceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   currencySymbol: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '600' as const,
     marginRight: 4,
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: '700' as const,
     letterSpacing: 1,
+  },
+  progressContainer: {
+    marginTop: 12,
+    width: '70%',
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 10,
+    marginTop: 6,
+    fontWeight: '500' as const,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
+    zIndex: 1,
   },
   memberIdLabel: {
-    fontSize: 10,
+    fontSize: 9,
     marginBottom: 2,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    fontWeight: '600' as const,
   },
   memberId: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    letterSpacing: 1,
+    fontSize: 13,
+    fontWeight: '600' as const,
+    letterSpacing: 1.5,
   },
   pointsContainer: {
     alignItems: 'flex-end',
   },
   pointsLabel: {
-    fontSize: 10,
-    marginBottom: 2,
+    fontSize: 9,
+    marginBottom: 4,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    fontWeight: '600' as const,
+  },
+  pointsValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   pointsValue: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+    fontSize: 18,
+    fontWeight: '700' as const,
+    letterSpacing: 0.5,
   },
   memberIdSection: {
     flex: 1,
@@ -480,11 +743,11 @@ const styles = StyleSheet.create({
   barcodeContainer: {
     marginTop: 8,
     backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 8,
+    borderRadius: 8,
+    padding: 6,
     width: '100%',
-    maxWidth: 170,
-    height: 44,
+    maxWidth: 160,
+    height: 40,
     overflow: 'hidden',
   },
   barcodeError: {
@@ -494,16 +757,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
-    backgroundColor: 'rgba(201, 169, 98, 0.1)',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 8,
     alignSelf: 'flex-start',
     gap: 4,
   },
   loginPromptText: {
-    fontSize: 13,
-    fontWeight: '700' as const,
+    fontSize: 11,
+    fontWeight: '600' as const,
   },
   cardDecoration: {
     position: 'absolute',
@@ -512,25 +774,32 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     overflow: 'hidden',
-    borderRadius: 20,
+    borderRadius: 24,
     pointerEvents: 'none',
   },
   decorCircle: {
     position: 'absolute',
-    borderRadius: 100,
+    borderRadius: 200,
     borderWidth: 1,
   },
   decorCircle1: {
-    width: 200,
-    height: 200,
-    top: -100,
-    right: -50,
+    width: 250,
+    height: 250,
+    top: -130,
+    right: -80,
   },
   decorCircle2: {
-    width: 150,
-    height: 150,
-    bottom: -75,
-    left: -50,
+    width: 180,
+    height: 180,
+    bottom: -90,
+    left: -60,
+  },
+  decorCircle3: {
+    width: 100,
+    height: 100,
+    top: '40%',
+    right: '20%',
+    opacity: 0.5,
   },
   quickActions: {
     flexDirection: 'row',
@@ -542,9 +811,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -552,6 +821,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 12,
     color: Colors.textSecondary,
+    fontWeight: '500' as const,
   },
   section: {
     marginBottom: 24,

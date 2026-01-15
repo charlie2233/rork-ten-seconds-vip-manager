@@ -64,6 +64,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'home.promoCta': '立即参与',
     'home.barcodeFailed': '条码生成失败',
     'home.loginToShowBarcode': '登录查看条码',
+    'home.toNextTier': '升级到下一等级',
 
     'transactions.title': '账单记录',
     'transactions.totalDeposit': '累计充值',
@@ -436,6 +437,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'home.promoCta': 'Join now',
     'home.barcodeFailed': 'Barcode failed',
     'home.loginToShowBarcode': 'Login to show barcode',
+    'home.toNextTier': 'to next tier',
 
     'transactions.title': 'Billing',
     'transactions.totalDeposit': 'Total top-up',
@@ -808,6 +810,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'home.promoCta': 'Participar',
     'home.barcodeFailed': 'Error en código',
     'home.loginToShowBarcode': 'Inicia sesión para ver',
+    'home.toNextTier': 'para siguiente nivel',
 
     'transactions.title': 'Facturación',
     'transactions.totalDeposit': 'Total recargado',
