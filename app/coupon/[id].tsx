@@ -22,12 +22,13 @@ import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { CouponStatus } from '@/types';
 import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
+import { formatShortDateTime } from '@/lib/datetime';
 
 export default function CouponDetailScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { getCoupon, claimCoupon, markCouponUsed } = useCoupons();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { id, claim } = useLocalSearchParams<{ id: string; claim?: string }>();
   const [copied, setCopied] = useState(false);
   const [redeemedVisible, setRedeemedVisible] = useState(false);
@@ -169,6 +170,11 @@ export default function CouponDetailScreen() {
           ? t('couponDetail.notClaimed')
           : '';
 
+  const usedAtLabel =
+    status === 'used' && state?.usedAt ? formatShortDateTime(state.usedAt, locale) : '';
+  const statusLabelWithTime =
+    status === 'used' && usedAtLabel ? `${statusLabel} · ${usedAtLabel}` : statusLabel;
+
   const canRedeem = status === 'available' && !!redeemCode;
 
   const lockedHint =
@@ -227,7 +233,7 @@ export default function CouponDetailScreen() {
             </View>
             {status !== 'available' && (
               <View style={styles.statusPill}>
-                <Text style={styles.statusText}>{statusLabel}</Text>
+                <Text style={styles.statusText}>{statusLabelWithTime}</Text>
               </View>
             )}
           </View>
@@ -286,7 +292,7 @@ export default function CouponDetailScreen() {
               <View style={styles.codeLockedIcon}>
                 <Lock size={18} color={Colors.textMuted} />
               </View>
-              <Text style={styles.codeLockedTitle}>{statusLabel}</Text>
+              <Text style={styles.codeLockedTitle}>{statusLabelWithTime}</Text>
               <Text style={styles.codeLockedText}>{lockedHint}</Text>
             </View>
           )}

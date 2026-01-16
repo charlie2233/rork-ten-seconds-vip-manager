@@ -13,6 +13,7 @@ import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
 import { getTierFromBalance } from '@/lib/tier';
+import { formatShortDateTime } from '@/lib/datetime';
 
 type SegmentKey = CouponStatus;
 
@@ -38,7 +39,7 @@ export default function CouponsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { claimedCoupons, offers, claimCoupon } = useCoupons();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
   const [isExpanded, setIsExpanded] = useState(false);
   const [claimedCouponName, setClaimedCouponName] = useState<string | null>(null);
@@ -146,7 +147,12 @@ export default function CouponsScreen() {
                   state.status === 'used' ? 'used' : isExpired ? 'expired' : 'available';
                 const statusLabel =
                   status === 'used'
-                    ? t('couponDetail.used')
+                    ? (() => {
+                        const usedAt = state.usedAt
+                          ? formatShortDateTime(state.usedAt, locale)
+                          : '';
+                        return usedAt ? `${t('couponDetail.used')} · ${usedAt}` : t('couponDetail.used');
+                      })()
                     : status === 'expired'
                       ? t('couponDetail.expired')
                       : '';
