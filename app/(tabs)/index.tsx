@@ -41,11 +41,14 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const shimmer = Animated.loop(
-      Animated.timing(shimmerAnim, {
-        toValue: 1,
-        duration: 2500,
-        useNativeDriver: true,
-      })
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 2500,
+          useNativeDriver: true,
+        }),
+        Animated.delay(2000),
+      ])
     );
     shimmer.start();
 
