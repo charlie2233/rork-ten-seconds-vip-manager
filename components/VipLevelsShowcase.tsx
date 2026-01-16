@@ -218,7 +218,11 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
             <Text style={styles.progressNext}>{t('profile.vipProgressMax')}</Text>
           </View>
         )
-      ) : null}
+      ) : (
+        <View style={styles.progressCard}>
+          <Text style={styles.progressNext}>{t('profile.vipProgressLoginHint')}</Text>
+        </View>
+      )}
 
       <ScrollView
         horizontal

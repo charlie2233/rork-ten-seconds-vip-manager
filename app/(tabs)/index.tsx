@@ -110,8 +110,12 @@ export default function HomeScreen() {
   const nextTierMin = nextTier ? TIER_MIN_BALANCE[nextTier] : null;
   const currentTierMin = TIER_MIN_BALANCE[effectiveTier];
   const progressToNext = nextTierMin 
-    ? Math.min(100, ((displayBalance - currentTierMin) / (nextTierMin - currentTierMin)) * 100)
+    ? Math.max(
+        0,
+        Math.min(100, ((displayBalance - currentTierMin) / (nextTierMin - currentTierMin)) * 100)
+      )
     : 100;
+  const remainingToNext = nextTierMin ? Math.max(0, nextTierMin - displayBalance) : 0;
 
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
@@ -400,7 +404,7 @@ export default function HomeScreen() {
                     />
                   </View>
                   <Text style={[styles.progressText, { color: cardTheme.textMuted }]}>
-                    ${(nextTierMin! - displayBalance).toFixed(0)} {t('home.toNextTier')}
+                    ${remainingToNext.toFixed(0)} {t('home.toNextTier')}
                   </Text>
                 </View>
               )}
