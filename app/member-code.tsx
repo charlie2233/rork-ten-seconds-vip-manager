@@ -115,6 +115,58 @@ export default function MemberCodeScreen() {
   const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
+  const cardSurface = useMemo(() => {
+    switch (effectiveTier) {
+      case 'silver':
+        return {
+          textureColor: '#000',
+          textureOpacity: 0.05,
+          innerStrokeOpacity: 0.6,
+          specularOpacity: 0.8,
+          specularColors: ['transparent', 'rgba(255,255,255,0.30)', 'rgba(255,255,255,0.08)', 'transparent'] as const,
+        };
+      case 'gold':
+        return {
+          textureColor: '#000',
+          textureOpacity: 0.04,
+          innerStrokeOpacity: 0.4,
+          specularOpacity: 0.75,
+          specularColors: ['transparent', 'rgba(255,235,180,0.28)', 'rgba(255,255,255,0.08)', 'transparent'] as const,
+        };
+      case 'platinum':
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.06,
+          innerStrokeOpacity: 0.45,
+          specularOpacity: 0.85,
+          specularColors: ['transparent', 'rgba(255,255,255,0.22)', 'rgba(165,243,252,0.11)', 'transparent'] as const,
+        };
+      case 'diamond':
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.065,
+          innerStrokeOpacity: 0.4,
+          specularOpacity: 0.82,
+          specularColors: ['transparent', 'rgba(255,255,255,0.18)', 'rgba(64,224,208,0.14)', 'transparent'] as const,
+        };
+      case 'blackGold':
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.06,
+          innerStrokeOpacity: 0.38,
+          specularOpacity: 0.7,
+          specularColors: ['transparent', 'rgba(212,175,55,0.22)', 'rgba(255,255,255,0.06)', 'transparent'] as const,
+        };
+      default:
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.055,
+          innerStrokeOpacity: 0.4,
+          specularOpacity: 0.75,
+          specularColors: ['transparent', 'rgba(255,255,255,0.20)', 'rgba(255,255,255,0.06)', 'transparent'] as const,
+        };
+    }
+  }, [effectiveTier]);
 
   const shimmerTranslate = shimmerAnim.interpolate({
     inputRange: [0, 1],
@@ -285,14 +337,34 @@ export default function MemberCodeScreen() {
             {/* Texture Overlay */}
             <CardTexture 
               type={cardTheme.texture || 'none'} 
-              color={effectiveTier === 'silver' || effectiveTier === 'platinum' ? '#000' : '#FFF'} 
-              opacity={effectiveTier === 'silver' ? 0.05 : 0.08} 
+              color={cardSurface.textureColor} 
+              opacity={cardSurface.textureOpacity} 
+            />
+
+            <View
+              pointerEvents="none"
+              style={[
+                styles.cardInnerStroke,
+                { borderColor: cardTheme.borderGlow, opacity: cardSurface.innerStrokeOpacity },
+              ]}
             />
 
             {/* Decorative Patterns */}
             <View style={styles.cardPattern}>
                <View style={[styles.circleDecor, { borderColor: cardTheme.decorationBorder, width: 300, height: 300, top: -100, right: -100 }]} />
                <View style={[styles.circleDecor, { borderColor: cardTheme.decorationBorder, width: 200, height: 200, bottom: -50, left: -50 }]} />
+            </View>
+
+            <View
+              pointerEvents="none"
+              style={[styles.cardSpecular, { opacity: cardSurface.specularOpacity }]}
+            >
+              <LinearGradient
+                colors={cardSurface.specularColors}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={StyleSheet.absoluteFill}
+              />
             </View>
 
             {/* Shimmer Effect */}
@@ -492,6 +564,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     aspectRatio: 0.62, // Vertical card ratio
     position: 'relative',
+  },
+  cardInnerStroke: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 24,
+    borderWidth: 1,
+  },
+  cardSpecular: {
+    position: 'absolute',
+    top: '-12%',
+    left: '-55%',
+    width: '160%',
+    height: '140%',
+    transform: [{ rotate: '18deg' }],
   },
   cardPattern: {
     ...StyleSheet.absoluteFillObject,

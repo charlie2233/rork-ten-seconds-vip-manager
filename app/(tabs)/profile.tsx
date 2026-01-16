@@ -85,6 +85,58 @@ export default function ProfileScreen() {
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
+  const cardSurface = useMemo(() => {
+    switch (effectiveTier) {
+      case 'silver':
+        return {
+          textureColor: '#000',
+          textureOpacity: 0.04,
+          innerStrokeOpacity: 0.5,
+          specularOpacity: 0.55,
+          specularColors: ['transparent', 'rgba(255,255,255,0.24)', 'rgba(255,255,255,0.07)', 'transparent'] as const,
+        };
+      case 'gold':
+        return {
+          textureColor: '#000',
+          textureOpacity: 0.03,
+          innerStrokeOpacity: 0.3,
+          specularOpacity: 0.5,
+          specularColors: ['transparent', 'rgba(255,235,180,0.22)', 'rgba(255,255,255,0.07)', 'transparent'] as const,
+        };
+      case 'platinum':
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.05,
+          innerStrokeOpacity: 0.35,
+          specularOpacity: 0.6,
+          specularColors: ['transparent', 'rgba(255,255,255,0.18)', 'rgba(165,243,252,0.09)', 'transparent'] as const,
+        };
+      case 'diamond':
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.055,
+          innerStrokeOpacity: 0.3,
+          specularOpacity: 0.58,
+          specularColors: ['transparent', 'rgba(255,255,255,0.16)', 'rgba(64,224,208,0.10)', 'transparent'] as const,
+        };
+      case 'blackGold':
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.05,
+          innerStrokeOpacity: 0.28,
+          specularOpacity: 0.5,
+          specularColors: ['transparent', 'rgba(212,175,55,0.18)', 'rgba(255,255,255,0.06)', 'transparent'] as const,
+        };
+      default:
+        return {
+          textureColor: '#FFF',
+          textureOpacity: 0.05,
+          innerStrokeOpacity: 0.3,
+          specularOpacity: 0.55,
+          specularColors: ['transparent', 'rgba(255,255,255,0.16)', 'rgba(255,255,255,0.06)', 'transparent'] as const,
+        };
+    }
+  }, [effectiveTier]);
   
   const sections = user
     ? menuSections
@@ -178,8 +230,16 @@ export default function ProfileScreen() {
             {/* Texture Overlay */}
             <CardTexture 
               type={cardTheme.texture || 'none'} 
-              color={effectiveTier === 'silver' || effectiveTier === 'platinum' ? '#000' : '#FFF'} 
-              opacity={effectiveTier === 'silver' ? 0.05 : 0.08} 
+              color={cardSurface.textureColor} 
+              opacity={cardSurface.textureOpacity} 
+            />
+
+            <View
+              pointerEvents="none"
+              style={[
+                styles.cardInnerStroke,
+                { borderColor: cardTheme.borderGlow, opacity: cardSurface.innerStrokeOpacity },
+              ]}
             />
 
             {/* Pattern Overlay */}
@@ -195,6 +255,18 @@ export default function ProfileScreen() {
               end={{ x: 0, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
+
+            <View
+              pointerEvents="none"
+              style={[styles.cardSpecular, { opacity: cardSurface.specularOpacity }]}
+            >
+              <LinearGradient
+                colors={cardSurface.specularColors}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
 
             <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
@@ -386,6 +458,19 @@ const styles = StyleSheet.create({
   cardPattern: {
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
+  },
+  cardInnerStroke: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 24,
+    borderWidth: 1,
+  },
+  cardSpecular: {
+    position: 'absolute',
+    top: '-25%',
+    left: '-35%',
+    width: '120%',
+    height: '120%',
+    transform: [{ rotate: '18deg' }],
   },
   circleDecor: {
     position: 'absolute',

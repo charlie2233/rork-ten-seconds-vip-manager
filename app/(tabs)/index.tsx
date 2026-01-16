@@ -23,6 +23,7 @@ import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
+import { CardTexture } from '@/components/CardTexture';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -145,6 +146,77 @@ export default function HomeScreen() {
     outputRange: [0.3, 0.8],
   });
 
+  const cardSurface = useMemo(() => {
+    switch (effectiveTier) {
+      case 'silver':
+        return {
+          patternCount: 10,
+          patternRotation: '35deg',
+          patternLineWidth: 1,
+          textureColor: '#000',
+          textureOpacity: 0.045,
+          innerStrokeOpacity: 0.55,
+          specularOpacity: 0.75,
+          specularColors: ['transparent', 'rgba(255,255,255,0.28)', 'rgba(255,255,255,0.08)', 'transparent'] as const,
+        };
+      case 'gold':
+        return {
+          patternCount: 6,
+          patternRotation: '42deg',
+          patternLineWidth: 1,
+          textureColor: '#000',
+          textureOpacity: 0.035,
+          innerStrokeOpacity: 0.35,
+          specularOpacity: 0.7,
+          specularColors: ['transparent', 'rgba(255,235,180,0.28)', 'rgba(255,255,255,0.08)', 'transparent'] as const,
+        };
+      case 'platinum':
+        return {
+          patternCount: 4,
+          patternRotation: '55deg',
+          patternLineWidth: 1.5,
+          textureColor: '#FFF',
+          textureOpacity: 0.055,
+          innerStrokeOpacity: 0.4,
+          specularOpacity: 0.8,
+          specularColors: ['transparent', 'rgba(255,255,255,0.22)', 'rgba(165,243,252,0.10)', 'transparent'] as const,
+        };
+      case 'diamond':
+        return {
+          patternCount: 5,
+          patternRotation: '50deg',
+          patternLineWidth: 1.2,
+          textureColor: '#FFF',
+          textureOpacity: 0.06,
+          innerStrokeOpacity: 0.35,
+          specularOpacity: 0.75,
+          specularColors: ['transparent', 'rgba(255,255,255,0.18)', 'rgba(64,224,208,0.12)', 'transparent'] as const,
+        };
+      case 'blackGold':
+        return {
+          patternCount: 0,
+          patternRotation: '45deg',
+          patternLineWidth: 1,
+          textureColor: '#FFF',
+          textureOpacity: 0.055,
+          innerStrokeOpacity: 0.32,
+          specularOpacity: 0.65,
+          specularColors: ['transparent', 'rgba(212,175,55,0.20)', 'rgba(255,255,255,0.06)', 'transparent'] as const,
+        };
+      default:
+        return {
+          patternCount: 6,
+          patternRotation: '45deg',
+          patternLineWidth: 1,
+          textureColor: '#FFF',
+          textureOpacity: 0.05,
+          innerStrokeOpacity: 0.35,
+          specularOpacity: 0.7,
+          specularColors: ['transparent', 'rgba(255,255,255,0.18)', 'rgba(255,255,255,0.06)', 'transparent'] as const,
+        };
+    }
+  }, [effectiveTier]);
+
   const getTierIcon = () => {
     switch (effectiveTier) {
       case 'blackGold': return <Crown size={16} color={cardTheme.accent} />;
@@ -192,16 +264,43 @@ export default function HomeScreen() {
               style={styles.cardOverlay}
             />
 
+            <View
+              pointerEvents="none"
+              style={[
+                styles.innerStroke,
+                { borderColor: cardTheme.borderGlow, opacity: cardSurface.innerStrokeOpacity },
+              ]}
+            />
+
+            <CardTexture
+              type={cardTheme.texture || 'none'}
+              color={cardSurface.textureColor}
+              opacity={cardSurface.textureOpacity}
+            />
+
+            <View
+              pointerEvents="none"
+              style={[styles.specularOverlay, { opacity: cardSurface.specularOpacity }]}
+            >
+              <LinearGradient
+                colors={cardSurface.specularColors}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
+
             <View style={styles.patternContainer}>
-              {[...Array(6)].map((_, i) => (
+              {[...Array(cardSurface.patternCount)].map((_, i) => (
                 <View 
                   key={i} 
                   style={[
                     styles.patternLine,
                     { 
                       backgroundColor: cardTheme.patternColor,
-                      left: `${15 + i * 15}%`,
-                      transform: [{ rotate: '45deg' }],
+                      left: `${10 + (i * 80) / Math.max(1, cardSurface.patternCount - 1)}%`,
+                      transform: [{ rotate: cardSurface.patternRotation }],
+                      width: cardSurface.patternLineWidth,
                     }
                   ]} 
                 />
@@ -560,6 +659,19 @@ const styles = StyleSheet.create({
   cardOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 24,
+  },
+  innerStroke: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 24,
+    borderWidth: 1,
+  },
+  specularOverlay: {
+    position: 'absolute',
+    top: -32,
+    left: -110,
+    width: CARD_WIDTH * 0.9,
+    height: CARD_HEIGHT * 1.2,
+    transform: [{ rotate: '18deg' }],
   },
   patternContainer: {
     ...StyleSheet.absoluteFillObject,
