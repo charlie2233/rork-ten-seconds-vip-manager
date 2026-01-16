@@ -38,6 +38,7 @@ import LanguageToggle from '@/components/LanguageToggle';
 import { migrationService } from '@/lib/migration';
 import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
+import { CardTexture } from '@/components/CardTexture';
 
 interface MenuItem {
   icon: typeof Bell;
@@ -174,6 +175,13 @@ export default function ProfileScreen() {
               style={StyleSheet.absoluteFill}
             />
             
+            {/* Texture Overlay */}
+            <CardTexture 
+              type={cardTheme.texture || 'none'} 
+              color={effectiveTier === 'silver' || effectiveTier === 'platinum' ? '#000' : '#FFF'} 
+              opacity={effectiveTier === 'silver' ? 0.05 : 0.08} 
+            />
+
             {/* Pattern Overlay */}
             <View style={styles.cardPattern}>
               <View style={[styles.circleDecor, { borderColor: cardTheme.decorationBorder, width: 200, height: 200, top: -80, right: -60 }]} />

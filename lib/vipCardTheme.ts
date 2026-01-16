@@ -1,8 +1,8 @@
 import type { User } from '@/types';
 
 export type VipCardTheme = {
-  gradient: readonly [string, string, string];
-  overlayGradient: readonly [string, string];
+  gradient: readonly [string, string, ...string[]];
+  overlayGradient: readonly [string, string, ...string[]];
   borderColor: string;
   borderGlow: string;
   accent: string;
@@ -16,77 +16,81 @@ export type VipCardTheme = {
   decorationBorder: string;
   patternColor: string;
   glowColor: string;
-  chipGradient: readonly [string, string];
-  tierBadgeGradient: readonly [string, string];
+  chipGradient: readonly [string, string, ...string[]];
+  tierBadgeGradient: readonly [string, string, ...string[]];
   tierIcon: string;
-  backgroundImage?: string; // Placeholder for potential background images
+  texture?: 'brushed' | 'grain' | 'carbon' | 'none';
 };
-
-const BASE_TEXT = '#FFFFFF';
 
 const THEMES: Readonly<Record<User['tier'], VipCardTheme>> = {
   silver: {
-    gradient: ['#8E9EAB', '#5C6B7F', '#2C3E50'], // Cool metallic silver/blue-grey
-    overlayGradient: ['rgba(255,255,255,0.1)', 'rgba(0,0,0,0.2)'],
-    borderColor: 'rgba(224, 231, 239, 0.5)',
-    borderGlow: 'rgba(192,192,192,0.6)',
-    accent: '#E0E7EF',
-    accentLight: '#FFFFFF',
-    text: BASE_TEXT,
-    textSecondary: 'rgba(255,255,255,0.9)',
-    textMuted: 'rgba(255,255,255,0.7)',
-    qrBackground: 'rgba(255,255,255,0.9)',
-    shimmer: 'rgba(255,255,255,0.2)',
-    shimmerIntense: 'rgba(255,255,255,0.5)',
-    decorationBorder: 'rgba(255,255,255,0.15)',
-    patternColor: 'rgba(255,255,255,0.05)',
-    glowColor: 'rgba(142, 158, 171, 0.6)',
-    chipGradient: ['#D7DDE8', '#757F9A'],
-    tierBadgeGradient: ['#E0E7EF', '#B4C6DB'],
+    // Industrial Silver: Brushed metal look, clean but tangible
+    gradient: ['#E8EAEF', '#BCC6CC', '#8B9AA5', '#52616D'], 
+    overlayGradient: ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.0)', 'rgba(0,0,0,0.1)'],
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderGlow: 'rgba(192,192,192,0.4)',
+    accent: '#2C3E50', // Dark text for contrast on bright silver
+    accentLight: '#52616D',
+    text: '#1A2633', // Dark text
+    textSecondary: 'rgba(26, 38, 51, 0.8)',
+    textMuted: 'rgba(26, 38, 51, 0.6)',
+    qrBackground: 'rgba(255,255,255,0.8)',
+    shimmer: 'rgba(255,255,255,0.4)',
+    shimmerIntense: 'rgba(255,255,255,0.8)',
+    decorationBorder: 'rgba(26, 38, 51, 0.1)',
+    patternColor: 'rgba(26, 38, 51, 0.05)',
+    glowColor: 'rgba(188, 198, 204, 0.5)',
+    chipGradient: ['#E0E5E9', '#A4B0B9'],
+    tierBadgeGradient: ['#F5F7FA', '#D7DEE5'],
     tierIcon: '🥈',
+    texture: 'brushed',
   },
   gold: {
-    gradient: ['#DBA514', '#AA771C', '#583C08'], // Richer, deeper gold
-    overlayGradient: ['rgba(255, 223, 128, 0.15)', 'rgba(0,0,0,0.3)'],
-    borderColor: 'rgba(255, 215, 0, 0.6)',
-    borderGlow: 'rgba(255, 215, 0, 0.5)',
-    accent: '#FFD700',
+    // Luxurious Gold: Warm, rich, radiant
+    gradient: ['#FAD961', '#F76B1C', '#8A4B06'], // More vibrant amber/gold
+    overlayGradient: ['rgba(255, 255, 255, 0.3)', 'rgba(0,0,0,0.2)'],
+    borderColor: 'rgba(255, 223, 128, 0.8)',
+    borderGlow: 'rgba(255, 215, 0, 0.6)',
+    accent: '#FFF8E7',
     accentLight: '#FFF2C2',
     text: '#FFFFFF',
     textSecondary: 'rgba(255,255,255,0.95)',
     textMuted: 'rgba(255,255,255,0.75)',
     qrBackground: 'rgba(255,255,255,0.95)',
-    shimmer: 'rgba(255, 255, 255, 0.25)',
-    shimmerIntense: 'rgba(255, 215, 0, 0.5)',
-    decorationBorder: 'rgba(255, 215, 0, 0.25)',
-    patternColor: 'rgba(255, 215, 0, 0.1)',
-    glowColor: 'rgba(219, 165, 20, 0.7)',
-    chipGradient: ['#FFD700', '#B8860B'],
-    tierBadgeGradient: ['#FFE57F', '#D4AF37'],
+    shimmer: 'rgba(255, 255, 255, 0.3)',
+    shimmerIntense: 'rgba(255, 255, 200, 0.6)',
+    decorationBorder: 'rgba(255, 255, 255, 0.3)',
+    patternColor: 'rgba(255, 255, 255, 0.15)',
+    glowColor: 'rgba(247, 107, 28, 0.5)',
+    chipGradient: ['#FFD700', '#DAA520'],
+    tierBadgeGradient: ['#FFF8E7', '#FAD961'],
     tierIcon: '🥇',
+    texture: 'grain',
   },
   platinum: {
-    gradient: ['#E3E3E3', '#8E8E8E', '#2B2B2B'], // High contrast platinum
-    overlayGradient: ['rgba(255,255,255,0.2)', 'rgba(0,0,0,0.4)'],
-    borderColor: 'rgba(255, 255, 255, 0.7)',
-    borderGlow: 'rgba(255, 255, 255, 0.6)',
-    accent: '#FFFFFF',
+    // Premium Platinum: Dark, sleek, futuristic, "liquid metal"
+    gradient: ['#495057', '#8E9EAB', '#CED4DA', '#ADB5BD', '#343A40'],
+    overlayGradient: ['rgba(255,255,255,0.15)', 'rgba(0,0,0,0.5)'],
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderGlow: 'rgba(206, 212, 218, 0.5)',
+    accent: '#F8F9FA',
     accentLight: '#FFFFFF',
-    text: BASE_TEXT,
-    textSecondary: 'rgba(255,255,255,0.95)',
-    textMuted: 'rgba(255,255,255,0.7)',
+    text: '#FFFFFF',
+    textSecondary: 'rgba(255,255,255,0.9)',
+    textMuted: 'rgba(255,255,255,0.6)',
     qrBackground: 'rgba(255,255,255,0.9)',
-    shimmer: 'rgba(255,255,255,0.3)',
-    shimmerIntense: 'rgba(255,255,255,0.6)',
-    decorationBorder: 'rgba(255,255,255,0.2)',
-    patternColor: 'rgba(255,255,255,0.08)',
-    glowColor: 'rgba(200, 200, 200, 0.6)',
-    chipGradient: ['#FFFFFF', '#A9A9A9'],
-    tierBadgeGradient: ['#F5F5F5', '#C0C0C0'],
+    shimmer: 'rgba(255,255,255,0.2)',
+    shimmerIntense: 'rgba(165, 243, 252, 0.4)', // Cyan tinted shimmer for platinum
+    decorationBorder: 'rgba(255,255,255,0.15)',
+    patternColor: 'rgba(255,255,255,0.05)',
+    glowColor: 'rgba(142, 158, 171, 0.6)',
+    chipGradient: ['#E9ECEF', '#6C757D'],
+    tierBadgeGradient: ['#DEE2E6', '#6C757D'],
     tierIcon: '⭐',
+    texture: 'grain',
   },
   diamond: {
-    gradient: ['#2C5364', '#203A43', '#0F2027'], // Deep mysterious blue/teal
+    gradient: ['#2C5364', '#203A43', '#0F2027'],
     overlayGradient: ['rgba(0, 255, 255, 0.1)', 'rgba(0,0,0,0.4)'],
     borderColor: 'rgba(64, 224, 208, 0.5)',
     borderGlow: 'rgba(0, 255, 255, 0.4)',
@@ -104,11 +108,12 @@ const THEMES: Readonly<Record<User['tier'], VipCardTheme>> = {
     chipGradient: ['#7FFFD4', '#2C5364'],
     tierBadgeGradient: ['#E0FFFF', '#40E0D0'],
     tierIcon: '💎',
+    texture: 'grain',
   },
   blackGold: {
-    gradient: ['#1C1C1C', '#000000', '#1C1C1C'], // Matte black texture
+    gradient: ['#1C1C1C', '#000000', '#1C1C1C'],
     overlayGradient: ['rgba(212, 175, 55, 0.1)', 'rgba(0,0,0,0.6)'],
-    borderColor: 'rgba(212, 175, 55, 0.8)', // Gold border
+    borderColor: 'rgba(212, 175, 55, 0.8)',
     borderGlow: 'rgba(212, 175, 55, 0.6)',
     accent: '#D4AF37',
     accentLight: '#F7E7CE',
@@ -124,6 +129,7 @@ const THEMES: Readonly<Record<User['tier'], VipCardTheme>> = {
     chipGradient: ['#D4AF37', '#8B6914'],
     tierBadgeGradient: ['#F7E7CE', '#C5A028'],
     tierIcon: '👑',
+    texture: 'carbon',
   },
 };
 

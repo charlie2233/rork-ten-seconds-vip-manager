@@ -26,6 +26,7 @@ import LanguageToggle from '@/components/LanguageToggle';
 import { trpc } from '@/lib/trpc';
 import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
+import { CardTexture } from '@/components/CardTexture';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = Math.min(width - 48, 400);
@@ -279,6 +280,13 @@ export default function MemberCodeScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
+            />
+
+            {/* Texture Overlay */}
+            <CardTexture 
+              type={cardTheme.texture || 'none'} 
+              color={effectiveTier === 'silver' || effectiveTier === 'platinum' ? '#000' : '#FFF'} 
+              opacity={effectiveTier === 'silver' ? 0.05 : 0.08} 
             />
 
             {/* Decorative Patterns */}
