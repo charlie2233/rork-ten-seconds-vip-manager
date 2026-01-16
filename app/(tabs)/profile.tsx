@@ -39,6 +39,7 @@ import { migrationService } from '@/lib/migration';
 import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
 import { CardTexture } from '@/components/CardTexture';
+import VipLevelsShowcase from '@/components/VipLevelsShowcase';
 
 interface MenuItem {
   icon: typeof Bell;
@@ -331,6 +332,8 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
         )}
+
+        <VipLevelsShowcase currentTier={user ? effectiveTier : null} />
 
         {user ? (
           <View style={styles.infoCard}>
