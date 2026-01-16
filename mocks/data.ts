@@ -34,7 +34,7 @@ export const testAccounts: { memberId: string; password: string; user: User }[] 
       memberId: 'SSD-GOLD-002',
       name: 'Gold User',
       phone: '555****2002',
-      balance: 350.00,
+      balance: 250.00,
       points: 2500,
       tier: 'gold',
       joinDate: '2025-10-15',
