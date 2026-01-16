@@ -11,6 +11,7 @@ import { CardTexture } from '@/components/CardTexture';
 
 type Props = {
   currentTier?: User['tier'] | null;
+  currentBalance?: number | null;
 };
 
 type Surface = {
@@ -152,8 +153,19 @@ function TierPreviewCard({ tier, isCurrent }: { tier: User['tier']; isCurrent: b
   );
 }
 
-export default function VipLevelsShowcase({ currentTier = null }: Props) {
-  const { t } = useI18n();
+export default function VipLevelsShowcase({ currentTier = null, currentBalance = null }: Props) {
+  const { t, locale } = useI18n();
+
+  const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
+
+  const nextTier = useMemo(() => {
+    if (!currentTier) return null;
+    const currentIndex = TIER_ORDER.indexOf(currentTier);
+    if (currentIndex < 0) return null;
+    return currentIndex < TIER_ORDER.length - 1 ? TIER_ORDER[currentIndex + 1] : null;
+  }, [currentTier]);
+
+  const nextTierTheme = useMemo(() => (nextTier ? getVipCardTheme(nextTier) : null), [nextTier]);
 
   return (
     <View style={styles.section}>
@@ -161,6 +173,52 @@ export default function VipLevelsShowcase({ currentTier = null }: Props) {
         <Text style={styles.title}>{t('profile.vipLevelsTitle')}</Text>
         <Text style={styles.subtitle}>{t('profile.vipLevelsSubtitle')}</Text>
       </View>
+
+      {currentTier && typeof currentBalance === 'number' && Number.isFinite(currentBalance) ? (
+        nextTier ? (
+          (() => {
+            const currentMin = currentTier === 'silver' ? 0 : TIER_MIN_BALANCE[currentTier];
+            const nextMin = TIER_MIN_BALANCE[nextTier];
+            const remaining = Math.max(0, nextMin - currentBalance);
+            const denom = Math.max(1, nextMin - currentMin);
+            const raw = (currentBalance - currentMin) / denom;
+            const pct = Math.max(0, Math.min(1, raw));
+            const percentText = `${Math.round(pct * 100)}%`;
+            const remainingText = Math.ceil(remaining).toLocaleString(numberLocale, { maximumFractionDigits: 0 });
+            const nextTierName = t(`tier.${nextTier}`);
+            const fillColors = nextTierTheme?.chipGradient ?? ['#FFFFFF', Colors.primary];
+            return (
+              <View style={styles.progressCard}>
+                <View style={styles.progressTopRow}>
+                  <Text style={styles.progressNext} numberOfLines={1}>
+                    {t('profile.vipProgressNext', { tier: nextTierName })}
+                  </Text>
+                  <Text style={styles.progressPercent} numberOfLines={1}>
+                    {percentText}
+                  </Text>
+                </View>
+
+                <View style={styles.progressTrack}>
+                  <LinearGradient
+                    colors={fillColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.progressFill, { width: `${pct * 100}%` }]}
+                  />
+                </View>
+
+                <Text style={styles.progressHint}>
+                  {t('profile.vipProgressNeed', { amount: remainingText, tier: nextTierName })}
+                </Text>
+              </View>
+            );
+          })()
+        ) : (
+          <View style={styles.progressCard}>
+            <Text style={styles.progressNext}>{t('profile.vipProgressMax')}</Text>
+          </View>
+        )
+      ) : null}
 
       <ScrollView
         horizontal
@@ -201,6 +259,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textMuted,
     lineHeight: 16,
+  },
+  progressCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginHorizontal: 4,
+    marginBottom: 14,
+  },
+  progressTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 10,
+  },
+  progressNext: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  progressPercent: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textMuted,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: Colors.surfaceLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 8,
+  },
+  progressHint: {
+    marginTop: 10,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '600',
   },
   carouselContent: {
     paddingHorizontal: 4,
@@ -306,4 +409,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
-

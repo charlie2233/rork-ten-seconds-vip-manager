@@ -333,7 +333,10 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
 
-        <VipLevelsShowcase currentTier={user ? effectiveTier : null} />
+        <VipLevelsShowcase
+          currentTier={user ? effectiveTier : null}
+          currentBalance={user?.balance ?? null}
+        />
 
         {user ? (
           <View style={styles.infoCard}>
