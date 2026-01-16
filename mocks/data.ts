@@ -11,6 +11,79 @@ export const mockUser: User = {
   joinDate: '2024-06-15',
 };
 
+export const testAccounts: { memberId: string; password: string; user: User }[] = [
+  {
+    memberId: 'TEST1',
+    password: 'test1',
+    user: {
+      id: 'test-1',
+      memberId: 'SSD-SILVER-001',
+      name: 'Silver User',
+      phone: '555****1001',
+      balance: 150.00,
+      points: 500,
+      tier: 'silver',
+      joinDate: '2025-12-01',
+    },
+  },
+  {
+    memberId: 'TEST2',
+    password: 'test2',
+    user: {
+      id: 'test-2',
+      memberId: 'SSD-GOLD-002',
+      name: 'Gold User',
+      phone: '555****2002',
+      balance: 350.00,
+      points: 2500,
+      tier: 'gold',
+      joinDate: '2025-10-15',
+    },
+  },
+  {
+    memberId: 'TEST3',
+    password: 'test3',
+    user: {
+      id: 'test-3',
+      memberId: 'SSD-DIAMOND-003',
+      name: 'Diamond User',
+      phone: '555****3003',
+      balance: 450.00,
+      points: 5000,
+      tier: 'diamond',
+      joinDate: '2025-08-20',
+    },
+  },
+  {
+    memberId: 'TEST4',
+    password: 'test4',
+    user: {
+      id: 'test-4',
+      memberId: 'SSD-PLAT-004',
+      name: 'Platinum User',
+      phone: '555****4004',
+      balance: 750.00,
+      points: 8000,
+      tier: 'platinum',
+      joinDate: '2025-06-01',
+    },
+  },
+  {
+    memberId: 'TEST5',
+    password: 'test5',
+    user: {
+      id: 'test-5',
+      memberId: 'SSD-BLACK-005',
+      name: 'Black Gold User',
+      phone: '555****5005',
+      balance: 2000.00,
+      points: 15000,
+      tier: 'blackGold',
+      joinDate: '2025-01-01',
+    },
+  },
+];
+
 export const mockTransactions: Transaction[] = [
   {
     id: '1',

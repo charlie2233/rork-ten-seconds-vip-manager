@@ -2,7 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PointsRecord, User } from '@/types';
-import { mockUser } from '@/mocks/data';
+import { mockUser, testAccounts } from '@/mocks/data';
 import { getTierFromBalance } from '@/lib/tier';
 import { calculatePointsEarned } from '@/lib/points';
 
@@ -118,13 +118,28 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const loginMutation = useMutation({
     mutationFn: async ({ memberId, password }: { memberId: string; password: string }) => {
-      // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const normalizedMemberId = memberId.trim().toUpperCase();
+      const normalizedPassword = password.trim().toLowerCase();
+      
+      const testAccount = testAccounts.find(
+        (acc) => acc.memberId.toUpperCase() === normalizedMemberId && 
+                 acc.password.toLowerCase() === normalizedPassword
+      );
+      
+      if (testAccount) {
+        console.log('[AuthContext] Logging in as test account:', testAccount.user.name);
+        const userData: User = { ...testAccount.user };
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+        return userData;
+      }
       
       if (memberId.length >= 4 && password.length >= 4) {
         const userData: User = {
           ...mockUser,
-          memberId: memberId.toUpperCase(),
+          id: `user_${Date.now()}`,
+          memberId: normalizedMemberId,
         };
         await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
         return userData;
