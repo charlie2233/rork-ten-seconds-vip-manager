@@ -23,6 +23,7 @@ import Colors from '@/constants/colors';
 import * as bwipjs from 'bwip-js/generic';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import AuthGateCard from '@/components/AuthGateCard';
 import { trpc } from '@/lib/trpc';
 import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
@@ -240,10 +241,11 @@ export default function MemberCodeScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.centerContent}>
-          <Text style={styles.errorText}>{t('memberCode.pleaseLoginFirst')}</Text>
-          <TouchableOpacity onPress={() => router.push('/login')} style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
-          </TouchableOpacity>
+          <AuthGateCard
+            title={t('memberCode.pleaseLoginFirst')}
+            message={t('memberCode.loginHint')}
+            style={{ width: '100%', maxWidth: 380 }}
+          />
         </View>
       </View>
     );

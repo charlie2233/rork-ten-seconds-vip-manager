@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import AuthGateCard from '@/components/AuthGateCard';
 import { CouponStatus } from '@/types';
 import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
 import { formatShortDateTime } from '@/lib/datetime';
@@ -100,15 +101,11 @@ export default function CouponDetailScreen() {
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{t('couponDetail.title')}</Text>
           </View>
-          <View style={styles.notFoundBox}>
-            <Text style={styles.notFoundText}>{t('memberCode.pleaseLoginFirst')}</Text>
-            <TouchableOpacity 
-              style={[styles.primaryButton, { marginTop: 20, width: '100%' }]}
-              onPress={() => router.push('/login')}
-            >
-              <Text style={styles.primaryButtonText}>{t('auth.login')}</Text>
-            </TouchableOpacity>
-          </View>
+          <AuthGateCard
+            title={t('memberCode.pleaseLoginFirst')}
+            message={t('coupons.loginRequired.message')}
+            style={{ marginTop: 40 }}
+          />
         </View>
       </View>
     );

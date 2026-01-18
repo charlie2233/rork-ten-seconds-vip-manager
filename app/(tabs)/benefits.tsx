@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, Sparkles, Ticket, Wallet } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, LogIn, Sparkles, Ticket, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import ImageCarousel from '@/components/ImageCarousel';
+import AuthGateCard from '@/components/AuthGateCard';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
@@ -116,6 +117,14 @@ export default function CouponsScreen() {
         </View>
 
         <ImageCarousel images={COUPON_BANNERS} height={170} style={styles.bannerCarousel} />
+
+        {!user ? (
+          <AuthGateCard
+            title={t('coupons.loginRequired.title')}
+            message={t('coupons.loginRequired.message')}
+            style={{ marginBottom: 18 }}
+          />
+        ) : null}
 
         <View style={styles.segmentContainer}>
           {SEGMENTS.map((segment) => {
@@ -280,12 +289,23 @@ export default function CouponsScreen() {
                     </TouchableOpacity>
                   );
                 })() : (
-                  <View style={styles.lockedBadge}>
-                    <Lock size={14} color={Colors.textMuted} />
-                    <Text style={styles.lockedText}>
-                      {t('coupons.requiresTier', { tier: t(formatTierKey(definition.tier)) })}
-                    </Text>
-                  </View>
+                  user ? (
+                    <View style={styles.lockedBadge}>
+                      <Lock size={14} color={Colors.textMuted} />
+                      <Text style={styles.lockedText}>
+                        {t('coupons.requiresTier', { tier: t(formatTierKey(definition.tier)) })}
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.loginBadge}
+                      onPress={() => router.push('/login')}
+                      activeOpacity={0.8}
+                    >
+                      <LogIn size={14} color={Colors.primary} />
+                      <Text style={styles.loginText}>{t('coupons.signInToUnlock')}</Text>
+                    </TouchableOpacity>
+                  )
                 )}
               </View>
             ))}
@@ -650,5 +670,21 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: 11,
     fontWeight: '600' as const,
+  },
+  loginBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(201, 169, 98, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(201, 169, 98, 0.35)',
+  },
+  loginText: {
+    color: Colors.primary,
+    fontSize: 11,
+    fontWeight: '700' as const,
   },
 });

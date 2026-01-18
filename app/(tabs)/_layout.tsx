@@ -1,15 +1,33 @@
-import { Tabs } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Tabs, router } from "expo-router";
 import { Home, Gift, Receipt, User } from "lucide-react-native";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useI18n } from "@/contexts/I18nContext";
+
+const ONBOARDING_SEEN_KEY = 'onboarding_seen_v1';
 
 export default function TabLayout() {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const tabBarBottomPadding = Math.max(14, insets.bottom);
   const tabBarHeight = 74 + tabBarBottomPadding;
+  const didCheckOnboardingRef = useRef(false);
+
+  useEffect(() => {
+    if (didCheckOnboardingRef.current) return;
+    didCheckOnboardingRef.current = true;
+    (async () => {
+      try {
+        const seen = await AsyncStorage.getItem(ONBOARDING_SEEN_KEY);
+        if (seen === '1') return;
+        router.push('/onboarding');
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
 
   return (
     <Tabs

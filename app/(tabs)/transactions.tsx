@@ -15,6 +15,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
 import LanguageToggle from '@/components/LanguageToggle';
+import AuthGateCard from '@/components/AuthGateCard';
 import { couponCatalog } from '@/mocks/data';
 
 type FilterType = 'all' | 'deposit' | 'spend' | 'points';
@@ -146,126 +147,130 @@ export default function TransactionsScreen() {
 
         <Text style={styles.title}>{t('transactions.title')}</Text>
 
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <LinearGradient
-              colors={['rgba(76, 175, 80, 0.15)', 'rgba(76, 175, 80, 0.05)']}
-              style={styles.statGradient}
-            >
-              <Text style={styles.statLabel}>{t('transactions.totalDeposit')}</Text>
-              <Text style={[styles.statValue, { color: Colors.success }]}>
-                +${totalDeposit.toFixed(2)}
-              </Text>
-            </LinearGradient>
-          </View>
-          
-          <View style={styles.statCard}>
-            <LinearGradient
-              colors={['rgba(201, 169, 98, 0.15)', 'rgba(201, 169, 98, 0.05)']}
-              style={styles.statGradient}
-            >
-              <Text style={styles.statLabel}>{t('transactions.totalSpend')}</Text>
-              <Text style={[styles.statValue, { color: Colors.primary }]}>
-                -${totalSpend.toFixed(2)}
-              </Text>
-            </LinearGradient>
-          </View>
-        </View>
-
-        <View style={styles.filterContainer}>
-          {filterOptions.map((option) => (
-            <TouchableOpacity
-              key={option.key}
-              style={[
-                styles.filterButton,
-                activeFilter === option.key && styles.filterButtonActive,
-              ]}
-              onPress={() => setActiveFilter(option.key)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  activeFilter === option.key && styles.filterTextActive,
-                ]}
-              >
-                {t(option.labelKey)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.transactionsList}>
-          {!user ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>{t('transactions.loginRequired')}</Text>
-            </View>
-          ) : activeFilter === 'points' ? (
-            pointsItems.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>{t('points.empty')}</Text>
-              </View>
-            ) : (
-              pointsItems.map((item, index) => (
-                <View
-                  key={item.id}
-                  style={[
-                    styles.transactionItem,
-                    index === pointsItems.length - 1 && styles.lastItem,
-                  ]}
+        {!user ? (
+          <AuthGateCard
+            title={t('transactions.loginRequired')}
+            message={t('auth.gate.billing.message')}
+            style={{ marginBottom: 20 }}
+          />
+        ) : (
+          <>
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <LinearGradient
+                  colors={['rgba(76, 175, 80, 0.15)', 'rgba(76, 175, 80, 0.05)']}
+                  style={styles.statGradient}
                 >
-                  <View
+                  <Text style={styles.statLabel}>{t('transactions.totalDeposit')}</Text>
+                  <Text style={[styles.statValue, { color: Colors.success }]}>
+                    +${totalDeposit.toFixed(2)}
+                  </Text>
+                </LinearGradient>
+              </View>
+
+              <View style={styles.statCard}>
+                <LinearGradient
+                  colors={['rgba(201, 169, 98, 0.15)', 'rgba(201, 169, 98, 0.05)']}
+                  style={styles.statGradient}
+                >
+                  <Text style={styles.statLabel}>{t('transactions.totalSpend')}</Text>
+                  <Text style={[styles.statValue, { color: Colors.primary }]}>
+                    -${totalSpend.toFixed(2)}
+                  </Text>
+                </LinearGradient>
+              </View>
+            </View>
+
+            <View style={styles.filterContainer}>
+              {filterOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.key}
+                  style={[
+                    styles.filterButton,
+                    activeFilter === option.key && styles.filterButtonActive,
+                  ]}
+                  onPress={() => setActiveFilter(option.key)}
+                  activeOpacity={0.7}
+                >
+                  <Text
                     style={[
-                      styles.transactionIcon,
-                      { backgroundColor: `${Colors.primary}15` },
+                      styles.filterText,
+                      activeFilter === option.key && styles.filterTextActive,
                     ]}
                   >
-                    <Sparkles size={20} color={Colors.primary} />
-                  </View>
+                    {t(option.labelKey)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-                  <View style={styles.transactionContent}>
-                    <Text style={styles.transactionDesc} numberOfLines={1}>
-                      {renderPointsDescription(item)}
-                    </Text>
-                    <Text style={styles.transactionDate}>{item.date}</Text>
+            <View style={styles.transactionsList}>
+              {activeFilter === 'points' ? (
+                pointsItems.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyText}>{t('points.empty')}</Text>
                   </View>
-
-                  <View style={styles.transactionRight}>
-                    <Text
+                ) : (
+                  pointsItems.map((item, index) => (
+                    <View
+                      key={item.id}
                       style={[
-                        styles.transactionAmount,
-                        item.delta >= 0 ? styles.positiveAmount : styles.negativeAmount,
+                        styles.transactionItem,
+                        index === pointsItems.length - 1 && styles.lastItem,
                       ]}
                     >
-                      {item.delta >= 0 ? '+' : ''}
-                      {Math.abs(item.delta).toLocaleString(numberLocale)} {t('points.unit')}
-                    </Text>
-                    {'balance' in item && typeof item.balance === 'number' ? (
-                      <Text style={styles.transactionBalance}>
-                        {t('points.balancePrefix')}: {item.balance.toLocaleString(numberLocale)}{' '}
-                        {t('points.unit')}
-                      </Text>
-                    ) : (
-                      <Text style={styles.transactionBalance} />
-                    )}
-                  </View>
+                      <View
+                        style={[
+                          styles.transactionIcon,
+                          { backgroundColor: `${Colors.primary}15` },
+                        ]}
+                      >
+                        <Sparkles size={20} color={Colors.primary} />
+                      </View>
+
+                      <View style={styles.transactionContent}>
+                        <Text style={styles.transactionDesc} numberOfLines={1}>
+                          {renderPointsDescription(item)}
+                        </Text>
+                        <Text style={styles.transactionDate}>{item.date}</Text>
+                      </View>
+
+                      <View style={styles.transactionRight}>
+                        <Text
+                          style={[
+                            styles.transactionAmount,
+                            item.delta >= 0 ? styles.positiveAmount : styles.negativeAmount,
+                          ]}
+                        >
+                          {item.delta >= 0 ? '+' : ''}
+                          {Math.abs(item.delta).toLocaleString(numberLocale)} {t('points.unit')}
+                        </Text>
+                        {'balance' in item && typeof item.balance === 'number' ? (
+                          <Text style={styles.transactionBalance}>
+                            {t('points.balancePrefix')}: {item.balance.toLocaleString(numberLocale)}{' '}
+                            {t('points.unit')}
+                          </Text>
+                        ) : (
+                          <Text style={styles.transactionBalance} />
+                        )}
+                      </View>
+                    </View>
+                  ))
+                )
+              ) : transactionsQuery.isLoading ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>{t('common.loading')}</Text>
                 </View>
-              ))
-            )
-          ) : transactionsQuery.isLoading ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>{t('common.loading')}</Text>
-            </View>
-          ) : filteredTransactions.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>{t('transactions.empty')}</Text>
-            </View>
-          ) : (
-            filteredTransactions.map((transaction, index) => {
-              const IconComponent = getTransactionIcon(transaction.type);
-              const iconColor = getTransactionColor(transaction.type);
-              
-              return (
+              ) : filteredTransactions.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>{t('transactions.empty')}</Text>
+                </View>
+              ) : (
+                filteredTransactions.map((transaction, index) => {
+                  const IconComponent = getTransactionIcon(transaction.type);
+                  const iconColor = getTransactionColor(transaction.type);
+
+                  return (
                 <View
                   key={transaction.id}
                   style={[
@@ -307,9 +312,11 @@ export default function TransactionsScreen() {
                   </View>
                 </View>
               );
-            })
-          )}
-        </View>
+                })
+              )}
+            </View>
+          </>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
