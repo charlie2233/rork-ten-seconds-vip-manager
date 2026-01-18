@@ -82,6 +82,7 @@ export default function ImageCarousel({
   const dots = useMemo(() => {
     return images.map((img, i) => {
       const isActive = i === activeIndex;
+      const label = `Banner ${i + 1} of ${count}`;
       return (
         <TouchableOpacity
           key={`dot-${img.key}`}
@@ -89,12 +90,15 @@ export default function ImageCarousel({
           onPress={() => scrollToIndex(i, true)}
           activeOpacity={0.7}
           accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ selected: isActive }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <View style={[styles.dot, isActive && styles.dotActive]} />
         </TouchableOpacity>
       );
     });
-  }, [activeIndex, images, scrollToIndex]);
+  }, [activeIndex, count, images, scrollToIndex]);
 
   if (count === 0) return null;
 
@@ -149,7 +153,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dotButton: {
-    padding: 4,
+    padding: 6,
   },
   dot: {
     width: 6,

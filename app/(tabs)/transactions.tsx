@@ -5,10 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Share,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowDownLeft, ArrowUpRight, RotateCcw, Sparkles } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
+  Share2,
+  Sparkles,
+} from 'lucide-react-native';
+import Svg, { Line, Rect } from 'react-native-svg';
 import Colors from '@/constants/colors';
 import { Transaction } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
@@ -60,11 +71,70 @@ function parseDateLike(value: string): number {
   return Number.isFinite(normalized) ? normalized : 0;
 }
 
+function formatMonthLabel(date: Date, locale: string): string {
+  try {
+    return date.toLocaleDateString(locale, { year: 'numeric', month: 'long' });
+  } catch {
+    return date.toISOString().slice(0, 7);
+  }
+}
+
+function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function PointsBarChart({ values }: { values: number[] }) {
+  const chartWidth = 160;
+  const chartHeight = 52;
+  const padding = 6;
+  const gap = 4;
+  const count = Math.max(1, values.length);
+  const baselineY = Math.round(chartHeight / 2);
+  const maxBarHeight = baselineY - padding - 2;
+  const maxAbs = Math.max(1, ...values.map((v) => Math.abs(v)));
+  const barWidth = (chartWidth - padding * 2 - gap * (count - 1)) / count;
+
+  return (
+    <Svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+      <Line
+        x1={padding}
+        y1={baselineY}
+        x2={chartWidth - padding}
+        y2={baselineY}
+        stroke="rgba(255,255,255,0.18)"
+        strokeWidth={1}
+      />
+      {values.map((v, i) => {
+        const h = (Math.abs(v) / maxAbs) * maxBarHeight;
+        const x = padding + i * (barWidth + gap);
+        const y = v >= 0 ? baselineY - h : baselineY;
+        const fill =
+          v >= 0 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.75)';
+        return (
+          <Rect
+            key={`bar-${i}`}
+            x={x}
+            y={y}
+            width={barWidth}
+            height={h}
+            rx={2}
+            fill={fill}
+          />
+        );
+      })}
+    </Svg>
+  );
+}
+
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const { user, pointsHistory } = useAuth();
   const { t, locale } = useI18n();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [howOpen, setHowOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
   const transactionsQuery = trpc.transactions.list.useQuery(
@@ -129,6 +199,72 @@ export default function TransactionsScreen() {
     [t]
   );
 
+  const pointsSummary = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    let earned = 0;
+    let spent = 0;
+
+    for (const item of pointsItems) {
+      const ts = parseDateLike(item.date);
+      if (!ts) continue;
+      if (ts < monthStart.valueOf() || ts >= nextMonthStart.valueOf()) continue;
+      if (item.delta >= 0) earned += item.delta;
+      else spent += Math.abs(item.delta);
+    }
+
+    const days = 14;
+    const todayStart = startOfDay(now).valueOf();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const series: number[] = [];
+
+    for (let i = days - 1; i >= 0; i -= 1) {
+      const dayStart = todayStart - i * dayMs;
+      const dayEnd = dayStart + dayMs;
+      const net = pointsItems.reduce((sum, item) => {
+        const ts = parseDateLike(item.date);
+        if (!ts) return sum;
+        if (ts >= dayStart && ts < dayEnd) return sum + item.delta;
+        return sum;
+      }, 0);
+      series.push(net);
+    }
+
+    return {
+      monthLabel: formatMonthLabel(now, numberLocale),
+      earned,
+      spent,
+      net: earned - spent,
+      series,
+    };
+  }, [numberLocale, pointsItems]);
+
+  const sharePointsSummary = useCallback(async () => {
+    const balance = user?.points ?? 0;
+    const message = t('pointsCenter.shareMessage', {
+      month: pointsSummary.monthLabel,
+      earned: pointsSummary.earned.toLocaleString(numberLocale),
+      spent: pointsSummary.spent.toLocaleString(numberLocale),
+      net: pointsSummary.net.toLocaleString(numberLocale),
+      balance: balance.toLocaleString(numberLocale),
+    });
+
+    try {
+      await Clipboard.setStringAsync(message);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+
+    try {
+      await Share.share({ message });
+    } catch {
+      // ignore
+    }
+  }, [numberLocale, pointsSummary, t, user?.points]);
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -191,6 +327,7 @@ export default function TransactionsScreen() {
                   ]}
                   onPress={() => setActiveFilter(option.key)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
                 >
                   <Text
                     style={[
@@ -203,6 +340,107 @@ export default function TransactionsScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {activeFilter === 'points' ? (
+              <View style={styles.pointsCenterCard}>
+                <View style={styles.pointsCenterHeader}>
+                  <View>
+                    <Text style={styles.pointsCenterTitle}>{t('pointsCenter.title')}</Text>
+                    <Text style={styles.pointsCenterSubtitle}>
+                      {t('pointsCenter.thisMonth', { month: pointsSummary.monthLabel })}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.shareButton}
+                    onPress={sharePointsSummary}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('pointsCenter.share')}
+                    accessibilityHint={t('pointsCenter.shareHint')}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Share2 size={18} color={Colors.text} />
+                  </TouchableOpacity>
+                </View>
+                {shareCopied ? (
+                  <Text style={styles.shareCopiedText}>{t('common.copied')}</Text>
+                ) : null}
+
+                <View style={styles.pointsBalanceRow}>
+                  <Text style={styles.pointsBalanceValue}>
+                    {(user.points ?? 0).toLocaleString(numberLocale)}
+                  </Text>
+                  <Text style={styles.pointsBalanceUnit}>{t('points.unit')}</Text>
+                </View>
+
+                <View style={styles.pointsSummaryRow}>
+                  <View style={styles.pointsSummaryItem}>
+                    <Text style={styles.pointsSummaryLabel}>{t('pointsCenter.earned')}</Text>
+                    <Text style={[styles.pointsSummaryValue, { color: Colors.success }]}>
+                      +{pointsSummary.earned.toLocaleString(numberLocale)}
+                    </Text>
+                  </View>
+                  <View style={styles.pointsSummaryDivider} />
+                  <View style={styles.pointsSummaryItem}>
+                    <Text style={styles.pointsSummaryLabel}>{t('pointsCenter.spent')}</Text>
+                    <Text style={[styles.pointsSummaryValue, { color: Colors.error }]}>
+                      -{pointsSummary.spent.toLocaleString(numberLocale)}
+                    </Text>
+                  </View>
+                  <View style={styles.pointsSummaryDivider} />
+                  <View style={styles.pointsSummaryItem}>
+                    <Text style={styles.pointsSummaryLabel}>{t('pointsCenter.net')}</Text>
+                    <Text style={styles.pointsSummaryValue}>
+                      {pointsSummary.net >= 0 ? '+' : ''}
+                      {pointsSummary.net.toLocaleString(numberLocale)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View
+                  accessible
+                  accessibilityRole="image"
+                  accessibilityLabel={t('pointsCenter.chartA11y', {
+                    earned: pointsSummary.earned.toLocaleString(numberLocale),
+                    spent: pointsSummary.spent.toLocaleString(numberLocale),
+                    net: pointsSummary.net.toLocaleString(numberLocale),
+                  })}
+                >
+                  <PointsBarChart values={pointsSummary.series} />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.howToggle}
+                  onPress={() => setHowOpen((v) => !v)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('pointsCenter.howTitle')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={styles.howTitle}>{t('pointsCenter.howTitle')}</Text>
+                  {howOpen ? (
+                    <ChevronUp size={18} color={Colors.textSecondary} />
+                  ) : (
+                    <ChevronDown size={18} color={Colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+
+                {howOpen ? (
+                  <View style={styles.howContent}>
+                    <Text style={styles.howSectionTitle}>{t('pointsCenter.howEarnTitle')}</Text>
+                    <Text style={styles.howBullet}>• {t('pointsCenter.howEarn1')}</Text>
+                    <Text style={styles.howBullet}>• {t('pointsCenter.howEarn2')}</Text>
+
+                    <View style={{ height: 10 }} />
+
+                    <Text style={styles.howSectionTitle}>{t('pointsCenter.howSpendTitle')}</Text>
+                    <Text style={styles.howBullet}>• {t('pointsCenter.howSpend1')}</Text>
+                    <Text style={styles.howBullet}>• {t('pointsCenter.howSpend2')}</Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
 
             <View style={styles.transactionsList}>
               {activeFilter === 'points' ? (
@@ -452,5 +690,127 @@ const styles = StyleSheet.create({
   transactionBalance: {
     fontSize: 11,
     color: Colors.textMuted,
+  },
+  pointsCenterCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    padding: 16,
+    marginBottom: 14,
+  },
+  pointsCenterHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 10,
+  },
+  pointsCenterTitle: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: '800' as const,
+  },
+  pointsCenterSubtitle: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.backgroundLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  shareCopiedText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    marginTop: -4,
+    marginBottom: 6,
+  },
+  pointsBalanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 6,
+    marginBottom: 12,
+  },
+  pointsBalanceValue: {
+    color: Colors.text,
+    fontSize: 30,
+    fontWeight: '900' as const,
+    letterSpacing: 0.5,
+  },
+  pointsBalanceUnit: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '700' as const,
+    marginBottom: 6,
+  },
+  pointsSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundLight,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginBottom: 12,
+  },
+  pointsSummaryItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  pointsSummaryLabel: {
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+  },
+  pointsSummaryValue: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '800' as const,
+  },
+  pointsSummaryDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: Colors.border,
+    marginHorizontal: 6,
+  },
+  howToggle: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  howTitle: {
+    color: Colors.text,
+    fontSize: 13,
+    fontWeight: '800' as const,
+  },
+  howContent: {
+    marginTop: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundLight,
+    padding: 12,
+  },
+  howSectionTitle: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: '800' as const,
+    marginBottom: 6,
+  },
+  howBullet: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

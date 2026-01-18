@@ -9,7 +9,7 @@ export default {
   surfaceLight: '#2E2E2E',
   text: '#FFFFFF',
   textSecondary: '#A0A0A0',
-  textMuted: '#6B6B6B',
+  textMuted: '#7A7A7A',
   border: '#333333',
   success: '#4CAF50',
   warning: '#FF9800',

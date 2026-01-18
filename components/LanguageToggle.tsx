@@ -25,7 +25,7 @@ export default function LanguageToggle({
   variant = 'full',
   align = 'left',
 }: Props) {
-  const { locale, setLocale } = useI18n();
+  const { locale, setLocale, t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -52,6 +52,10 @@ export default function LanguageToggle({
         style={[styles.button, variant === 'icon' && styles.iconButton, style]}
         onPress={() => setIsOpen(true)}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('preferences.language')}: ${currentLabel}`}
+        accessibilityHint={t('a11y.languageHint')}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         testID="language-toggle"
       >
         <Languages size={16} color={Colors.textSecondary} />
@@ -88,6 +92,9 @@ export default function LanguageToggle({
                   style={styles.menuItem}
                   onPress={() => chooseLanguage(opt.locale)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={opt.label}
+                  accessibilityState={{ selected }}
                 >
                   <Text style={[styles.menuText, selected && styles.menuTextSelected]}>
                     {opt.label}
@@ -107,7 +114,7 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: 10,
     gap: 8,
-    height: 32,
+    minHeight: 32,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -117,7 +124,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   iconButton: {
-    width: 36,
+    width: 44,
+    minHeight: 40,
     paddingHorizontal: 0,
   },
   text: {
@@ -145,7 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    height: 48,
+    minHeight: 48,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },

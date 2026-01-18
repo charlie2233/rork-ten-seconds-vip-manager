@@ -37,6 +37,8 @@ export default function AuthGateCard({
         onPress={onPressCta ?? (() => router.push('/login'))}
         activeOpacity={0.85}
         accessibilityRole="button"
+        accessibilityLabel={ctaLabel ?? t('auth.login')}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <LinearGradient
           colors={[Colors.primary, Colors.primaryDark]}
@@ -85,16 +87,17 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: '100%',
-    height: 46,
     borderRadius: 14,
     overflow: 'hidden',
   },
   ctaGradient: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 46,
   },
   ctaText: {
     color: Colors.background,
@@ -102,4 +105,3 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
-
