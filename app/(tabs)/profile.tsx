@@ -18,6 +18,7 @@ import {
   Shield,
   HelpCircle,
   MessageSquare,
+  Info,
   LogOut,
   LogIn,
   Settings,
@@ -61,6 +62,7 @@ const menuSections: MenuSection[] = [
       { icon: Bell, labelKey: 'profile.item.notifications', value: '', route: '/notifications' },
       { icon: Shield, labelKey: 'profile.item.security', value: '', route: '/security' },
       { icon: Settings, labelKey: 'profile.item.preferences', value: '', route: '/preferences' },
+      { icon: Info, labelKey: 'profile.item.howItWorks', value: '', route: '/how-it-works' },
     ],
   },
   {

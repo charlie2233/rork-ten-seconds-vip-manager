@@ -378,7 +378,7 @@ export default function HomeScreen() {
                   backgroundColor: cardTheme.qrBackground, 
                   borderColor: cardTheme.borderColor,
                 }]}
-                onPress={() => router.push('/member-code')}
+                onPress={() => (user ? router.push('/member-code') : router.push('/login'))}
                 activeOpacity={0.7}
               >
                 <QrCode size={26} color={cardTheme.accent} />
@@ -492,7 +492,7 @@ export default function HomeScreen() {
           <TouchableOpacity 
             style={styles.actionButton} 
             activeOpacity={0.7}
-            onPress={() => router.push('/(tabs)/benefits')}
+            onPress={() => (user ? router.push('/(tabs)/benefits') : router.push('/login'))}
           >
             <LinearGradient
               colors={['rgba(212, 57, 58, 0.2)', 'rgba(212, 57, 58, 0.08)']}
@@ -506,7 +506,7 @@ export default function HomeScreen() {
           <TouchableOpacity 
             style={styles.actionButton} 
             activeOpacity={0.7}
-            onPress={() => router.push('/(tabs)/transactions')}
+            onPress={() => (user ? router.push('/(tabs)/transactions') : router.push('/login'))}
           >
             <LinearGradient
               colors={['rgba(76, 175, 80, 0.2)', 'rgba(76, 175, 80, 0.08)']}

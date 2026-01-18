@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -32,8 +32,21 @@ export default function CouponDetailScreen() {
   const { backgroundGradient, fontScale } = useSettings();
   const { id, claim } = useLocalSearchParams<{ id: string; claim?: string }>();
   const [copied, setCopied] = useState(false);
-  const [redeemedVisible, setRedeemedVisible] = useState(false);
-  const [claimedVisible, setClaimedVisible] = useState(false);
+  const [toastType, setToastType] = useState<'redeemed' | 'claimed' | null>(null);
+  const [toastSeconds, setToastSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!toastType || toastSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setToastSeconds((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [toastSeconds, toastType]);
+
+  useEffect(() => {
+    if (!toastType || toastSeconds !== 0) return;
+    setToastType(null);
+  }, [toastSeconds, toastType]);
 
   const { definition, state } = useMemo(() => {
     const couponId = Array.isArray(id) ? id[0] : id;
@@ -176,15 +189,15 @@ export default function CouponDetailScreen() {
 
   const claimNow = async () => {
     await claimCoupon(definition.id);
-    setClaimedVisible(true);
-    setTimeout(() => setClaimedVisible(false), 1500);
+    setToastType('claimed');
+    setToastSeconds(2);
   };
 
   const redeemNow = async () => {
     if (!state) return;
     await markCouponUsed(state.id);
-    setRedeemedVisible(true);
-    setTimeout(() => setRedeemedVisible(false), 1500);
+    setToastType('redeemed');
+    setToastSeconds(3);
   };
 
   return (
@@ -331,48 +344,43 @@ export default function CouponDetailScreen() {
       </ScrollView>
 
       <Modal
-        visible={redeemedVisible}
+        visible={!!toastType && toastSeconds > 0}
         transparent
         animationType="fade"
-        onRequestClose={() => setRedeemedVisible(false)}
-	      >
-	        <View style={styles.redeemedOverlay}>
-	          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRedeemedVisible(false)} />
-	          <View style={styles.redeemedCard}>
+        onRequestClose={() => {
+          setToastType(null);
+          setToastSeconds(0);
+        }}
+      >
+        <View style={styles.redeemedOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              setToastType(null);
+              setToastSeconds(0);
+            }}
+          />
+          <View style={styles.redeemedCard}>
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}
               style={styles.redeemedIcon}
             >
               <Sparkles size={26} color={Colors.background} />
             </LinearGradient>
-            <Text style={styles.redeemedTitle}>{t('couponDetail.redeemedTitle')}</Text>
-	            <Text style={styles.redeemedSubtitle}>{t('couponDetail.redeemedMessage')}</Text>
-	          </View>
-	        </View>
-	      </Modal>
-
-	      <Modal
-	        visible={claimedVisible}
-	        transparent
-	        animationType="fade"
-	        onRequestClose={() => setClaimedVisible(false)}
-	      >
-	        <View style={styles.redeemedOverlay}>
-	          <Pressable style={StyleSheet.absoluteFill} onPress={() => setClaimedVisible(false)} />
-	          <View style={styles.redeemedCard}>
-	            <LinearGradient
-	              colors={[Colors.primary, Colors.primaryDark]}
-	              style={styles.redeemedIcon}
-	            >
-	              <Sparkles size={26} color={Colors.background} />
-	            </LinearGradient>
-	            <Text style={styles.redeemedTitle}>{t('couponDetail.claimedTitle')}</Text>
-	            <Text style={styles.redeemedSubtitle}>
-	              {t('couponDetail.claimedMessage', { coupon: t(definition.title) })}
-	            </Text>
-	          </View>
-	        </View>
-	      </Modal>
+            <Text style={styles.redeemedTitle}>
+              {toastType === 'redeemed' ? t('couponDetail.redeemedTitle') : t('couponDetail.claimedTitle')}
+            </Text>
+            <Text style={styles.redeemedSubtitle}>
+              {toastType === 'redeemed'
+                ? t('couponDetail.redeemedMessage')
+                : t('couponDetail.claimedMessage', { coupon: t(definition.title) })}
+            </Text>
+            <Text style={styles.redeemedCountdown}>
+              {t('common.closingIn', { seconds: String(toastSeconds) })}
+            </Text>
+          </View>
+        </View>
+      </Modal>
 	    </View>
 	  );
 }
@@ -611,5 +619,11 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  redeemedCountdown: {
+    marginTop: 12,
+    color: Colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700' as const,
   },
 });

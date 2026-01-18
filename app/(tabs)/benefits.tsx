@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, LogIn, Sparkles, Ticket, Wallet } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, LogIn, Search, Sparkles, Ticket, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
@@ -10,6 +10,7 @@ import ImageCarousel from '@/components/ImageCarousel';
 import AuthGateCard from '@/components/AuthGateCard';
 import TopBar from '@/components/TopBar';
 import BrandBanner from '@/components/BrandBanner';
+import CouponDetailsSheet from '@/components/CouponDetailsSheet';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
@@ -18,6 +19,7 @@ import { formatShortDateTime } from '@/lib/datetime';
 import { useSettings } from '@/contexts/SettingsContext';
 
 type SegmentKey = CouponStatus;
+type SortKey = 'default' | 'expiringSoon' | 'newest' | 'recentlyUsed';
 
 const COUPON_BANNERS = [
   { key: 'classic', source: require('../../banners/banner-classic.jpg') },
@@ -45,23 +47,91 @@ export default function CouponsScreen() {
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
   const [isExpanded, setIsExpanded] = useState(false);
   const [claimedCouponName, setClaimedCouponName] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expiringSoonOnly, setExpiringSoonOnly] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>('expiringSoon');
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
+  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
 
   const availablePoints = user?.points ?? 0;
 
   useEffect(() => {
     setIsExpanded(false);
+    setExpiringSoonOnly(false);
+    setSortKey(activeSegment === 'available' ? 'expiringSoon' : 'recentlyUsed');
   }, [activeSegment]);
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
   const currentTier = tierInfo[effectiveTier];
 
   const segmentedCoupons = useMemo(() => {
-    return claimedCoupons.filter((c) => {
+    const normalize = (value: string) => value.trim().toLowerCase();
+    const query = normalize(searchQuery);
+    const now = new Date();
+    const soonCutoff = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const filtered = claimedCoupons.filter((c) => {
       const effective: CouponStatus =
         c.state.status === 'used' ? 'used' : c.isExpired ? 'expired' : 'available';
-      return effective === activeSegment;
+      if (effective !== activeSegment) return false;
+
+      if (query) {
+        const title = normalize(t(c.definition.title));
+        const desc = normalize(t(c.definition.description));
+        if (!title.includes(query) && !desc.includes(query)) return false;
+      }
+
+      if (activeSegment === 'available' && expiringSoonOnly) {
+        const until = new Date(c.definition.validTo);
+        if (!Number.isFinite(until.valueOf())) return false;
+        if (until > soonCutoff) return false;
+      }
+
+      return true;
     });
-  }, [activeSegment, claimedCoupons]);
+
+    const sorted = [...filtered].sort((a, b) => {
+      const key = sortKey === 'default' ? (activeSegment === 'used' ? 'recentlyUsed' : 'expiringSoon') : sortKey;
+
+      if (key === 'recentlyUsed') {
+        const atA = a.state.usedAt ? Date.parse(a.state.usedAt) : 0;
+        const atB = b.state.usedAt ? Date.parse(b.state.usedAt) : 0;
+        if (atA !== atB) return atB - atA;
+        return Date.parse(b.state.claimedAt) - Date.parse(a.state.claimedAt);
+      }
+
+      if (key === 'newest') {
+        return Date.parse(b.state.claimedAt) - Date.parse(a.state.claimedAt);
+      }
+
+      if (key === 'expiringSoon') {
+        const untilA = Date.parse(a.definition.validTo);
+        const untilB = Date.parse(b.definition.validTo);
+        const safeA = Number.isFinite(untilA) ? untilA : Number.MAX_SAFE_INTEGER;
+        const safeB = Number.isFinite(untilB) ? untilB : Number.MAX_SAFE_INTEGER;
+        if (safeA !== safeB) return safeA - safeB;
+        return Date.parse(b.state.claimedAt) - Date.parse(a.state.claimedAt);
+      }
+
+      return 0;
+    });
+
+    return sorted;
+  }, [activeSegment, claimedCoupons, expiringSoonOnly, searchQuery, sortKey, t]);
+
+  const filteredOffers = useMemo(() => {
+    const normalize = (value: string) => value.trim().toLowerCase();
+    const query = normalize(searchQuery);
+    if (!query) return offers;
+    return offers.filter(({ definition }) => {
+      const title = normalize(t(definition.title));
+      const desc = normalize(t(definition.description));
+      const minSpend = normalize(t(definition.minSpendText ?? definition.description));
+      return title.includes(query) || desc.includes(query) || minSpend.includes(query);
+    });
+  }, [offers, searchQuery, t]);
 
   const hasMoreCoupons = segmentedCoupons.length > MAX_VISIBLE_COUPONS;
   const visibleCoupons = isExpanded ? segmentedCoupons : segmentedCoupons.slice(0, MAX_VISIBLE_COUPONS);
@@ -120,6 +190,32 @@ export default function CouponsScreen() {
 
         <ImageCarousel images={COUPON_BANNERS} height={170} style={styles.bannerCarousel} />
 
+        <View style={styles.searchRow}>
+          <View style={styles.searchBox}>
+            <Search size={16} color={Colors.textMuted} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={t('coupons.searchPlaceholder')}
+              placeholderTextColor={Colors.textMuted}
+              style={styles.searchInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.sortPill}
+            onPress={() => setSortSheetOpen(true)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+          >
+            <Text style={styles.sortText}>{t(`coupons.sort.${sortKey}`)}</Text>
+            <ChevronDown size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
         {!user ? (
           <AuthGateCard
             title={t('coupons.loginRequired.title')}
@@ -147,6 +243,21 @@ export default function CouponsScreen() {
         </View>
 
         <View style={styles.couponList}>
+          {activeSegment === 'available' ? (
+            <View style={styles.filtersRow}>
+              <TouchableOpacity
+                style={[styles.filterChip, expiringSoonOnly && styles.filterChipActive]}
+                onPress={() => setExpiringSoonOnly((v) => !v)}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.filterChipText, expiringSoonOnly && styles.filterChipTextActive]}>
+                  {t('coupons.filter.expiringSoon7')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
           {segmentedCoupons.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>{t(emptyKey)}</Text>
@@ -173,7 +284,15 @@ export default function CouponsScreen() {
                     key={state.id}
                     style={styles.couponCard}
                     activeOpacity={0.8}
-                    onPress={() => router.push(`/coupon/${definition.id}?claim=${state.id}`)}
+                    onPress={() => {
+                      if (!user) {
+                        router.push('/login');
+                        return;
+                      }
+                      setSelectedCouponId(definition.id);
+                      setSelectedClaimId(state.id);
+                      setDetailsOpen(true);
+                    }}
                   >
                     <View style={styles.couponLeft}>
                       <View
@@ -240,12 +359,25 @@ export default function CouponsScreen() {
           )}
         </View>
 
-        {offers.length > 0 && (
+        {filteredOffers.length > 0 && (
           <View style={styles.offersSection}>
             <Text style={styles.sectionTitle}>{t('coupons.section.offers')}</Text>
 
-            {offers.map(({ definition, isUnlocked }) => (
-              <View key={definition.id} style={styles.offerCard}>
+            {filteredOffers.map(({ definition, isUnlocked }) => (
+              <TouchableOpacity
+                key={definition.id}
+                style={styles.offerCard}
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (!user) {
+                    router.push('/login');
+                    return;
+                  }
+                  setSelectedCouponId(definition.id);
+                  setSelectedClaimId(null);
+                  setDetailsOpen(true);
+                }}
+              >
                 <View style={styles.offerLeft}>
                   <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
                   <View style={styles.offerTextBlock}>
@@ -269,17 +401,17 @@ export default function CouponsScreen() {
                       : t('coupons.claim');
 
 	                  return (
-	                    <TouchableOpacity
-	                      style={[styles.claimButton, !canAfford && styles.claimButtonDisabled]}
-	                      disabled={!canAfford}
-	                      onPress={async () => {
-	                        await claimCoupon(definition.id);
-	                        const title = t(definition.title);
-	                        setClaimedCouponName(title);
-	                        setTimeout(() => setClaimedCouponName(null), 1500);
-	                      }}
-	                      activeOpacity={0.8}
-	                    >
+                      <TouchableOpacity
+                        style={[styles.claimButton, !canAfford && styles.claimButtonDisabled]}
+                        disabled={!canAfford}
+                        onPress={async () => {
+                          await claimCoupon(definition.id);
+                          const title = t(definition.title);
+                          setClaimedCouponName(title);
+                          setTimeout(() => setClaimedCouponName(null), 1500);
+                        }}
+                        activeOpacity={0.8}
+                      >
                       {canAfford ? (
                         <Check size={16} color={Colors.background} />
                       ) : (
@@ -309,13 +441,54 @@ export default function CouponsScreen() {
                     </TouchableOpacity>
                   )
                 )}
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
 
 	        <View style={{ height: 100 }} />
 	      </ScrollView>
+
+      <CouponDetailsSheet
+        visible={detailsOpen}
+        couponId={selectedCouponId}
+        couponInstanceId={selectedClaimId}
+        onClose={() => setDetailsOpen(false)}
+      />
+
+      <Modal
+        visible={sortSheetOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSortSheetOpen(false)}
+      >
+        <View style={styles.sortOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setSortSheetOpen(false)} />
+          <View style={styles.sortSheet}>
+            {(['default', 'expiringSoon', 'newest', 'recentlyUsed'] as const).map((key, index, arr) => {
+              const selected = key === sortKey;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[styles.sortRow, index === arr.length - 1 && styles.sortRowLast]}
+                  onPress={() => {
+                    setSortKey(key);
+                    setSortSheetOpen(false);
+                  }}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                >
+                  <Text style={[styles.sortRowText, selected && styles.sortRowTextSelected]}>
+                    {t(`coupons.sort.${key}`)}
+                  </Text>
+                  {selected ? <Check size={18} color={Colors.primary} /> : <View style={styles.sortSpacer} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
 
 	      <Modal
 	        visible={!!claimedCouponName}
@@ -359,6 +532,108 @@ const styles = StyleSheet.create({
   },
   bannerCarousel: {
     marginBottom: 18,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  searchBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    minHeight: 44,
+    borderRadius: 16,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    color: Colors.text,
+    fontSize: 13,
+    fontWeight: '600' as const,
+  },
+  sortPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    minHeight: 44,
+    borderRadius: 16,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  sortText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800' as const,
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  filterChip: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  filterChipActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(201, 169, 98, 0.14)',
+  },
+  filterChipText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700' as const,
+  },
+  filterChipTextActive: {
+    color: Colors.primary,
+  },
+  sortOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 18,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  sortSheet: {
+    borderRadius: 18,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    minHeight: 52,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  sortRowLast: {
+    borderBottomWidth: 0,
+  },
+  sortRowText: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '700' as const,
+  },
+  sortRowTextSelected: {
+    color: Colors.primary,
+  },
+  sortSpacer: {
+    width: 18,
+    height: 18,
   },
   rechargeButton: {
     flexDirection: 'row',

@@ -66,6 +66,7 @@ function RootLayoutNav() {
       <Stack.Screen name="notifications" options={{ headerShown: false }} />
       <Stack.Screen name="security" options={{ headerShown: false }} />
       <Stack.Screen name="preferences" options={{ headerShown: false }} />
+      <Stack.Screen name="how-it-works" options={{ headerShown: false }} />
       <Stack.Screen name="nearby-stores" options={{ headerShown: false }} />
       <Stack.Screen name="support-chat" options={{ headerShown: false }} />
       <Stack.Screen name="help-center" options={{ headerShown: false }} />
