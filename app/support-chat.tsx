@@ -12,12 +12,10 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Send, Bot, User, Sparkles } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { Send, Bot, User } from 'lucide-react-native';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
-import LanguageToggle from '@/components/LanguageToggle';
 import ChatMarkdown from '@/components/ChatMarkdown';
 import { useRorkAgent } from '@rork-ai/toolkit-sdk';
 import { z } from 'zod';
@@ -25,6 +23,8 @@ import { trpcClient } from '@/lib/trpc';
 import { storeLocations } from '@/mocks/data';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { getTierFromBalance } from '@/lib/tier';
+import TopBar from '@/components/TopBar';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const QUICK_QUESTIONS = [
   'support.quick.balance',
@@ -36,6 +36,7 @@ const QUICK_QUESTIONS = [
 export default function SupportChatScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { backgroundGradient } = useSettings();
   const { user } = useAuth();
   const { claimedCoupons, offers } = useCoupons();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -269,28 +270,23 @@ export default function SupportChatScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <View style={styles.headerTitleRow}>
-            <Sparkles size={16} color={Colors.primary} />
-            <Text style={styles.headerTitle}>{t('support.title')}</Text>
-          </View>
-          <View style={styles.onlineStatus}>
+      <TopBar
+        title={t('support.title')}
+        leftAction="back"
+        style={styles.topBar}
+        right={
+          <View style={[styles.onlineStatus, { marginTop: 0 }]}>
             <View style={styles.aiIndicator}>
               <Text style={styles.aiText}>AI</Text>
             </View>
             <Text style={styles.onlineText}>{t('support.online')}</Text>
           </View>
-        </View>
-        <LanguageToggle variant="icon" align="right" />
-      </View>
+        }
+      />
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -423,37 +419,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+  topBar: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  headerCenter: {
-    alignItems: 'center',
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: Colors.text,
   },
   onlineStatus: {
     flexDirection: 'row',
@@ -475,9 +443,6 @@ const styles = StyleSheet.create({
   onlineText: {
     fontSize: 11,
     color: Colors.success,
-  },
-  placeholder: {
-    width: 40,
   },
   keyboardView: {
     flex: 1,

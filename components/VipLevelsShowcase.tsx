@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { User } from '@/types';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { TIER_ORDER, TIER_MIN_BALANCE } from '@/lib/tier';
 import { getPointsPerDollar } from '@/lib/points';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
@@ -155,6 +156,7 @@ function TierPreviewCard({ tier, isCurrent }: { tier: User['tier']; isCurrent: b
 
 export default function VipLevelsShowcase({ currentTier = null, currentBalance = null }: Props) {
   const { t, locale } = useI18n();
+  const { hideBalance, fontScale } = useSettings();
 
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
@@ -170,8 +172,8 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>{t('profile.vipLevelsTitle')}</Text>
-        <Text style={styles.subtitle}>{t('profile.vipLevelsSubtitle')}</Text>
+        <Text style={[styles.title, { fontSize: 16 * fontScale }]}>{t('profile.vipLevelsTitle')}</Text>
+        <Text style={[styles.subtitle, { fontSize: 12 * fontScale }]}>{t('profile.vipLevelsSubtitle')}</Text>
       </View>
 
       {currentTier && typeof currentBalance === 'number' && Number.isFinite(currentBalance) ? (
@@ -184,7 +186,9 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
             const raw = (currentBalance - currentMin) / denom;
             const pct = Math.max(0, Math.min(1, raw));
             const percentText = `${Math.round(pct * 100)}%`;
-            const remainingText = Math.ceil(remaining).toLocaleString(numberLocale, { maximumFractionDigits: 0 });
+            const remainingText = hideBalance
+              ? '•••'
+              : Math.ceil(remaining).toLocaleString(numberLocale, { maximumFractionDigits: 0 });
             const nextTierName = t(`tier.${nextTier}`);
             const fillColors = nextTierTheme?.chipGradient ?? ['#FFFFFF', Colors.primary];
             return (

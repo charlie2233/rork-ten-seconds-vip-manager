@@ -9,9 +9,8 @@ import {
   Pressable,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Check, ChevronLeft, Copy, Lock, Sparkles } from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Check, Copy, Lock, Sparkles } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
@@ -19,17 +18,18 @@ import Colors from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import AuthGateCard from '@/components/AuthGateCard';
+import TopBar from '@/components/TopBar';
 import { CouponStatus } from '@/types';
 import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
 import { formatShortDateTime } from '@/lib/datetime';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export default function CouponDetailScreen() {
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { getCoupon, claimCoupon, markCouponUsed } = useCoupons();
   const { t, locale } = useI18n();
+  const { backgroundGradient, fontScale } = useSettings();
   const { id, claim } = useLocalSearchParams<{ id: string; claim?: string }>();
   const [copied, setCopied] = useState(false);
   const [redeemedVisible, setRedeemedVisible] = useState(false);
@@ -91,16 +91,11 @@ export default function CouponDetailScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={[Colors.background, Colors.backgroundLight]}
+          colors={backgroundGradient}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <ChevronLeft size={22} color={Colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('couponDetail.title')}</Text>
-          </View>
+        <TopBar title={t('couponDetail.title')} leftAction="back" />
+        <View style={styles.content}>
           <AuthGateCard
             title={t('memberCode.pleaseLoginFirst')}
             message={t('coupons.loginRequired.message')}
@@ -117,19 +112,11 @@ export default function CouponDetailScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={[Colors.background, Colors.backgroundLight]}
+          colors={backgroundGradient}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.content, { paddingTop: insets.top + 12 }]}>
-          <View style={styles.languageRow}>
-            <LanguageToggle />
-          </View>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <ChevronLeft size={22} color={Colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('couponDetail.title')}</Text>
-          </View>
+        <TopBar title={t('couponDetail.title')} leftAction="back" />
+        <View style={styles.content}>
           <View style={styles.notFoundBox}>
             <Text style={styles.notFoundText}>{t('notFound.message')}</Text>
           </View>
@@ -203,29 +190,21 @@ export default function CouponDetailScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
+      <TopBar title={t('couponDetail.title')} leftAction="back" />
+
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.languageRow}>
-          <LanguageToggle />
-        </View>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ChevronLeft size={22} color={Colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('couponDetail.title')}</Text>
-        </View>
-
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleBlock}>
-              <Text style={styles.couponTitle}>{t(definition.title)}</Text>
+              <Text style={[styles.couponTitle, { fontSize: 18 * fontScale }]}>{t(definition.title)}</Text>
               <Text style={styles.couponDesc}>{t(definition.description)}</Text>
             </View>
             {status !== 'available' && (
@@ -409,30 +388,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingBottom: 24,
-  },
-  languageRow: {
-    marginBottom: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: Colors.text,
   },
   notFoundBox: {
     marginTop: 40,

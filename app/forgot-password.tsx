@@ -10,18 +10,18 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Phone, Shield, CheckCircle } from 'lucide-react-native';
+import { Phone, Shield, CheckCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
+import TopBar from '@/components/TopBar';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type Step = 'phone' | 'code' | 'success';
 
 export default function ForgotPasswordScreen() {
-  const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { backgroundGradient } = useSettings();
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -70,16 +70,11 @@ export default function ForgotPasswordScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight, Colors.background]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <LanguageToggle variant="icon" align="right" />
-      </View>
+      <TopBar title={t('auth.forgotPassword')} leftAction="back" />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

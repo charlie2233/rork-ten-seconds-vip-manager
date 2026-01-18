@@ -9,7 +9,6 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Phone,
   CreditCard,
@@ -34,12 +33,13 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
+import TopBar from '@/components/TopBar';
 import { migrationService } from '@/lib/migration';
 import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
 import { CardTexture } from '@/components/CardTexture';
 import VipLevelsShowcase from '@/components/VipLevelsShowcase';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface MenuItem {
   icon: typeof Bell;
@@ -80,9 +80,9 @@ const menuSections: MenuSection[] = [
 ];
 
 export default function ProfileScreen() {
-  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const { t } = useI18n();
+  const { backgroundGradient, fontScale, hideBalance } = useSettings();
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
@@ -174,7 +174,7 @@ export default function ProfileScreen() {
               const balance = Number(result?.balance ?? 0);
               Alert.alert(
                 t('profile.migration.success'),
-                `${t('home.balance')}: $${balance.toFixed(2)}`
+                `${t('home.balance')}: ${hideBalance ? '$••••' : `$${balance.toFixed(2)}`}`
               );
             } catch {
               Alert.alert(t('forgot.error'), t('profile.migration.notFound'));
@@ -197,18 +197,19 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
+
+      <TopBar title={t('brand.shortName')} />
       
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>{t('profile.title')}</Text>
-          <LanguageToggle />
+          <Text style={[styles.title, { fontSize: 28 * fontScale }]}>{t('profile.title')}</Text>
         </View>
 
         {user ? (

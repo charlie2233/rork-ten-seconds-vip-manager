@@ -10,18 +10,18 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Eye, EyeOff, CreditCard, Lock, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
+import TopBar from '@/components/TopBar';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export default function LoginScreen() {
-  const insets = useSafeAreaInsets();
   const { login, enterGuestMode, isLoggingIn, loginError } = useAuth();
   const { t } = useI18n();
+  const { backgroundGradient } = useSettings();
   const [memberId, setMemberId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -54,31 +54,30 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight, Colors.background]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.langToggle, { top: insets.top + 16 }]}>
-        <LanguageToggle />
-      </View>
-
-      <View style={[styles.closeToggle, { top: insets.top + 16 }]}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={async () => {
-            await enterGuestMode();
-            router.replace('/');
-          }}
-          activeOpacity={0.7}
-          testID="login-close"
-        >
-          <X size={18} color={Colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <TopBar
+        title={t('auth.login')}
+        right={
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={async () => {
+              await enterGuestMode();
+              router.replace('/');
+            }}
+            activeOpacity={0.7}
+            testID="login-close"
+          >
+            <X size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        }
+      />
       
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={[styles.content, { paddingTop: insets.top + 60 }]}
+        style={[styles.content, { paddingTop: 24 }]}
       >
         <View style={styles.header}>
           <View style={styles.logoContainer}>
@@ -181,16 +180,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  langToggle: {
-    position: 'absolute',
-    left: 24,
-    zIndex: 10,
-  },
-  closeToggle: {
-    position: 'absolute',
-    right: 24,
-    zIndex: 10,
   },
   closeButton: {
     width: 36,

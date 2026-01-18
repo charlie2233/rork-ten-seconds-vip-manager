@@ -1,20 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, LogIn, Sparkles, Ticket, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import ImageCarousel from '@/components/ImageCarousel';
 import AuthGateCard from '@/components/AuthGateCard';
+import TopBar from '@/components/TopBar';
+import BrandBanner from '@/components/BrandBanner';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import { CouponStatus, User } from '@/types';
 import { getTierFromBalance } from '@/lib/tier';
 import { formatShortDateTime } from '@/lib/datetime';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type SegmentKey = CouponStatus;
 
@@ -37,10 +38,10 @@ function formatTierKey(tier: User['tier']) {
 }
 
 export default function CouponsScreen() {
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { claimedCoupons, offers, claimCoupon } = useCoupons();
   const { t, locale } = useI18n();
+  const { backgroundGradient } = useSettings();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
   const [isExpanded, setIsExpanded] = useState(false);
   const [claimedCouponName, setClaimedCouponName] = useState<string | null>(null);
@@ -76,31 +77,32 @@ export default function CouponsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
+      <TopBar title={t('brand.shortName')} />
+
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.languageRow}>
-          <LanguageToggle />
-        </View>
-
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={styles.title}>{t('coupons.title')}</Text>
-            <TouchableOpacity 
-              style={styles.rechargeButton}
-              onPress={() => router.push('/recharge')}
-              activeOpacity={0.7}
-            >
-              <Wallet size={16} color={Colors.primary} />
-              <Text style={styles.rechargeButtonText}>{t('home.action.recharge')}</Text>
-            </TouchableOpacity>
-          </View>
+          <BrandBanner
+            title={t('coupons.title')}
+            right={
+              <TouchableOpacity
+                style={styles.rechargeButton}
+                onPress={() => router.push('/recharge')}
+                activeOpacity={0.7}
+              >
+                <Wallet size={16} color={Colors.primary} />
+                <Text style={styles.rechargeButtonText}>{t('home.action.recharge')}</Text>
+              </TouchableOpacity>
+            }
+            style={{ marginBottom: 10 }}
+          />
           <View style={styles.tierRow}>
             <View style={styles.tierBadge}>
               <Text style={[styles.tierText, { color: currentTier.color }]}>
@@ -352,25 +354,11 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
   },
-  languageRow: {
-    marginBottom: 16,
-  },
   header: {
     marginBottom: 20,
   },
   bannerCarousel: {
     marginBottom: 18,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: Colors.text,
   },
   rechargeButton: {
     flexDirection: 'row',

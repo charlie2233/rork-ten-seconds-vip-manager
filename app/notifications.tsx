@@ -8,12 +8,11 @@ import {
   Switch,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Bell, Gift, Wallet, Megaphone, MessageCircle } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { Bell, Gift, Wallet, Megaphone, MessageCircle } from 'lucide-react-native';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
+import TopBar from '@/components/TopBar';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const NOTIFICATION_SETTINGS = [
   { key: 'transactions', icon: Wallet, labelKey: 'notifications.transactions' },
@@ -52,8 +51,8 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 export default function NotificationsScreen() {
-  const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { backgroundGradient } = useSettings();
   const [settings, setSettings] = useState<Record<string, boolean>>({
     transactions: true,
     promotions: true,
@@ -68,17 +67,11 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
-        <LanguageToggle variant="icon" align="right" />
-      </View>
+      <TopBar title={t('notifications.title')} leftAction="back" />
 
       <ScrollView
         style={styles.scrollView}
@@ -163,31 +156,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-  placeholder: {
-    width: 40,
   },
   scrollView: {
     flex: 1,

@@ -8,6 +8,7 @@ import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
 import { CouponsProvider } from "@/contexts/CouponsContext";
+import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -16,7 +17,8 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   const { isAuthenticated, isGuest, isLoading: isAuthLoading } = useAuth();
   const { isLoading: isI18nLoading } = useI18n();
-  const isLoading = isAuthLoading || isI18nLoading;
+  const { isLoading: isSettingsLoading } = useSettings();
+  const isLoading = isAuthLoading || isI18nLoading || isSettingsLoading;
 
   useEffect(() => {
     if (!isLoading) {
@@ -76,11 +78,13 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <I18nProvider>
-            <AuthProvider>
-              <CouponsProvider>
-                <RootLayoutNav />
-              </CouponsProvider>
-            </AuthProvider>
+            <SettingsProvider>
+              <AuthProvider>
+                <CouponsProvider>
+                  <RootLayoutNav />
+                </CouponsProvider>
+              </AuthProvider>
+            </SettingsProvider>
           </I18nProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>

@@ -15,6 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
+import TopBar from '@/components/TopBar';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const ONBOARDING_SEEN_KEY = 'onboarding_seen_v1';
 
@@ -28,6 +30,7 @@ type Slide = {
 export default function OnboardingScreen() {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const { backgroundGradient } = useSettings();
   const scrollRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(1);
@@ -107,22 +110,23 @@ export default function OnboardingScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight, Colors.background]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <View style={styles.headerLeft} />
-        <Text style={styles.headerTitle}>{t('onboarding.title')}</Text>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={close}
-          activeOpacity={0.75}
-          accessibilityRole="button"
-        >
-          <X size={18} color={Colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <TopBar
+        title={t('onboarding.title')}
+        right={
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={close}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+          >
+            <X size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        }
+      />
 
       <View
         style={styles.carouselContainer}
@@ -312,4 +316,3 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
-

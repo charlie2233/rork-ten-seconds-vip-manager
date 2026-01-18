@@ -13,7 +13,6 @@ import {
   Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, RefreshCw, Copy, Check, Wallet, AlertCircle, Sparkles, Crown, Star, Gem } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -22,20 +21,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import * as bwipjs from 'bwip-js/generic';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import AuthGateCard from '@/components/AuthGateCard';
 import { trpc } from '@/lib/trpc';
 import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
 import { CardTexture } from '@/components/CardTexture';
+import { useSettings } from '@/contexts/SettingsContext';
+import TopBar from '@/components/TopBar';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = Math.min(width - 48, 400);
 
 export default function MemberCodeScreen() {
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { t, locale } = useI18n();
+  const { hideBalance, backgroundGradient } = useSettings();
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [syncedBalance, setSyncedBalance] = useState<number | null>(null);
@@ -229,17 +229,26 @@ export default function MemberCodeScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#1a1a1a', '#000000']}
+          colors={backgroundGradient}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.topBar, { top: insets.top + 10 }]}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => router.back()}
-          >
-            <X size={24} color="#FFF" />
-          </TouchableOpacity>
-        </View>
+        <TopBar
+          title={t('memberCode.title')}
+          right={
+            <TouchableOpacity
+              style={[
+                styles.closePill,
+                { borderColor: 'rgba(255,255,255,0.2)', backgroundColor: 'rgba(0,0,0,0.3)' },
+              ]}
+              onPress={() => router.back()}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+            >
+              <X size={18} color="#FFF" />
+              <Text style={[styles.closePillText, { color: '#FFF' }]}>{t('common.close')}</Text>
+            </TouchableOpacity>
+          }
+        />
         <View style={styles.centerContent}>
           <AuthGateCard
             title={t('memberCode.pleaseLoginFirst')}
@@ -295,17 +304,23 @@ export default function MemberCodeScreen() {
         <View style={[styles.backdropOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]} />
       </LinearGradient>
 
-      <View style={[styles.topBar, { top: insets.top + 16 }]}>
-        <LanguageToggle />
-        <TouchableOpacity
-          style={[styles.closePill, { borderColor: 'rgba(255,255,255,0.2)', backgroundColor: 'rgba(0,0,0,0.3)' }]}
-          onPress={() => router.back()}
-          activeOpacity={0.8}
-        >
-          <X size={18} color="#FFF" />
-          <Text style={[styles.closePillText, { color: '#FFF' }]}>{t('common.close')}</Text>
-        </TouchableOpacity>
-      </View>
+      <TopBar
+        title={t('memberCode.title')}
+        right={
+          <TouchableOpacity
+            style={[
+              styles.closePill,
+              { borderColor: 'rgba(255,255,255,0.2)', backgroundColor: 'rgba(0,0,0,0.3)' },
+            ]}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+          >
+            <X size={18} color="#FFF" />
+            <Text style={[styles.closePillText, { color: '#FFF' }]}>{t('common.close')}</Text>
+          </TouchableOpacity>
+        }
+      />
 
       <View style={styles.content}>
         <Animated.View style={[
@@ -487,7 +502,12 @@ export default function MemberCodeScreen() {
             <View style={styles.statItem}>
                <Text style={styles.statLabel}>{t('memberCode.balance')}</Text>
                <Text style={styles.statValue}>
-                 ${displayBalance.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                 {hideBalance
+                   ? '$••••'
+                   : `$${displayBalance.toLocaleString(numberLocale, {
+                       minimumFractionDigits: 2,
+                       maximumFractionDigits: 2,
+                     })}`}
                </Text>
                {menusafeQuery.isFetching && <ActivityIndicator size="small" color={Colors.primary} style={styles.loader} />}
             </View>
@@ -546,7 +566,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 24,
   },
   cardWrapper: {
     width: '100%',

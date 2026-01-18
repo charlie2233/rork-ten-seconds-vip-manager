@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Calendar, Clock, Gift, Sparkles, ChevronRight } from 'lucide-react-native';
+import { Calendar, Clock, Gift, Sparkles, ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
+import TopBar from '@/components/TopBar';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const PROMOTIONS = [
   {
@@ -42,23 +42,17 @@ const PROMOTIONS = [
 ];
 
 export default function PromoScreen() {
-  const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { backgroundGradient } = useSettings();
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('promo.title')}</Text>
-        <LanguageToggle variant="icon" align="right" />
-      </View>
+      <TopBar title={t('promo.title')} leftAction="back" />
 
       <ScrollView
         style={styles.scrollView}

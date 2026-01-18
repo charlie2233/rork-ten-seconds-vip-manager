@@ -8,7 +8,6 @@ import {
   Share,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import {
   ArrowDownLeft,
@@ -25,9 +24,11 @@ import { Transaction } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
-import LanguageToggle from '@/components/LanguageToggle';
 import AuthGateCard from '@/components/AuthGateCard';
+import TopBar from '@/components/TopBar';
+import BrandBanner from '@/components/BrandBanner';
 import { couponCatalog } from '@/mocks/data';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type FilterType = 'all' | 'deposit' | 'spend' | 'points';
 
@@ -129,9 +130,9 @@ function PointsBarChart({ values }: { values: number[] }) {
 }
 
 export default function TransactionsScreen() {
-  const insets = useSafeAreaInsets();
   const { user, pointsHistory } = useAuth();
   const { t, locale } = useI18n();
+  const { backgroundGradient, hideBalance } = useSettings();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [howOpen, setHowOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -268,20 +269,18 @@ export default function TransactionsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
+
+      <TopBar title={t('brand.shortName')} />
       
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.languageRow}>
-          <LanguageToggle />
-        </View>
-
-        <Text style={styles.title}>{t('transactions.title')}</Text>
+        <BrandBanner title={t('transactions.title')} style={{ marginBottom: 16 }} />
 
         {!user ? (
           <AuthGateCard
@@ -299,7 +298,7 @@ export default function TransactionsScreen() {
                 >
                   <Text style={styles.statLabel}>{t('transactions.totalDeposit')}</Text>
                   <Text style={[styles.statValue, { color: Colors.success }]}>
-                    +${totalDeposit.toFixed(2)}
+                    {hideBalance ? '+$••••' : `+$${totalDeposit.toFixed(2)}`}
                   </Text>
                 </LinearGradient>
               </View>
@@ -311,7 +310,7 @@ export default function TransactionsScreen() {
                 >
                   <Text style={styles.statLabel}>{t('transactions.totalSpend')}</Text>
                   <Text style={[styles.statValue, { color: Colors.primary }]}>
-                    -${totalSpend.toFixed(2)}
+                    {hideBalance ? '-$••••' : `-$${totalSpend.toFixed(2)}`}
                   </Text>
                 </LinearGradient>
               </View>
@@ -541,11 +540,14 @@ export default function TransactionsScreen() {
                           : styles.negativeAmount,
                       ]}
                     >
-                      {transaction.amount > 0 ? '+' : ''}
-                      ${Math.abs(transaction.amount).toFixed(2)}
+                      {hideBalance
+                        ? transaction.amount > 0
+                          ? '+$••••'
+                          : '$••••'
+                        : `${transaction.amount > 0 ? '+' : ''}$${Math.abs(transaction.amount).toFixed(2)}`}
                     </Text>
                     <Text style={styles.transactionBalance}>
-                      {t('transactions.balancePrefix')}: ${transaction.balance.toFixed(2)}
+                      {t('transactions.balancePrefix')}: {hideBalance ? '$••••' : `$${transaction.balance.toFixed(2)}`}
                     </Text>
                   </View>
                 </View>
@@ -572,15 +574,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-  },
-  languageRow: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    marginBottom: 24,
   },
   statsRow: {
     flexDirection: 'row',

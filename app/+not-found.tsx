@@ -1,25 +1,27 @@
 import { Link, Stack } from "expo-router";
 import { StyleSheet, View, Text } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useI18n } from "@/contexts/I18nContext";
-import LanguageToggle from "@/components/LanguageToggle";
+import TopBar from "@/components/TopBar";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export default function NotFoundScreen() {
   const { t } = useI18n();
-  const insets = useSafeAreaInsets();
+  const { backgroundGradient } = useSettings();
 
   return (
     <>
       <Stack.Screen options={{ title: t("notFound.title"), headerShown: false }} />
       <View style={styles.container}>
-        <View style={[styles.langToggle, { top: insets.top + 16 }]}>
-          <LanguageToggle />
+        <LinearGradient colors={backgroundGradient} style={StyleSheet.absoluteFill} />
+        <TopBar title={t("notFound.title")} />
+        <View style={styles.content}>
+          <Text style={styles.title}>{t("notFound.message")}</Text>
+          <Link href="/" style={styles.link}>
+            <Text style={styles.linkText}>{t("notFound.backHome")}</Text>
+          </Link>
         </View>
-        <Text style={styles.title}>{t("notFound.message")}</Text>
-        <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>{t("notFound.backHome")}</Text>
-        </Link>
       </View>
     </>
   );
@@ -28,14 +30,13 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.background,
     padding: 20,
-  },
-  langToggle: {
-    position: "absolute",
-    left: 24,
   },
   title: {
     fontSize: 20,

@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   ChevronDown,
   ChevronUp,
   CreditCard,
@@ -21,8 +19,9 @@ import {
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
+import TopBar from '@/components/TopBar';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type FAQ = {
   id: string;
@@ -65,8 +64,8 @@ const FAQ_LIST: FAQ[] = [
 ];
 
 export default function HelpCenterScreen() {
-  const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { backgroundGradient } = useSettings();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
@@ -76,17 +75,11 @@ export default function HelpCenterScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('help.title')}</Text>
-        <LanguageToggle variant="icon" align="right" />
-      </View>
+      <TopBar title={t('help.title')} leftAction="back" />
 
       <ScrollView
         style={styles.scrollView}

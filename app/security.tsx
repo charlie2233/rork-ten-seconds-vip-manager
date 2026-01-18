@@ -9,9 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   ChevronRight,
   Lock,
   Smartphone,
@@ -20,16 +18,15 @@ import {
   Shield,
   KeyRound,
 } from 'lucide-react-native';
-import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
+import { useSettings } from '@/contexts/SettingsContext';
+import TopBar from '@/components/TopBar';
 
 export default function SecurityScreen() {
-  const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { hideBalance, setHideBalance, backgroundGradient } = useSettings();
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [hideBalance, setHideBalance] = useState(false);
 
   const handleChangePassword = () => {
     Alert.alert(t('security.changePassword'), t('security.changePasswordHint'));
@@ -46,17 +43,11 @@ export default function SecurityScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('security.title')}</Text>
-        <LanguageToggle variant="icon" align="right" />
-      </View>
+      <TopBar title={t('security.title')} leftAction="back" />
 
       <ScrollView
         style={styles.scrollView}

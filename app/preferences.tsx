@@ -13,13 +13,13 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Moon, Volume2, Vibrate, Globe, ChevronRight, User } from 'lucide-react-native';
+import { Moon, Volume2, Vibrate, Globe, Eye, ChevronRight, User } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n, Locale } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
+import { FontSize, useSettings } from '@/contexts/SettingsContext';
+import TopBar from '@/components/TopBar';
 
 const LANGUAGES: { key: Locale; label: string }[] = [
   { key: 'zh', label: '中文' },
@@ -27,33 +27,37 @@ const LANGUAGES: { key: Locale; label: string }[] = [
   { key: 'es', label: 'Español' },
 ];
 
+const FONT_SIZES: { key: FontSize; labelKey: string }[] = [
+  { key: 'sm', labelKey: 'preferences.fontSize.small' },
+  { key: 'md', labelKey: 'preferences.fontSize.default' },
+  { key: 'lg', labelKey: 'preferences.fontSize.large' },
+  { key: 'xl', labelKey: 'preferences.fontSize.xlarge' },
+];
+
 export default function PreferencesScreen() {
-  const insets = useSafeAreaInsets();
   const { t, locale, setLocale } = useI18n();
   const { user, setUserName } = useAuth();
-  const [darkMode, setDarkMode] = useState(true);
+  const { theme, setTheme, fontSize, setFontSize, hideBalance, setHideBalance, backgroundGradient } =
+    useSettings();
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
+  const [showFontSheet, setShowFontSheet] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
   const [pendingName, setPendingName] = useState('');
 
   const currentLanguage = LANGUAGES.find((l) => l.key === locale)?.label || '中文';
+  const currentFontLabelKey =
+    FONT_SIZES.find((f) => f.key === fontSize)?.labelKey ?? 'preferences.fontSize.default';
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('preferences.title')}</Text>
-        <LanguageToggle variant="icon" align="right" />
-      </View>
+      <TopBar title={t('preferences.title')} leftAction="back" />
 
       <ScrollView
         style={styles.scrollView}
@@ -68,11 +72,43 @@ export default function PreferencesScreen() {
                 <View style={styles.rowIcon}>
                   <Moon size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.darkMode')}</Text>
+                <Text style={styles.rowLabel}>{t('preferences.theme')}</Text>
               </View>
               <Switch
-                value={darkMode}
-                onValueChange={setDarkMode}
+                value={theme === 'warm'}
+                onValueChange={(next) => setTheme(next ? 'warm' : 'classic')}
+                trackColor={{ false: Colors.border, true: Colors.primary }}
+                thumbColor={Colors.text}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => setShowFontSheet((v) => !v)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.rowLeft}>
+                <View style={styles.rowIcon}>
+                  <Text style={styles.fontIconText}>Aa</Text>
+                </View>
+                <Text style={styles.rowLabel}>{t('preferences.fontSize')}</Text>
+              </View>
+              <View style={styles.rowRight}>
+                <Text style={styles.rowValue}>{t(currentFontLabelKey)}</Text>
+                <ChevronRight size={18} color={Colors.textMuted} />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.toggleRow}>
+              <View style={styles.rowLeft}>
+                <View style={styles.rowIcon}>
+                  <Eye size={20} color={Colors.primary} />
+                </View>
+                <Text style={styles.rowLabel}>{t('preferences.hideBalance')}</Text>
+              </View>
+              <Switch
+                value={hideBalance}
+                onValueChange={setHideBalance}
                 trackColor={{ false: Colors.border, true: Colors.primary }}
                 thumbColor={Colors.text}
               />
@@ -145,6 +181,28 @@ export default function PreferencesScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        )}
+
+        {showFontSheet && (
+          <View style={styles.languageSheet}>
+            {FONT_SIZES.map((opt) => {
+              const selected = opt.key === fontSize;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[styles.languageOption, selected && styles.languageOptionActive]}
+                  onPress={() => {
+                    setFontSize(opt.key);
+                    setShowFontSheet(false);
+                  }}
+                >
+                  <Text style={[styles.languageText, selected && styles.languageTextActive]}>
+                    {t(opt.labelKey)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
 
@@ -322,6 +380,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+  },
+  fontIconText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '800' as const,
+    letterSpacing: 0.3,
   },
   rowLabel: {
     fontSize: 15,

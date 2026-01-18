@@ -10,7 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn, Sparkles, Crown, Star } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
@@ -21,18 +20,20 @@ import { getTierFromBalance, TIER_MIN_BALANCE, TIER_ORDER } from '@/lib/tier';
 import Colors from '@/constants/colors';
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
-import LanguageToggle from '@/components/LanguageToggle';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
 import { CardTexture } from '@/components/CardTexture';
+import TopBar from '@/components/TopBar';
+import BrandBanner from '@/components/BrandBanner';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
 const CARD_HEIGHT = 240;
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { t, locale } = useI18n();
+  const { backgroundGradient, hideBalance, fontScale } = useSettings();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -236,19 +237,24 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
+
+      <TopBar title={t('brand.shortName')} />
       
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <LanguageToggle style={styles.languageMenu} />
-          <Text style={styles.greeting}>{t('home.welcomeBack')}</Text>
-          <Text style={styles.userName}>{user?.name ?? ''}</Text>
+          <BrandBanner
+            subtitle={storeAddress}
+            style={{ marginBottom: 16 }}
+          />
+          <Text style={[styles.greeting, { fontSize: 16 * fontScale }]}>{t('home.welcomeBack')}</Text>
+          <Text style={[styles.userName, { fontSize: 28 * fontScale }]}>{user?.name ?? ''}</Text>
         </View>
 
         <Animated.View style={[styles.cardContainer, { transform: [{ scale: pulseAnim }] }]}>
@@ -386,10 +392,12 @@ export default function HomeScreen() {
               <View style={styles.balanceRow}>
                 <Text style={[styles.currencySymbol, { color: cardTheme.text }]}>$</Text>
                 <Text style={[styles.balanceAmount, { color: cardTheme.text }]}>
-                  {displayBalance.toLocaleString(numberLocale, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {hideBalance
+                    ? '••••'
+                    : displayBalance.toLocaleString(numberLocale, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                 </Text>
               </View>
               
@@ -404,7 +412,7 @@ export default function HomeScreen() {
                     />
                   </View>
                   <Text style={[styles.progressText, { color: cardTheme.textMuted }]}>
-                    ${remainingToNext.toFixed(0)} {t('home.toNextTier')}
+                    {hideBalance ? `••• ${t('home.toNextTier')}` : `$${remainingToNext.toFixed(0)} ${t('home.toNextTier')}`}
                   </Text>
                 </View>
               )}
@@ -567,8 +575,11 @@ export default function HomeScreen() {
                         transaction.amount > 0 ? styles.positiveAmount : styles.negativeAmount,
                       ]}
                     >
-                      {transaction.amount > 0 ? '+' : ''}
-                      {transaction.amount.toFixed(2)}
+                      {hideBalance
+                        ? transaction.amount > 0
+                          ? '+$••••'
+                          : '$••••'
+                        : `${transaction.amount > 0 ? '+' : ''}$${Math.abs(transaction.amount).toFixed(2)}`}
                     </Text>
                   </View>
                 ))
@@ -616,10 +627,6 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 24,
-  },
-  languageMenu: {
-    alignSelf: 'flex-start',
-    marginBottom: 14,
   },
   greeting: {
     fontSize: 16,

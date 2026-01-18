@@ -1,15 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { ChevronLeft, Clock, Globe, MapPin, Phone, ShoppingBag } from 'lucide-react-native';
+import { Clock, Globe, MapPin, Phone, ShoppingBag } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import LanguageToggle from '@/components/LanguageToggle';
+import TopBar from '@/components/TopBar';
 import { useI18n } from '@/contexts/I18nContext';
 import { storeLocations } from '@/mocks/data';
 import { Weekday } from '@/types';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const WEEKDAY_ORDER: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
@@ -28,8 +27,8 @@ function mapUrlForAddress(address: string) {
 }
 
 export default function LocationsScreen() {
-  const insets = useSafeAreaInsets();
   const { t } = useI18n();
+  const { backgroundGradient } = useSettings();
 
   const location = storeLocations[0];
   if (!location) return null;
@@ -58,27 +57,17 @@ export default function LocationsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.background, Colors.backgroundLight]}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
       />
 
+      <TopBar title={t('locations.title')} leftAction="back" />
+
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.languageRow}>
-          <LanguageToggle />
-        </View>
-
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ChevronLeft size={22} color={Colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t('locations.title')}</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.storeName}>{t(location.name)}</Text>
@@ -164,35 +153,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
     paddingBottom: 24,
-  },
-  languageRow: {
-    marginBottom: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 18,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  title: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '800' as const,
-    color: Colors.text,
-  },
-  headerSpacer: {
-    width: 40,
-    height: 40,
   },
   card: {
     backgroundColor: Colors.surface,
