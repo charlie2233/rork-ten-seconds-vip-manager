@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,62 +6,96 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, Gift, Wallet, Megaphone, MessageCircle } from 'lucide-react-native';
+import { 
+  Bell, 
+  Gift, 
+  Wallet, 
+  Megaphone, 
+  MessageCircle, 
+  Clock, 
+  Award,
+  Ticket,
+  CheckCheck,
+  Trash2,
+  BellRing,
+} from 'lucide-react-native';
 import { useI18n } from '@/contexts/I18nContext';
 import Colors from '@/constants/colors';
 import TopBar from '@/components/TopBar';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useNotifications, NotificationCategory } from '@/contexts/NotificationsContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NOTIFICATION_SETTINGS = [
-  { key: 'transactions', icon: Wallet, labelKey: 'notifications.transactions' },
-  { key: 'promotions', icon: Gift, labelKey: 'notifications.promotions' },
-  { key: 'announcements', icon: Megaphone, labelKey: 'notifications.announcements' },
-  { key: 'messages', icon: MessageCircle, labelKey: 'notifications.messages' },
+  { key: 'couponExpiring' as const, icon: Ticket, labelKey: 'notifications.couponExpiring' },
+  { key: 'tierUpgrade' as const, icon: Award, labelKey: 'notifications.tierUpgrade' },
+  { key: 'promoExpiring' as const, icon: Clock, labelKey: 'notifications.promoExpiring' },
+  { key: 'transactions' as const, icon: Wallet, labelKey: 'notifications.transactions' },
+  { key: 'promotions' as const, icon: Gift, labelKey: 'notifications.promotions' },
+  { key: 'announcements' as const, icon: Megaphone, labelKey: 'notifications.announcements' },
+  { key: 'messages' as const, icon: MessageCircle, labelKey: 'notifications.messages' },
 ];
 
-const MOCK_NOTIFICATIONS = [
-  {
-    id: '1',
-    type: 'promo',
-    titleKey: 'notifications.item.promo.title',
-    descKey: 'notifications.item.promo.desc',
-    timeKey: 'time.hoursAgo',
-    timeParams: { count: 2 },
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'transaction',
-    titleKey: 'notifications.item.transaction.title',
-    descKey: 'notifications.item.transaction.desc',
-    timeKey: 'time.yesterday',
-    read: true,
-  },
-  {
-    id: '3',
-    type: 'system',
-    titleKey: 'notifications.item.system.title',
-    descKey: 'notifications.item.system.desc',
-    timeKey: 'time.daysAgo',
-    timeParams: { count: 3 },
-    read: true,
-  },
-];
+function getNotificationIcon(type: NotificationCategory) {
+  switch (type) {
+    case 'couponExpiring':
+      return Ticket;
+    case 'tierUpgrade':
+      return Award;
+    case 'promoExpiring':
+      return Clock;
+    case 'transactions':
+      return Wallet;
+    case 'promotions':
+      return Gift;
+    case 'announcements':
+      return Megaphone;
+    case 'messages':
+      return MessageCircle;
+    default:
+      return Bell;
+  }
+}
+
+function formatTimeAgo(dateString: string, t: (key: string, params?: Record<string, string | number>) => string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffHours < 1) {
+    return t('time.justNow');
+  } else if (diffHours < 24) {
+    return t('time.hoursAgo', { count: diffHours });
+  } else if (diffDays === 1) {
+    return t('time.yesterday');
+  } else {
+    return t('time.daysAgo', { count: diffDays });
+  }
+}
 
 export default function NotificationsScreen() {
   const { t } = useI18n();
   const { backgroundGradient } = useSettings();
-  const [settings, setSettings] = useState<Record<string, boolean>>({
-    transactions: true,
-    promotions: true,
-    announcements: false,
-    messages: true,
-  });
+  const { isAuthenticated } = useAuth();
+  const {
+    settings,
+    notifications,
+    hasPermission,
+    unreadCount,
+    toggleSetting,
+    markAsRead,
+    markAllAsRead,
+    clearNotifications,
+    requestPermission,
+  } = useNotifications();
 
-  const toggleSetting = (key: string) => {
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  const handleRequestPermission = async () => {
+    await requestPermission();
   };
 
   return (
@@ -71,18 +105,58 @@ export default function NotificationsScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      <TopBar title={t('notifications.title')} leftAction="back" />
+      <TopBar 
+        title={t('notifications.title')} 
+        leftAction="back"
+        right={unreadCount > 0 ? (
+          <TouchableOpacity 
+            style={styles.headerAction}
+            onPress={markAllAsRead}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <CheckCheck size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        ) : undefined}
+      />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {Platform.OS !== 'web' && hasPermission === false && (
+          <TouchableOpacity 
+            style={styles.permissionBanner}
+            onPress={handleRequestPermission}
+            activeOpacity={0.8}
+          >
+            <View style={styles.permissionIcon}>
+              <BellRing size={24} color={Colors.secondary} />
+            </View>
+            <View style={styles.permissionContent}>
+              <Text style={styles.permissionTitle}>{t('notifications.permissionTitle')}</Text>
+              <Text style={styles.permissionDesc}>{t('notifications.permissionDesc')}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('notifications.settingsTitle')}</Text>
-          <View style={styles.settingsCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('notifications.settingsTitle')}</Text>
+            <View style={styles.masterToggle}>
+              <Text style={styles.masterToggleLabel}>{t('notifications.enabled')}</Text>
+              <Switch
+                value={settings.enabled}
+                onValueChange={() => toggleSetting('enabled')}
+                trackColor={{ false: Colors.border, true: Colors.primary }}
+                thumbColor={Colors.text}
+              />
+            </View>
+          </View>
+          <View style={[styles.settingsCard, !settings.enabled && styles.settingsDisabled]}>
             {NOTIFICATION_SETTINGS.map((setting, index) => {
               const IconComponent = setting.icon;
+              const settingKey = setting.key;
               return (
                 <View
                   key={setting.key}
@@ -93,15 +167,18 @@ export default function NotificationsScreen() {
                 >
                   <View style={styles.settingLeft}>
                     <View style={styles.settingIcon}>
-                      <IconComponent size={20} color={Colors.primary} />
+                      <IconComponent size={20} color={settings.enabled ? Colors.primary : Colors.textMuted} />
                     </View>
-                    <Text style={styles.settingLabel}>{t(setting.labelKey)}</Text>
+                    <Text style={[styles.settingLabel, !settings.enabled && styles.textDisabled]}>
+                      {t(setting.labelKey)}
+                    </Text>
                   </View>
                   <Switch
-                    value={settings[setting.key]}
-                    onValueChange={() => toggleSetting(setting.key)}
+                    value={settings[settingKey]}
+                    onValueChange={() => toggleSetting(settingKey)}
                     trackColor={{ false: Colors.border, true: Colors.primary }}
                     thumbColor={Colors.text}
+                    disabled={!settings.enabled}
                   />
                 </View>
               );
@@ -110,38 +187,74 @@ export default function NotificationsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('notifications.recentTitle')}</Text>
-          {MOCK_NOTIFICATIONS.length === 0 ? (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {t('notifications.recentTitle')}
+              {unreadCount > 0 && (
+                <Text style={styles.unreadBadge}> ({unreadCount})</Text>
+              )}
+            </Text>
+            {notifications.length > 0 && (
+              <TouchableOpacity 
+                onPress={clearNotifications}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Trash2 size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {!isAuthenticated ? (
+            <View style={styles.emptyState}>
+              <Bell size={48} color={Colors.textMuted} />
+              <Text style={styles.emptyText}>{t('notifications.loginRequired')}</Text>
+            </View>
+          ) : notifications.length === 0 ? (
             <View style={styles.emptyState}>
               <Bell size={48} color={Colors.textMuted} />
               <Text style={styles.emptyText}>{t('notifications.empty')}</Text>
             </View>
           ) : (
             <View style={styles.notificationsList}>
-              {MOCK_NOTIFICATIONS.map((notification, index) => (
-                <TouchableOpacity
-                  key={notification.id}
-                  style={[
-                    styles.notificationCard,
-                    !notification.read && styles.unreadCard,
-                    index === MOCK_NOTIFICATIONS.length - 1 && styles.lastCard,
-                  ]}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.notificationHeader}>
-                    <Text style={styles.notificationTitle}>
-                      {t(notification.titleKey)}
-                    </Text>
-                    {!notification.read && <View style={styles.unreadDot} />}
-                  </View>
-                  <Text style={styles.notificationDesc} numberOfLines={2}>
-                    {t(notification.descKey)}
-                  </Text>
-                  <Text style={styles.notificationTime}>
-                    {t(notification.timeKey, notification.timeParams)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {notifications.map((notification, index) => {
+                const IconComponent = getNotificationIcon(notification.type);
+                return (
+                  <TouchableOpacity
+                    key={notification.id}
+                    style={[
+                      styles.notificationCard,
+                      !notification.read && styles.unreadCard,
+                      index === notifications.length - 1 && styles.lastCard,
+                    ]}
+                    activeOpacity={0.7}
+                    onPress={() => markAsRead(notification.id)}
+                  >
+                    <View style={styles.notificationIconContainer}>
+                      <IconComponent 
+                        size={20} 
+                        color={notification.read ? Colors.textMuted : Colors.primary} 
+                      />
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <View style={styles.notificationHeader}>
+                        <Text style={[
+                          styles.notificationTitle,
+                          notification.read && styles.readTitle
+                        ]}>
+                          {t(notification.titleKey, notification.titleParams)}
+                        </Text>
+                        {!notification.read && <View style={styles.unreadDot} />}
+                      </View>
+                      <Text style={styles.notificationDesc} numberOfLines={2}>
+                        {t(notification.descKey, notification.descParams)}
+                      </Text>
+                      <Text style={styles.notificationTime}>
+                        {formatTimeAgo(notification.date, t)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
         </View>
@@ -163,20 +276,77 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 24,
   },
+  headerAction: {
+    padding: 4,
+  },
+  permissionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(201, 169, 98, 0.15)',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(201, 169, 98, 0.3)',
+  },
+  permissionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(201, 169, 98, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  permissionContent: {
+    flex: 1,
+  },
+  permissionTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  permissionDesc: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
   section: {
     marginBottom: 28,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
-    marginBottom: 12,
+  },
+  unreadBadge: {
+    color: Colors.secondary,
+    fontWeight: '700' as const,
+  },
+  masterToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  masterToggleLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
   },
   settingsCard: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  settingsDisabled: {
+    opacity: 0.6,
   },
   settingRow: {
     flexDirection: 'row',
@@ -206,6 +376,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.text,
   },
+  textDisabled: {
+    color: Colors.textMuted,
+  },
   emptyState: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
@@ -218,6 +391,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textMuted,
     marginTop: 12,
+    textAlign: 'center',
   },
   notificationsList: {
     gap: 12,
@@ -228,12 +402,26 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.border,
+    flexDirection: 'row',
   },
   unreadCard: {
     borderColor: Colors.primary,
     borderLeftWidth: 3,
+    backgroundColor: 'rgba(201, 169, 98, 0.05)',
   },
   lastCard: {},
+  notificationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(201, 169, 98, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
   notificationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -244,12 +432,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.text,
+    flex: 1,
+  },
+  readTitle: {
+    color: Colors.textSecondary,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: Colors.secondary,
+    marginLeft: 8,
   },
   notificationDesc: {
     fontSize: 13,

@@ -8,6 +8,7 @@ import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
 import { CouponsProvider } from "@/contexts/CouponsContext";
+import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 
 SplashScreen.preventAutoHideAsync();
@@ -81,7 +82,9 @@ export default function RootLayout() {
             <SettingsProvider>
               <AuthProvider>
                 <CouponsProvider>
-                  <RootLayoutNav />
+                  <NotificationsProvider>
+                    <RootLayoutNav />
+                  </NotificationsProvider>
                 </CouponsProvider>
               </AuthProvider>
             </SettingsProvider>
