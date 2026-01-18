@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -31,6 +32,7 @@ export default function RechargeScreen() {
   const { user } = useAuth();
   const { t, locale } = useI18n();
   const { backgroundGradient, hideBalance, fontScale } = useSettings();
+  const insets = useSafeAreaInsets();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
