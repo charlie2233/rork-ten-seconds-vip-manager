@@ -67,7 +67,7 @@ export default function SupportChatScreen() {
             throw new Error('Only the logged-in memberId is supported.');
           }
 
-          const result = await trpcClient.menusafe.getLatestBalance.query({
+          const result = await trpcClient.menusafe.getBalance.query({
             memberId: resolvedMemberId,
           });
 

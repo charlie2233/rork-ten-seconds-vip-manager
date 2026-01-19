@@ -9,7 +9,7 @@ export const migrationService = {
    */
   async syncUser(memberId: string) {
     try {
-      const result = await trpcClient.menusafe.getLatestBalance.query({ memberId });
+      const result = await trpcClient.menusafe.getBalance.query({ memberId });
       return result;
     } catch (error) {
       console.error('[Migration] Failed to sync user:', error);
