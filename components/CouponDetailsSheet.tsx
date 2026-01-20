@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, Copy, Lock, Sparkles, X } from 'lucide-react-native';
+import { Check, Copy, Lock, Sparkles, Star, X } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -33,7 +33,7 @@ export default function CouponDetailsSheet({
 }: Props) {
   const { user } = useAuth();
   const { t, locale } = useI18n();
-  const { getCoupon, claimCoupon, markCouponUsed } = useCoupons();
+  const { getCoupon, claimCoupon, markCouponUsed, isFavorite, toggleFavorite } = useCoupons();
   const [copied, setCopied] = useState(false);
   const [toastType, setToastType] = useState<ToastType | null>(null);
   const [toastSeconds, setToastSeconds] = useState(0);
@@ -65,6 +65,8 @@ export default function CouponDetailsSheet({
     if (!couponId) return { definition: null, state: null };
     return getCoupon(couponId, couponInstanceId);
   }, [couponId, couponInstanceId, getCoupon]);
+
+  const favored = definition ? isFavorite(definition.id) : false;
 
   const computed = useMemo(() => {
     if (!definition) {
@@ -111,8 +113,13 @@ export default function CouponDetailsSheet({
 
     const usedAtLabel =
       status === 'used' && state?.usedAt ? formatShortDateTime(state.usedAt, locale) : '';
+    const expiredAtLabel = status === 'expired' ? definition.validTo : '';
     const statusLabelWithTime =
-      status === 'used' && usedAtLabel ? `${statusLabel} · ${usedAtLabel}` : statusLabel;
+      status === 'used' && usedAtLabel
+        ? `${statusLabel} · ${usedAtLabel}`
+        : status === 'expired' && expiredAtLabel
+          ? `${statusLabel} · ${expiredAtLabel}`
+          : statusLabel;
 
     const canRedeem = status === 'available' && !!redeemCode;
 
@@ -224,14 +231,37 @@ export default function CouponDetailsSheet({
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>{t('couponDetail.title')}</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={onClose}
-                activeOpacity={0.75}
-                accessibilityRole="button"
-              >
-                <X size={16} color={Colors.textSecondary} />
-              </TouchableOpacity>
+              <View style={styles.sheetHeaderActions}>
+                {definition ? (
+                  <PressableScale
+                    containerStyle={[
+                      styles.headerIconButton,
+                      favored && styles.headerIconButtonActive,
+                    ]}
+                    onPress={() => toggleFavorite(definition.id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      favored ? t('coupons.unfavorite') : t('coupons.favorite')
+                    }
+                  >
+                    <Star
+                      size={16}
+                      color={favored ? Colors.primary : Colors.textSecondary}
+                      fill={favored ? Colors.primary : 'transparent'}
+                    />
+                  </PressableScale>
+                ) : null}
+
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={onClose}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                >
+                  <X size={16} color={Colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {!couponId ? (
@@ -458,6 +488,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900' as const,
   },
+  sheetHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   closeButton: {
     width: 36,
     height: 36,
@@ -467,6 +502,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  headerIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  headerIconButtonActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(201, 169, 98, 0.14)',
   },
   missingBox: {
     padding: 20,

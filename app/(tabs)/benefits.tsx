@@ -68,7 +68,7 @@ export default function CouponsScreen() {
   useEffect(() => {
     setIsExpanded(false);
     setExpiringSoonOnly(false);
-    setSortKey(activeSegment === 'available' ? 'expiringSoon' : 'recentlyUsed');
+    setSortKey(activeSegment === 'used' ? 'recentlyUsed' : 'expiringSoon');
   }, [activeSegment]);
 
   const effectiveTier = user ? getTierFromBalance(user.balance) : 'silver';

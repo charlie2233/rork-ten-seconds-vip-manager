@@ -50,15 +50,16 @@ export default function TopBar({
               <LeftIcon size={20} color={Colors.text} />
             </TouchableOpacity>
           ) : null}
-
-          <LanguageToggle variant="icon" align="left" />
         </View>
 
         <Text style={[styles.title, computedTitleStyle]} numberOfLines={1}>
           {title ?? ''}
         </Text>
 
-        <View style={styles.rightCluster}>{right ?? <View style={{ width: 44 }} />}</View>
+        <View style={styles.rightCluster}>
+          {right}
+          <LanguageToggle variant="icon" align="right" />
+        </View>
       </View>
     </View>
   );
@@ -100,7 +101,10 @@ const styles = StyleSheet.create({
   },
   rightCluster: {
     minWidth: 88,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 10,
   },
 });
 

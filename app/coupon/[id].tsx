@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
-import { Check, Copy, Lock, Sparkles } from 'lucide-react-native';
+import { Check, Copy, Lock, Sparkles, Star } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
@@ -30,7 +30,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 
 export default function CouponDetailScreen() {
   const { user } = useAuth();
-  const { getCoupon, claimCoupon, markCouponUsed } = useCoupons();
+  const { getCoupon, claimCoupon, markCouponUsed, isFavorite, toggleFavorite } = useCoupons();
   const { t, locale } = useI18n();
   const { backgroundGradient, fontScale } = useSettings();
   const { id, claim } = useLocalSearchParams<{ id: string; claim?: string }>();
@@ -172,8 +172,13 @@ export default function CouponDetailScreen() {
 
   const usedAtLabel =
     status === 'used' && state?.usedAt ? formatShortDateTime(state.usedAt, locale) : '';
+  const expiredAtLabel = status === 'expired' ? definition.validTo : '';
   const statusLabelWithTime =
-    status === 'used' && usedAtLabel ? `${statusLabel} · ${usedAtLabel}` : statusLabel;
+    status === 'used' && usedAtLabel
+      ? `${statusLabel} · ${usedAtLabel}`
+      : status === 'expired' && expiredAtLabel
+        ? `${statusLabel} · ${expiredAtLabel}`
+        : statusLabel;
 
   const canRedeem = status === 'available' && !!redeemCode;
 
@@ -210,7 +215,30 @@ export default function CouponDetailScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      <TopBar title={t('couponDetail.title')} leftAction="back" />
+      <TopBar
+        title={t('couponDetail.title')}
+        leftAction="back"
+        right={
+          <PressableScale
+            containerStyle={[
+              styles.topIconButton,
+              isFavorite(definition.id) && styles.topIconButtonActive,
+            ]}
+            onPress={() => toggleFavorite(definition.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isFavorite(definition.id) ? t('coupons.unfavorite') : t('coupons.favorite')
+            }
+          >
+            <Star
+              size={18}
+              color={isFavorite(definition.id) ? Colors.primary : Colors.textSecondary}
+              fill={isFavorite(definition.id) ? Colors.primary : 'transparent'}
+            />
+          </PressableScale>
+        }
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -630,5 +658,19 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: 12,
     fontWeight: '700' as const,
+  },
+  topIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  topIconButtonActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(201, 169, 98, 0.14)',
   },
 });
