@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Gift, Sparkles, Wallet } from 'lucide-react-native';
+import { Gift, Sparkles, Wallet, HelpCircle } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import BrandBanner from '@/components/BrandBanner';
@@ -128,6 +128,18 @@ export default function HowItWorksScreen() {
               </View>
             );
           })}
+        </View>
+
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.iconCircle}>
+              <HelpCircle size={18} color={Colors.primary} />
+            </View>
+            <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
+              {t('onboarding.help.title')}
+            </Text>
+          </View>
+          <Text style={styles.sectionBody}>{t('onboarding.help.body')}</Text>
         </View>
 
         <View style={{ height: 24 }} />
