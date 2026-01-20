@@ -15,10 +15,13 @@ import * as Clipboard from 'expo-clipboard';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
 import Colors from '@/constants/colors';
+import Layout from '@/constants/layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import AuthGateCard from '@/components/AuthGateCard';
+import ConfettiBurst from '@/components/ConfettiBurst';
+import PressableScale from '@/components/PressableScale';
 import TopBar from '@/components/TopBar';
 import { CouponStatus } from '@/types';
 import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
@@ -305,39 +308,39 @@ export default function CouponDetailScreen() {
           )}
         </View>
 
-	        {status === 'unclaimed' ? (
-	          <TouchableOpacity
-	            style={[
-	              styles.primaryButton,
-	              (!isUnlocked || !canAfford) && styles.primaryButtonDisabled,
-	            ]}
-	            disabled={!isUnlocked || !canAfford}
-	            onPress={() => void claimNow()}
-	            activeOpacity={0.8}
-	          >
-	            <Text style={styles.primaryButtonText}>
-	              {!isUnlocked
-	                ? t('coupons.locked')
+        {status === 'unclaimed' ? (
+          <PressableScale
+            containerStyle={[
+              styles.primaryButton,
+              (!isUnlocked || !canAfford) && styles.primaryButtonDisabled,
+            ]}
+            disabled={!isUnlocked || !canAfford}
+            onPress={() => void claimNow()}
+            accessibilityRole="button"
+          >
+            <Text style={styles.primaryButtonText}>
+              {!isUnlocked
+                ? t('coupons.locked')
                 : !canAfford
                   ? t('coupons.needMorePoints', { count: missingPoints })
                   : costPoints > 0
                     ? t('coupons.redeemForPoints', { points: costPoints })
                     : t('coupons.claim')}
             </Text>
-          </TouchableOpacity>
+          </PressableScale>
         ) : (
-          <TouchableOpacity
-            style={[styles.primaryButton, !canRedeem && styles.primaryButtonDisabled]}
+          <PressableScale
+            containerStyle={[styles.primaryButton, !canRedeem && styles.primaryButtonDisabled]}
             disabled={!canRedeem}
             onPress={() => void redeemNow()}
-            activeOpacity={0.8}
+            accessibilityRole="button"
           >
             {canRedeem ? (
               <Text style={styles.primaryButtonText}>{t('couponDetail.markUsed')}</Text>
             ) : (
               <Text style={styles.primaryButtonText}>{statusLabel}</Text>
             )}
-          </TouchableOpacity>
+          </PressableScale>
         )}
 
         <View style={{ height: 40 }} />
@@ -361,6 +364,7 @@ export default function CouponDetailScreen() {
             }}
           />
           <View style={styles.redeemedCard}>
+            <ConfettiBurst active={!!toastType && toastSeconds > 0} />
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}
               style={styles.redeemedIcon}
@@ -394,7 +398,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: Layout.screenPadding,
     paddingBottom: 24,
   },
   notFoundBox: {
@@ -588,7 +592,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: Layout.screenPadding,
   },
   redeemedCard: {
     width: '100%',
@@ -599,6 +603,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
+    overflow: 'hidden',
   },
   redeemedIcon: {
     width: 56,

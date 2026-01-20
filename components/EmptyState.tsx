@@ -8,10 +8,27 @@ type Props = {
   title: string;
   message?: string;
   icon?: React.ReactNode;
+  variant?: 'card' | 'inline';
   style?: StyleProp<ViewStyle>;
 };
 
-export default function EmptyState({ title, message, icon, style }: Props) {
+export default function EmptyState({
+  title,
+  message,
+  icon,
+  variant = 'card',
+  style,
+}: Props) {
+  if (variant === 'inline') {
+    return (
+      <View style={[styles.inline, style]}>
+        {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
+        <Text style={styles.title}>{title}</Text>
+        {message ? <Text style={styles.message}>{message}</Text> : null}
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.card, style]}>
       <LinearGradient
@@ -26,6 +43,10 @@ export default function EmptyState({ title, message, icon, style }: Props) {
 }
 
 const styles = StyleSheet.create({
+  inline: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   card: {
     borderRadius: Layout.cardRadius,
     borderWidth: 1,
@@ -61,4 +82,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

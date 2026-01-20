@@ -2,7 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Lock, LogIn } from 'lucide-react-native';
 import React from 'react';
-import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import PressableScale from '@/components/PressableScale';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
 
@@ -32,10 +33,9 @@ export default function AuthGateCard({
       <Text style={styles.title}>{title}</Text>
       {message ? <Text style={styles.message}>{message}</Text> : null}
 
-      <TouchableOpacity
-        style={styles.ctaButton}
+      <PressableScale
+        containerStyle={styles.ctaButton}
         onPress={onPressCta ?? (() => router.push('/login'))}
-        activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel={ctaLabel ?? t('auth.login')}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -49,7 +49,7 @@ export default function AuthGateCard({
           <LogIn size={16} color={Colors.background} />
           <Text style={styles.ctaText}>{ctaLabel ?? t('auth.login')}</Text>
         </LinearGradient>
-      </TouchableOpacity>
+      </PressableScale>
     </View>
   );
 }

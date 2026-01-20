@@ -24,6 +24,8 @@ import {
 } from 'lucide-react-native';
 import { useI18n } from '@/contexts/I18nContext';
 import Colors from '@/constants/colors';
+import Layout from '@/constants/layout';
+import EmptyState from '@/components/EmptyState';
 import TopBar from '@/components/TopBar';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useNotifications, NotificationCategory } from '@/contexts/NotificationsContext';
@@ -205,15 +207,15 @@ export default function NotificationsScreen() {
           </View>
           
           {!isAuthenticated ? (
-            <View style={styles.emptyState}>
-              <Bell size={48} color={Colors.textMuted} />
-              <Text style={styles.emptyText}>{t('notifications.loginRequired')}</Text>
-            </View>
+            <EmptyState
+              title={t('notifications.loginRequired')}
+              icon={<Bell size={20} color={Colors.primary} />}
+            />
           ) : notifications.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Bell size={48} color={Colors.textMuted} />
-              <Text style={styles.emptyText}>{t('notifications.empty')}</Text>
-            </View>
+            <EmptyState
+              title={t('notifications.empty')}
+              icon={<Bell size={20} color={Colors.primary} />}
+            />
           ) : (
             <View style={styles.notificationsList}>
               {notifications.map((notification, index) => {
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: Layout.screenPadding,
   },
   headerAction: {
     padding: 4,
@@ -378,20 +380,6 @@ const styles = StyleSheet.create({
   },
   textDisabled: {
     color: Colors.textMuted,
-  },
-  emptyState: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 40,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: Colors.textMuted,
-    marginTop: 12,
-    textAlign: 'center',
   },
   notificationsList: {
     gap: 12,

@@ -8,11 +8,16 @@ import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
 import ImageCarousel from '@/components/ImageCarousel';
 import AuthGateCard from '@/components/AuthGateCard';
+import ConfettiBurst from '@/components/ConfettiBurst';
+import EmptyState from '@/components/EmptyState';
+import PressableScale from '@/components/PressableScale';
+import Skeleton from '@/components/Skeleton';
 import TopBar from '@/components/TopBar';
 import BrandBanner from '@/components/BrandBanner';
 import CouponDetailsSheet from '@/components/CouponDetailsSheet';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
+import Layout from '@/constants/layout';
 import { CouponStatus, User } from '@/types';
 import { getTierFromBalance } from '@/lib/tier';
 import { formatShortDateTime } from '@/lib/datetime';
@@ -41,7 +46,7 @@ function formatTierKey(tier: User['tier']) {
 
 export default function CouponsScreen() {
   const { user } = useAuth();
-  const { claimedCoupons, offers, claimCoupon } = useCoupons();
+  const { isLoading: couponsLoading, claimedCoupons, offers, claimCoupon } = useCoupons();
   const { t, locale } = useI18n();
   const { backgroundGradient } = useSettings();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
@@ -258,10 +263,24 @@ export default function CouponsScreen() {
             </View>
           ) : null}
 
-          {segmentedCoupons.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>{t(emptyKey)}</Text>
-            </View>
+          {couponsLoading && user ? (
+            <>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <View key={`coupon-skeleton-${index}`} style={styles.couponCard}>
+                  <View style={styles.couponLeft}>
+                    <Skeleton style={{ width: 64, height: 64, borderRadius: 16 }} />
+                  </View>
+                  <View style={styles.couponContent}>
+                    <Skeleton style={{ width: '70%', height: 16, borderRadius: 8, marginBottom: 10 }} />
+                    <Skeleton style={{ width: '92%', height: 12, borderRadius: 8, marginBottom: 6 }} />
+                    <Skeleton style={{ width: '78%', height: 12, borderRadius: 8, marginBottom: 12 }} />
+                    <Skeleton style={{ width: '52%', height: 12, borderRadius: 8 }} />
+                  </View>
+                </View>
+              ))}
+            </>
+          ) : segmentedCoupons.length === 0 ? (
+            <EmptyState title={t(emptyKey)} icon={<Ticket size={20} color={Colors.primary} />} />
           ) : (
             <>
               {visibleCoupons.map(({ definition, state, isExpired }) => {
@@ -363,86 +382,107 @@ export default function CouponsScreen() {
           <View style={styles.offersSection}>
             <Text style={styles.sectionTitle}>{t('coupons.section.offers')}</Text>
 
-            {filteredOffers.map(({ definition, isUnlocked }) => (
-              <TouchableOpacity
-                key={definition.id}
-                style={styles.offerCard}
-                activeOpacity={0.8}
-                onPress={() => {
-                  if (!user) {
-                    router.push('/login');
-                    return;
-                  }
-                  setSelectedCouponId(definition.id);
-                  setSelectedClaimId(null);
-                  setDetailsOpen(true);
-                }}
-              >
-                <View style={styles.offerLeft}>
-                  <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
-                  <View style={styles.offerTextBlock}>
-                    <Text style={styles.offerTitle} numberOfLines={1}>
-                      {t(definition.title)}
-                    </Text>
-                    <Text style={styles.offerDesc} numberOfLines={1}>
-                      {t(definition.minSpendText ?? definition.description)}
-                    </Text>
-                  </View>
-                </View>
-
-                {isUnlocked ? (() => {
-                  const cost = Math.max(0, Math.floor(definition.costPoints ?? 0));
-                  const missing = Math.max(0, cost - availablePoints);
-                  const canAfford = cost === 0 || missing === 0;
-                  const buttonLabel = !canAfford
-                    ? t('coupons.needMorePoints', { count: missing })
-                    : cost > 0
-                      ? t('coupons.redeemForPoints', { points: cost })
-                      : t('coupons.claim');
-
-	                  return (
-                      <TouchableOpacity
-                        style={[styles.claimButton, !canAfford && styles.claimButtonDisabled]}
-                        disabled={!canAfford}
-                        onPress={async () => {
-                          await claimCoupon(definition.id);
-                          const title = t(definition.title);
-                          setClaimedCouponName(title);
-                          setTimeout(() => setClaimedCouponName(null), 1500);
-                        }}
-                        activeOpacity={0.8}
-                      >
-                      {canAfford ? (
-                        <Check size={16} color={Colors.background} />
-                      ) : (
-                        <Lock size={14} color={Colors.textMuted} />
-                      )}
-                      <Text style={[styles.claimText, !canAfford && styles.claimTextDisabled]}>
-                        {buttonLabel}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })() : (
-                  user ? (
-                    <View style={styles.lockedBadge}>
-                      <Lock size={14} color={Colors.textMuted} />
-                      <Text style={styles.lockedText}>
-                        {t('coupons.requiresTier', { tier: t(formatTierKey(definition.tier)) })}
-                      </Text>
+            {couponsLoading && user ? (
+              <>
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <View key={`offer-skeleton-${index}`} style={styles.offerCard}>
+                    <View style={styles.offerLeft}>
+                      <View style={styles.offerIconSkeleton}>
+                        <Skeleton style={{ width: 20, height: 20, borderRadius: 6 }} />
+                      </View>
+                      <View style={styles.offerTextBlock}>
+                        <Skeleton style={{ width: '78%', height: 14, borderRadius: 8, marginBottom: 8 }} />
+                        <Skeleton style={{ width: '60%', height: 12, borderRadius: 8 }} />
+                      </View>
                     </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.loginBadge}
-                      onPress={() => router.push('/login')}
-                      activeOpacity={0.8}
-                    >
-                      <LogIn size={14} color={Colors.primary} />
-                      <Text style={styles.loginText}>{t('coupons.signInToUnlock')}</Text>
-                    </TouchableOpacity>
-                  )
-                )}
-              </TouchableOpacity>
-            ))}
+                    <Skeleton style={{ width: 86, height: 32, borderRadius: 16 }} />
+                  </View>
+                ))}
+              </>
+            ) : (
+              <>
+                {filteredOffers.map(({ definition, isUnlocked }) => (
+                  <TouchableOpacity
+                    key={definition.id}
+                    style={styles.offerCard}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      if (!user) {
+                        router.push('/login');
+                        return;
+                      }
+                      setSelectedCouponId(definition.id);
+                      setSelectedClaimId(null);
+                      setDetailsOpen(true);
+                    }}
+                  >
+                    <View style={styles.offerLeft}>
+                      <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
+                      <View style={styles.offerTextBlock}>
+                        <Text style={styles.offerTitle} numberOfLines={1}>
+                          {t(definition.title)}
+                        </Text>
+                        <Text style={styles.offerDesc} numberOfLines={1}>
+                          {t(definition.minSpendText ?? definition.description)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {isUnlocked ? (() => {
+                      const cost = Math.max(0, Math.floor(definition.costPoints ?? 0));
+                      const missing = Math.max(0, cost - availablePoints);
+                      const canAfford = cost === 0 || missing === 0;
+                      const buttonLabel = !canAfford
+                        ? t('coupons.needMorePoints', { count: missing })
+                        : cost > 0
+                          ? t('coupons.redeemForPoints', { points: cost })
+                          : t('coupons.claim');
+
+                      return (
+                        <PressableScale
+                          containerStyle={[styles.claimButton, !canAfford && styles.claimButtonDisabled]}
+                          disabled={!canAfford}
+                          onPress={async () => {
+                            await claimCoupon(definition.id);
+                            const title = t(definition.title);
+                            setClaimedCouponName(title);
+                            setTimeout(() => setClaimedCouponName(null), 1500);
+                          }}
+                          accessibilityRole="button"
+                        >
+                          {canAfford ? (
+                            <Check size={16} color={Colors.background} />
+                          ) : (
+                            <Lock size={14} color={Colors.textMuted} />
+                          )}
+                          <Text style={[styles.claimText, !canAfford && styles.claimTextDisabled]}>
+                            {buttonLabel}
+                          </Text>
+                        </PressableScale>
+                      );
+                    })() : (
+                      user ? (
+                        <View style={styles.lockedBadge}>
+                          <Lock size={14} color={Colors.textMuted} />
+                          <Text style={styles.lockedText}>
+                            {t('coupons.requiresTier', { tier: t(formatTierKey(definition.tier)) })}
+                          </Text>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.loginBadge}
+                          onPress={() => router.push('/login')}
+                          activeOpacity={0.8}
+                        >
+                          <LogIn size={14} color={Colors.primary} />
+                          <Text style={styles.loginText}>{t('coupons.signInToUnlock')}</Text>
+                        </TouchableOpacity>
+                      )
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
           </View>
         )}
 
@@ -499,6 +539,7 @@ export default function CouponsScreen() {
 	        <View style={styles.claimedOverlay}>
 	          <Pressable style={StyleSheet.absoluteFill} onPress={() => setClaimedCouponName(null)} />
 	          <View style={styles.claimedCard}>
+              <ConfettiBurst active={!!claimedCouponName} />
 	            <LinearGradient
 	              colors={[Colors.primary, Colors.primaryDark]}
 	              style={styles.claimedIcon}
@@ -525,7 +566,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: Layout.screenPadding,
   },
   header: {
     marginBottom: 20,
@@ -827,7 +868,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: Layout.screenPadding,
   },
   claimedCard: {
     width: '100%',
@@ -838,6 +879,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
+    overflow: 'hidden',
   },
   claimedIcon: {
     width: 56,
@@ -881,6 +923,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     marginRight: 12,
+  },
+  offerIconSkeleton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(201, 169, 98, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(201, 169, 98, 0.16)',
   },
   offerTextBlock: {
     marginLeft: 10,

@@ -20,11 +20,14 @@ import {
 } from 'lucide-react-native';
 import Svg, { Line, Rect } from 'react-native-svg';
 import Colors from '@/constants/colors';
+import Layout from '@/constants/layout';
 import { Transaction } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
 import AuthGateCard from '@/components/AuthGateCard';
+import EmptyState from '@/components/EmptyState';
+import Skeleton from '@/components/Skeleton';
 import TopBar from '@/components/TopBar';
 import BrandBanner from '@/components/BrandBanner';
 import { couponCatalog } from '@/mocks/data';
@@ -444,9 +447,12 @@ export default function TransactionsScreen() {
             <View style={styles.transactionsList}>
               {activeFilter === 'points' ? (
                 pointsItems.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyText}>{t('points.empty')}</Text>
-                  </View>
+                  <EmptyState
+                    title={t('points.empty')}
+                    icon={<Sparkles size={20} color={Colors.primary} />}
+                    variant="inline"
+                    style={styles.emptyState}
+                  />
                 ) : (
                   pointsItems.map((item, index) => (
                     <View
@@ -495,13 +501,35 @@ export default function TransactionsScreen() {
                   ))
                 )
               ) : transactionsQuery.isLoading ? (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyText}>{t('common.loading')}</Text>
-                </View>
+                <>
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <View
+                      key={`tx-skeleton-${index}`}
+                      style={[styles.transactionItem, index === 3 && styles.lastItem]}
+                    >
+                      <View style={[styles.transactionIcon, { backgroundColor: `${Colors.primary}15` }]}>
+                        <Skeleton style={{ width: 20, height: 20, borderRadius: 6 }} />
+                      </View>
+
+                      <View style={styles.transactionContent}>
+                        <Skeleton style={{ width: '84%', height: 14, borderRadius: 8, marginBottom: 8 }} />
+                        <Skeleton style={{ width: '52%', height: 12, borderRadius: 8 }} />
+                      </View>
+
+                      <View style={styles.transactionRight}>
+                        <Skeleton style={{ width: 74, height: 16, borderRadius: 8, marginBottom: 8 }} />
+                        <Skeleton style={{ width: 96, height: 12, borderRadius: 8 }} />
+                      </View>
+                    </View>
+                  ))}
+                </>
               ) : filteredTransactions.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyText}>{t('transactions.empty')}</Text>
-                </View>
+                <EmptyState
+                  title={t('transactions.empty')}
+                  icon={<RotateCcw size={20} color={Colors.primary} />}
+                  variant="inline"
+                  style={styles.emptyState}
+                />
               ) : (
                 filteredTransactions.map((transaction, index) => {
                   const IconComponent = getTransactionIcon(transaction.type);
@@ -573,7 +601,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: Layout.screenPadding,
   },
   statsRow: {
     flexDirection: 'row',

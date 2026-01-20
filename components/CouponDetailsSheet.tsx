@@ -7,6 +7,8 @@ import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
 import Colors from '@/constants/colors';
 import AuthGateCard from '@/components/AuthGateCard';
+import ConfettiBurst from '@/components/ConfettiBurst';
+import PressableScale from '@/components/PressableScale';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
@@ -346,34 +348,44 @@ export default function CouponDetailsSheet({
                 </View>
 
                 {computed.status === 'unclaimed' ? (
-                  <TouchableOpacity
-                    style={[
+                  <PressableScale
+                    containerStyle={[
                       styles.primaryButton,
                       (!computed.canClaim || !!computed.claimDisabledReason) && styles.primaryButtonDisabled,
                     ]}
                     disabled={!computed.canClaim}
                     onPress={() => void claimNow()}
-                    activeOpacity={0.85}
+                    accessibilityRole="button"
                   >
-                    <Text style={styles.primaryButtonText}>
+                    <Text
+                      style={[
+                        styles.primaryButtonText,
+                        (!computed.canClaim || !!computed.claimDisabledReason) && styles.primaryButtonTextDisabled,
+                      ]}
+                    >
                       {computed.claimDisabledReason
                         ? computed.claimDisabledReason
                         : computed.costPoints > 0
                           ? t('coupons.redeemForPoints', { points: computed.costPoints })
                           : t('coupons.claim')}
                     </Text>
-                  </TouchableOpacity>
+                  </PressableScale>
                 ) : (
-                  <TouchableOpacity
-                    style={[styles.primaryButton, !computed.canRedeem && styles.primaryButtonDisabled]}
+                  <PressableScale
+                    containerStyle={[styles.primaryButton, !computed.canRedeem && styles.primaryButtonDisabled]}
                     disabled={!computed.canRedeem}
                     onPress={() => void redeemNow()}
-                    activeOpacity={0.85}
+                    accessibilityRole="button"
                   >
-                    <Text style={styles.primaryButtonText}>
+                    <Text
+                      style={[
+                        styles.primaryButtonText,
+                        !computed.canRedeem && styles.primaryButtonTextDisabled,
+                      ]}
+                    >
                       {computed.canRedeem ? t('couponDetail.markUsed') : computed.statusLabel}
                     </Text>
-                  </TouchableOpacity>
+                  </PressableScale>
                 )}
               </>
             )}
@@ -399,6 +411,7 @@ export default function CouponDetailsSheet({
             }}
           />
           <View style={styles.toastCard}>
+            <ConfettiBurst active={!!toastType && toastSeconds > 0} />
             <LinearGradient colors={[Colors.primary, Colors.primaryDark]} style={styles.toastIcon}>
               <Sparkles size={26} color={Colors.background} />
             </LinearGradient>
@@ -653,6 +666,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900' as const,
   },
+  primaryButtonTextDisabled: {
+    color: Colors.textSecondary,
+  },
   toastOverlay: {
     flex: 1,
     alignItems: 'center',
@@ -669,6 +685,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
+    overflow: 'hidden',
   },
   toastIcon: {
     width: 54,
@@ -698,4 +715,3 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
 });
-
