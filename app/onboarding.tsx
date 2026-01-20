@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Gift, MapPin, Sparkles, Wallet, X } from 'lucide-react-native';
+import { Gift, HelpCircle, MapPin, Sparkles, Wallet, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeScrollEvent,
@@ -77,6 +77,12 @@ export default function OnboardingScreen() {
         icon: <MapPin size={26} color={Colors.background} />,
         titleKey: 'onboarding.storeOnly.title',
         bodyKey: 'onboarding.storeOnly.body',
+      },
+      {
+        key: 'help',
+        icon: <HelpCircle size={26} color={Colors.background} />,
+        titleKey: 'onboarding.help.title',
+        bodyKey: 'onboarding.help.body',
       },
     ],
     []

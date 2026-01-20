@@ -64,6 +64,8 @@ const MESSAGES: Record<Locale, Messages> = {
 	    'onboarding.coupons.body': '用积分兑换卡券或领取升级赠券，到店出示核销码即可使用。',
 	    'onboarding.storeOnly.title': '到店充值',
 	    'onboarding.storeOnly.body': '提示：充值只能去门店充值。可在「门店地址」一键打开地图导航。',
+	    'onboarding.help.title': '需要帮助？',
+	    'onboarding.help.body': '常见问题可在「帮助中心」FAQ中查看，也可以使用AI客服进行咨询。',
 
 	    'howItWorks.title': '如何使用',
 	    'howItWorks.bannerTitle': '余额 / 积分 / 卡券怎么用？',
@@ -524,6 +526,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'onboarding.coupons.body': 'Redeem coupons with points or get upgrade gifts. Show the redeem code in store.',
     'onboarding.storeOnly.title': 'Top up in store',
     'onboarding.storeOnly.body': 'Note: Top-ups are in-store only. Use Locations to open maps navigation.',
+    'onboarding.help.title': 'Need help?',
+    'onboarding.help.body': 'Most questions are answered in the Help Center FAQ — or ask our AI assistant in Support Chat.',
 
     'howItWorks.title': 'How it works',
     'howItWorks.bannerTitle': 'Balance / Points / Coupons',
@@ -984,6 +988,8 @@ const MESSAGES: Record<Locale, Messages> = {
     'onboarding.coupons.body': 'Canjea cupones con puntos o recibe regalos por subir de nivel. Muestra el código en tienda.',
     'onboarding.storeOnly.title': 'Recarga en tienda',
     'onboarding.storeOnly.body': 'Nota: las recargas solo se hacen en tienda. Usa Ubicación para abrir el mapa.',
+    'onboarding.help.title': '¿Necesitas ayuda?',
+    'onboarding.help.body': 'Muchas preguntas están en las FAQ del Centro de ayuda; también puedes preguntar al asistente de IA en el chat de soporte.',
 
     'howItWorks.title': 'Cómo funciona',
     'howItWorks.bannerTitle': 'Saldo / Puntos / Cupones',

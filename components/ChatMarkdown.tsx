@@ -39,6 +39,23 @@ function splitByCodeFences(input: string): Block[] {
 }
 
 export default function ChatMarkdown({ text, variant }: Props) {
+  const webWrapStyle: any =
+    Platform.OS === 'web'
+      ? {
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word',
+        }
+      : null;
+
+  const webCodeWrapStyle: any =
+    Platform.OS === 'web'
+      ? {
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word',
+          whiteSpace: 'pre-wrap',
+        }
+      : null;
+
   const theme = useMemo(() => {
     if (variant === 'assistant') {
       return {
@@ -147,7 +164,7 @@ export default function ChatMarkdown({ text, variant }: Props) {
                 { backgroundColor: theme.codeBg, borderColor: theme.codeBorder },
               ]}
             >
-              <Text style={[styles.codeText, { color: theme.codeText }]} selectable>
+              <Text style={[styles.codeText, webCodeWrapStyle, { color: theme.codeText }]} selectable>
                 {block.content}
               </Text>
             </View>
@@ -155,7 +172,7 @@ export default function ChatMarkdown({ text, variant }: Props) {
         }
 
         return (
-          <Text key={nextKey()} style={[styles.text, { color: theme.textColor }]} selectable>
+          <Text key={nextKey()} style={[styles.text, webWrapStyle, { color: theme.textColor }]} selectable>
             {renderInline(block.content, false)}
           </Text>
         );
@@ -172,6 +189,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 14,
     lineHeight: 20,
+    flexShrink: 1,
   },
   bold: {
     fontWeight: '800' as const,
@@ -183,6 +201,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 13,
+    flexShrink: 1,
   },
   codeBlock: {
     borderWidth: 1,
@@ -193,6 +212,6 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: 12,
     lineHeight: 16,
+    flexShrink: 1,
   },
 });
-
