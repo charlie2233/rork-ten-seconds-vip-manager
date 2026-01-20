@@ -33,16 +33,52 @@ const QUICK_QUESTIONS = [
   'support.quick.points',
 ];
 
+const getSystemPrompt = (locale: string, userName?: string) => {
+  const isZh = locale === 'zh';
+  const isEs = locale === 'es';
+  
+  const name = isZh ? '小秒' : 'Miao';
+  const greeting = userName ? (isZh ? `${userName}` : isEs ? `${userName}` : `${userName}`) : '';
+  
+  return `You are ${name}, the friendly AI assistant for Ten Seconds Rice Noodle (十秒到云南过桥米线) VIP membership app.
+
+Personality:
+- Warm, cheerful, and genuinely helpful
+- Passionate about great food and customer service
+- Professional but approachable, like a friendly staff member
+- Use occasional food emojis (🍜 🥢 ✨) to add warmth, but don't overdo it
+- Keep responses concise and mobile-friendly
+
+Language: Respond in ${isZh ? 'Chinese (简体中文)' : isEs ? 'Spanish' : 'English'}. Match the user's language.
+
+Key knowledge:
+- Balance = stored value (like a gift card), can only be topped up in-store
+- Points = earned from top-ups (rate varies by VIP tier), used to redeem coupons
+- Coupons = claimed from wallet, show QR code in-store to redeem
+- VIP Tiers: Silver ($0+), Gold ($200+), Platinum ($300+), Diamond ($500+), Black Gold ($1000+)
+- Higher tiers earn more points per $1 spent
+- All top-ups and redemptions happen in-store only
+
+When greeting${greeting ? ` ${greeting}` : ''}: Be warm and acknowledge them personally if you know their name.
+
+Important:
+- Always be helpful and solution-oriented
+- If you don't know something, suggest they visit the store or check the FAQ
+- Never make up information about specific promotions or prices
+- Encourage users to check their coupon wallet for current offers`;  
+};
+
 export default function SupportChatScreen() {
   const insets = useSafeAreaInsets();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { backgroundGradient } = useSettings();
   const { user } = useAuth();
   const { claimedCoupons, offers } = useCoupons();
   const scrollViewRef = useRef<ScrollView>(null);
   const [inputText, setInputText] = useState('');
 
-  const welcomeMessage = t('support.welcomeMessage');
+  const aiName = t('ai.name');
+  const welcomeMessage = `${t('ai.greeting')} ${t('ai.personality.friendly')}`;
 
   const couponsRef = useRef({ claimedCoupons, offers });
   useEffect(() => {
@@ -163,8 +199,14 @@ export default function SupportChatScreen() {
     };
   }, [t, user?.id, user?.memberId, user?.points]);
 
+  const systemPrompt = useMemo(() => 
+    getSystemPrompt(locale, user?.name),
+    [locale, user?.name]
+  );
+
   const { messages, sendMessage, status } = useRorkAgent({
     tools,
+    system: systemPrompt,
   });
 
   const isLoading = status === 'streaming' || status === 'submitted';
@@ -281,7 +323,7 @@ export default function SupportChatScreen() {
         right={
           <View style={[styles.onlineStatus, { marginTop: 0 }]}>
             <View style={styles.aiIndicator}>
-              <Text style={styles.aiText}>AI</Text>
+              <Text style={styles.aiText}>{aiName}</Text>
             </View>
             <Text style={styles.onlineText}>{t('support.online')}</Text>
           </View>

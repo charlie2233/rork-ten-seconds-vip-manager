@@ -24,6 +24,7 @@ import { getVipCardTheme } from '@/lib/vipCardTheme';
 import { CardTexture } from '@/components/CardTexture';
 import TopBar from '@/components/TopBar';
 import BrandBanner from '@/components/BrandBanner';
+import ContextualHelpChips from '@/components/ContextualHelpChips';
 import { useSettings } from '@/contexts/SettingsContext';
 
 const { width } = Dimensions.get('window');
@@ -608,6 +609,11 @@ export default function HomeScreen() {
           </LinearGradient>
         </View>
 
+        <ContextualHelpChips
+          showTitle
+          style={styles.helpChips}
+        />
+
         <View style={{ height: 100 }} />
       </ScrollView>
     </View>
@@ -1044,5 +1050,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600' as const,
     color: Colors.secondary,
+  },
+  helpChips: {
+    marginTop: 20,
   },
 });

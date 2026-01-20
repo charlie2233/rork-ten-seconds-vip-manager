@@ -477,6 +477,15 @@ const MESSAGES: Record<Locale, Messages> = {
     'help.faq.password.a': '在登录页面点击"忘记密码"，通过注册手机号验证后可重置密码。',
     'help.stillNeedHelp': '没找到答案？',
     'help.contactSupport': '联系在线客服',
+
+    'helpChips.title': '需要帮助？',
+    'helpChips.howItWorks': '规则说明',
+    'helpChips.faq': '常见问题',
+    'helpChips.askAI': '问小秒',
+
+    'ai.name': '小秒',
+    'ai.greeting': '您好！我是十秒到智能客服小秒 🍜',
+    'ai.personality.friendly': '有什么可以帮您的吗？',
   },
   en: {
     'common.cancel': 'Cancel',
@@ -946,6 +955,15 @@ const MESSAGES: Record<Locale, Messages> = {
     'help.faq.password.a': 'Tap "Forgot password" on login screen to reset via phone verification.',
     'help.stillNeedHelp': 'Still need help?',
     'help.contactSupport': 'Contact support',
+
+    'helpChips.title': 'Need help?',
+    'helpChips.howItWorks': 'How it works',
+    'helpChips.faq': 'FAQ',
+    'helpChips.askAI': 'Ask Miao',
+
+    'ai.name': 'Miao',
+    'ai.greeting': 'Hi there! I\'m Miao, your Ten Seconds assistant 🍜',
+    'ai.personality.friendly': 'How can I help you today?',
   },
   es: {
     'common.cancel': 'Cancelar',
@@ -1415,6 +1433,15 @@ const MESSAGES: Record<Locale, Messages> = {
     'help.faq.password.a': 'Toca "¿Olvidaste contraseña?" en inicio de sesión para restablecer por verificación telefónica.',
     'help.stillNeedHelp': '¿Aún necesitas ayuda?',
     'help.contactSupport': 'Contactar soporte',
+
+    'helpChips.title': '¿Necesitas ayuda?',
+    'helpChips.howItWorks': 'Cómo funciona',
+    'helpChips.faq': 'Preguntas frecuentes',
+    'helpChips.askAI': 'Pregunta a Miao',
+
+    'ai.name': 'Miao',
+    'ai.greeting': '¡Hola! Soy Miao, tu asistente de Ten Seconds 🍜',
+    'ai.personality.friendly': '¿En qué puedo ayudarte hoy?',
   },
 };
 

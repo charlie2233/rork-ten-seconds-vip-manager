@@ -15,6 +15,7 @@ import Skeleton from '@/components/Skeleton';
 import TopBar from '@/components/TopBar';
 import BrandBanner from '@/components/BrandBanner';
 import CouponDetailsSheet from '@/components/CouponDetailsSheet';
+import ContextualHelpChips from '@/components/ContextualHelpChips';
 import { tierInfo } from '@/mocks/data';
 import Colors from '@/constants/colors';
 import Layout from '@/constants/layout';
@@ -626,8 +627,14 @@ export default function CouponsScreen() {
           </View>
         )}
 
-	        <View style={{ height: 100 }} />
-	      </ScrollView>
+	        <ContextualHelpChips
+          chips={['howItWorks', 'aiChat']}
+          compact
+          style={styles.helpChips}
+        />
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
       <CouponDetailsSheet
         visible={detailsOpen}
@@ -1188,5 +1195,8 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 11,
     fontWeight: '700' as const,
+  },
+  helpChips: {
+    marginTop: 16,
   },
 });
