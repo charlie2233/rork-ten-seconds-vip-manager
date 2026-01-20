@@ -11,12 +11,20 @@ type StoredSettings = {
   theme?: AppTheme;
   fontSize?: FontSize;
   hideBalance?: boolean;
+  soundEnabled?: boolean;
+  vibrationEnabled?: boolean;
+  biometricEnabled?: boolean;
+  reduceMotion?: boolean;
 };
 
 const DEFAULT_SETTINGS: Required<StoredSettings> = {
   theme: 'classic',
   fontSize: 'md',
   hideBalance: false,
+  soundEnabled: true,
+  vibrationEnabled: true,
+  biometricEnabled: false,
+  reduceMotion: false,
 };
 
 const FONT_SCALE: Readonly<Record<FontSize, number>> = {
@@ -43,6 +51,10 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
   const [theme, setThemeState] = useState<AppTheme>(DEFAULT_SETTINGS.theme);
   const [fontSize, setFontSizeState] = useState<FontSize>(DEFAULT_SETTINGS.fontSize);
   const [hideBalance, setHideBalanceState] = useState<boolean>(DEFAULT_SETTINGS.hideBalance);
+  const [soundEnabled, setSoundEnabledState] = useState<boolean>(DEFAULT_SETTINGS.soundEnabled);
+  const [vibrationEnabled, setVibrationEnabledState] = useState<boolean>(DEFAULT_SETTINGS.vibrationEnabled);
+  const [biometricEnabled, setBiometricEnabledState] = useState<boolean>(DEFAULT_SETTINGS.biometricEnabled);
+  const [reduceMotion, setReduceMotionState] = useState<boolean>(DEFAULT_SETTINGS.reduceMotion);
 
   useEffect(() => {
     (async () => {
@@ -52,6 +64,10 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
         if (parsed?.theme) setThemeState(parsed.theme);
         if (parsed?.fontSize) setFontSizeState(parsed.fontSize);
         if (typeof parsed?.hideBalance === 'boolean') setHideBalanceState(parsed.hideBalance);
+        if (typeof parsed?.soundEnabled === 'boolean') setSoundEnabledState(parsed.soundEnabled);
+        if (typeof parsed?.vibrationEnabled === 'boolean') setVibrationEnabledState(parsed.vibrationEnabled);
+        if (typeof parsed?.biometricEnabled === 'boolean') setBiometricEnabledState(parsed.biometricEnabled);
+        if (typeof parsed?.reduceMotion === 'boolean') setReduceMotionState(parsed.reduceMotion);
       } catch {
         // ignore
       } finally {
@@ -74,9 +90,9 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
   const setTheme = useCallback(
     async (next: AppTheme) => {
       setThemeState(next);
-      await persist({ theme: next, fontSize, hideBalance });
+      await persist({ theme: next, fontSize, hideBalance, soundEnabled, vibrationEnabled, biometricEnabled, reduceMotion });
     },
-    [fontSize, hideBalance, persist]
+    [fontSize, hideBalance, soundEnabled, vibrationEnabled, biometricEnabled, reduceMotion, persist]
   );
 
   const toggleTheme = useCallback(async () => {
@@ -86,17 +102,49 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
   const setFontSize = useCallback(
     async (next: FontSize) => {
       setFontSizeState(next);
-      await persist({ theme, fontSize: next, hideBalance });
+      await persist({ theme, fontSize: next, hideBalance, soundEnabled, vibrationEnabled, biometricEnabled, reduceMotion });
     },
-    [hideBalance, persist, theme]
+    [hideBalance, soundEnabled, vibrationEnabled, biometricEnabled, reduceMotion, persist, theme]
   );
 
   const setHideBalance = useCallback(
     async (next: boolean) => {
       setHideBalanceState(next);
-      await persist({ theme, fontSize, hideBalance: next });
+      await persist({ theme, fontSize, hideBalance: next, soundEnabled, vibrationEnabled, biometricEnabled, reduceMotion });
     },
-    [fontSize, persist, theme]
+    [fontSize, soundEnabled, vibrationEnabled, biometricEnabled, reduceMotion, persist, theme]
+  );
+
+  const setSoundEnabled = useCallback(
+    async (next: boolean) => {
+      setSoundEnabledState(next);
+      await persist({ theme, fontSize, hideBalance, soundEnabled: next, vibrationEnabled, biometricEnabled, reduceMotion });
+    },
+    [theme, fontSize, hideBalance, vibrationEnabled, biometricEnabled, reduceMotion, persist]
+  );
+
+  const setVibrationEnabled = useCallback(
+    async (next: boolean) => {
+      setVibrationEnabledState(next);
+      await persist({ theme, fontSize, hideBalance, soundEnabled, vibrationEnabled: next, biometricEnabled, reduceMotion });
+    },
+    [theme, fontSize, hideBalance, soundEnabled, biometricEnabled, reduceMotion, persist]
+  );
+
+  const setBiometricEnabled = useCallback(
+    async (next: boolean) => {
+      setBiometricEnabledState(next);
+      await persist({ theme, fontSize, hideBalance, soundEnabled, vibrationEnabled, biometricEnabled: next, reduceMotion });
+    },
+    [theme, fontSize, hideBalance, soundEnabled, vibrationEnabled, reduceMotion, persist]
+  );
+
+  const setReduceMotion = useCallback(
+    async (next: boolean) => {
+      setReduceMotionState(next);
+      await persist({ theme, fontSize, hideBalance, soundEnabled, vibrationEnabled, biometricEnabled, reduceMotion: next });
+    },
+    [theme, fontSize, hideBalance, soundEnabled, vibrationEnabled, biometricEnabled, persist]
   );
 
   const fontScale = useMemo(() => FONT_SCALE[fontSize] ?? 1, [fontSize]);
@@ -118,6 +166,14 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     fontScale,
     hideBalance,
     setHideBalance,
+    soundEnabled,
+    setSoundEnabled,
+    vibrationEnabled,
+    setVibrationEnabled,
+    biometricEnabled,
+    setBiometricEnabled,
+    reduceMotion,
+    setReduceMotion,
     backgroundGradient,
   };
 });

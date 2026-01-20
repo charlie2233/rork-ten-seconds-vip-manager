@@ -25,8 +25,7 @@ import TopBar from '@/components/TopBar';
 
 export default function SecurityScreen() {
   const { t } = useI18n();
-  const { hideBalance, setHideBalance, backgroundGradient } = useSettings();
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const { hideBalance, setHideBalance, backgroundGradient, biometricEnabled, setBiometricEnabled } = useSettings();
 
   const handleChangePassword = () => {
     Alert.alert(t('security.changePassword'), t('security.changePasswordHint'));

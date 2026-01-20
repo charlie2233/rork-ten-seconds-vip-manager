@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Pressable, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, LogIn, Search, Sparkles, Ticket, Wallet } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Lock, LogIn, Search, Sparkles, Star, Ticket, Wallet } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons } from '@/contexts/CouponsContext';
@@ -46,7 +46,7 @@ function formatTierKey(tier: User['tier']) {
 
 export default function CouponsScreen() {
   const { user } = useAuth();
-  const { isLoading: couponsLoading, claimedCoupons, offers, claimCoupon } = useCoupons();
+  const { isLoading: couponsLoading, claimedCoupons, offers, claimCoupon, isFavorite, toggleFavorite } = useCoupons();
   const { t, locale } = useI18n();
   const { backgroundGradient } = useSettings();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
@@ -54,6 +54,9 @@ export default function CouponsScreen() {
   const [claimedCouponName, setClaimedCouponName] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expiringSoonOnly, setExpiringSoonOnly] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [freeOnly, setFreeOnly] = useState(false);
+  const [unlockedOffersOnly, setUnlockedOffersOnly] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('expiringSoon');
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -81,6 +84,13 @@ export default function CouponsScreen() {
       const effective: CouponStatus =
         c.state.status === 'used' ? 'used' : c.isExpired ? 'expired' : 'available';
       if (effective !== activeSegment) return false;
+
+      if (favoritesOnly && !isFavorite(c.definition.id)) return false;
+
+      if (freeOnly) {
+        const cost = Math.max(0, Math.floor(c.definition.costPoints ?? 0));
+        if (cost > 0) return false;
+      }
 
       if (query) {
         const title = normalize(t(c.definition.title));
@@ -116,7 +126,7 @@ export default function CouponsScreen() {
         const untilB = Date.parse(b.definition.validTo);
         const safeA = Number.isFinite(untilA) ? untilA : Number.MAX_SAFE_INTEGER;
         const safeB = Number.isFinite(untilB) ? untilB : Number.MAX_SAFE_INTEGER;
-        if (safeA !== safeB) return safeA - safeB;
+        if (safeA !== safeB) return activeSegment === 'expired' ? safeB - safeA : safeA - safeB;
         return Date.parse(b.state.claimedAt) - Date.parse(a.state.claimedAt);
       }
 
@@ -124,19 +134,56 @@ export default function CouponsScreen() {
     });
 
     return sorted;
-  }, [activeSegment, claimedCoupons, expiringSoonOnly, searchQuery, sortKey, t]);
+  }, [activeSegment, claimedCoupons, expiringSoonOnly, favoritesOnly, freeOnly, isFavorite, searchQuery, sortKey, t]);
 
   const filteredOffers = useMemo(() => {
     const normalize = (value: string) => value.trim().toLowerCase();
     const query = normalize(searchQuery);
-    if (!query) return offers;
-    return offers.filter(({ definition }) => {
+
+    const base = offers.filter(({ definition, isUnlocked }) => {
+      if (favoritesOnly && !isFavorite(definition.id)) return false;
+
+      if (freeOnly) {
+        const cost = Math.max(0, Math.floor(definition.costPoints ?? 0));
+        if (cost > 0) return false;
+      }
+
+      if (unlockedOffersOnly && !isUnlocked) return false;
+
+      if (!query) return true;
       const title = normalize(t(definition.title));
       const desc = normalize(t(definition.description));
       const minSpend = normalize(t(definition.minSpendText ?? definition.description));
       return title.includes(query) || desc.includes(query) || minSpend.includes(query);
     });
-  }, [offers, searchQuery, t]);
+
+    const sort = sortKey === 'default' ? 'expiringSoon' : sortKey;
+    const effectiveSort = sort === 'recentlyUsed' ? 'expiringSoon' : sort;
+
+    const sorted = [...base].sort((a, b) => {
+      if (effectiveSort === 'expiringSoon') {
+        const untilA = Date.parse(a.definition.validTo);
+        const untilB = Date.parse(b.definition.validTo);
+        const safeA = Number.isFinite(untilA) ? untilA : Number.MAX_SAFE_INTEGER;
+        const safeB = Number.isFinite(untilB) ? untilB : Number.MAX_SAFE_INTEGER;
+        if (safeA !== safeB) return safeA - safeB;
+        return a.definition.id.localeCompare(b.definition.id);
+      }
+
+      if (effectiveSort === 'newest') {
+        const untilA = Date.parse(a.definition.validTo);
+        const untilB = Date.parse(b.definition.validTo);
+        const safeA = Number.isFinite(untilA) ? untilA : 0;
+        const safeB = Number.isFinite(untilB) ? untilB : 0;
+        if (safeA !== safeB) return safeB - safeA;
+        return a.definition.id.localeCompare(b.definition.id);
+      }
+
+      return 0;
+    });
+
+    return sorted;
+  }, [favoritesOnly, freeOnly, isFavorite, offers, searchQuery, sortKey, t, unlockedOffersOnly]);
 
   const hasMoreCoupons = segmentedCoupons.length > MAX_VISIBLE_COUPONS;
   const visibleCoupons = isExpanded ? segmentedCoupons : segmentedCoupons.slice(0, MAX_VISIBLE_COUPONS);
@@ -248,8 +295,8 @@ export default function CouponsScreen() {
         </View>
 
         <View style={styles.couponList}>
-          {activeSegment === 'available' ? (
-            <View style={styles.filtersRow}>
+          <View style={styles.filtersRow}>
+            {activeSegment === 'available' ? (
               <TouchableOpacity
                 style={[styles.filterChip, expiringSoonOnly && styles.filterChipActive]}
                 onPress={() => setExpiringSoonOnly((v) => !v)}
@@ -260,8 +307,35 @@ export default function CouponsScreen() {
                   {t('coupons.filter.expiringSoon7')}
                 </Text>
               </TouchableOpacity>
-            </View>
-          ) : null}
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.filterChip, favoritesOnly && styles.filterChipActive]}
+              onPress={() => setFavoritesOnly((v) => !v)}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+            >
+              <Star
+                size={14}
+                color={favoritesOnly ? Colors.primary : Colors.textMuted}
+                fill={favoritesOnly ? Colors.primary : 'transparent'}
+              />
+              <Text style={[styles.filterChipText, favoritesOnly && styles.filterChipTextActive]}>
+                {t('coupons.filter.favorites')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filterChip, freeOnly && styles.filterChipActive]}
+              onPress={() => setFreeOnly((v) => !v)}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.filterChipText, freeOnly && styles.filterChipTextActive]}>
+                {t('coupons.filter.free')}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {couponsLoading && user ? (
             <>
@@ -295,8 +369,9 @@ export default function CouponsScreen() {
                         return usedAt ? `${t('couponDetail.used')} · ${usedAt}` : t('couponDetail.used');
                       })()
                     : status === 'expired'
-                      ? t('couponDetail.expired')
+                      ? `${t('couponDetail.expired')} · ${definition.validTo}`
                       : '';
+                const favored = isFavorite(definition.id);
 
                 return (
                   <TouchableOpacity
@@ -336,11 +411,34 @@ export default function CouponsScreen() {
                         <Text style={styles.couponTitle} numberOfLines={1}>
                           {t(definition.title)}
                         </Text>
-                        {status !== 'available' && (
-                          <View style={styles.statusPill}>
-                            <Text style={styles.statusText}>{statusLabel}</Text>
-                          </View>
-                        )}
+                        <View style={styles.couponHeaderRight}>
+                          {status !== 'available' ? (
+                            <View style={styles.statusPill}>
+                              <Text style={styles.statusText}>{statusLabel}</Text>
+                            </View>
+                          ) : null}
+                          <PressableScale
+                            containerStyle={[
+                              styles.favoriteButton,
+                              favored && styles.favoriteButtonActive,
+                            ]}
+                            onPress={(e) => {
+                              e.stopPropagation?.();
+                              toggleFavorite(definition.id);
+                            }}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              favored ? t('coupons.unfavorite') : t('coupons.favorite')
+                            }
+                          >
+                            <Star
+                              size={16}
+                              color={favored ? Colors.primary : Colors.textMuted}
+                              fill={favored ? Colors.primary : 'transparent'}
+                            />
+                          </PressableScale>
+                        </View>
                       </View>
                       <Text style={styles.couponDesc} numberOfLines={2}>
                         {t(definition.description)}
@@ -378,9 +476,22 @@ export default function CouponsScreen() {
           )}
         </View>
 
-        {filteredOffers.length > 0 && (
+        {offers.length > 0 && (
           <View style={styles.offersSection}>
             <Text style={styles.sectionTitle}>{t('coupons.section.offers')}</Text>
+
+            <View style={styles.offerFiltersRow}>
+              <TouchableOpacity
+                style={[styles.filterChip, unlockedOffersOnly && styles.filterChipActive]}
+                onPress={() => setUnlockedOffersOnly((v) => !v)}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.filterChipText, unlockedOffersOnly && styles.filterChipTextActive]}>
+                  {t('coupons.filter.unlocked')}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {couponsLoading && user ? (
               <>
@@ -399,6 +510,13 @@ export default function CouponsScreen() {
                   </View>
                 ))}
               </>
+            ) : filteredOffers.length === 0 ? (
+              <EmptyState
+                variant="inline"
+                style={styles.offersEmptyState}
+                title={t('coupons.empty.offers')}
+                icon={<Ticket size={20} color={Colors.primary} />}
+              />
             ) : (
               <>
                 {filteredOffers.map(({ definition, isUnlocked }) => (
@@ -416,6 +534,28 @@ export default function CouponsScreen() {
                       setDetailsOpen(true);
                     }}
                   >
+                    <PressableScale
+                      containerStyle={[
+                        styles.offerFavoriteButton,
+                        isFavorite(definition.id) && styles.offerFavoriteButtonActive,
+                      ]}
+                      onPress={(e) => {
+                        e.stopPropagation?.();
+                        toggleFavorite(definition.id);
+                      }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        isFavorite(definition.id) ? t('coupons.unfavorite') : t('coupons.favorite')
+                      }
+                    >
+                      <Star
+                        size={16}
+                        color={isFavorite(definition.id) ? Colors.primary : Colors.textMuted}
+                        fill={isFavorite(definition.id) ? Colors.primary : 'transparent'}
+                      />
+                    </PressableScale>
+
                     <View style={styles.offerLeft}>
                       <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
                       <View style={styles.offerTextBlock}>
@@ -618,8 +758,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 12,
+    flexWrap: 'wrap',
   },
   filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -825,6 +969,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+  couponHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   couponTitle: {
     flex: 1,
     marginRight: 10,
@@ -845,6 +994,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600' as const,
   },
+  favoriteButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  favoriteButtonActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(201, 169, 98, 0.14)',
+  },
   couponDesc: {
     color: Colors.textSecondary,
     fontSize: 13,
@@ -862,6 +1025,15 @@ const styles = StyleSheet.create({
   },
   offersSection: {
     marginTop: 8,
+  },
+  offerFiltersRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  offersEmptyState: {
+    paddingVertical: 18,
   },
   claimedOverlay: {
     flex: 1,
@@ -917,6 +1089,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: 10,
+  },
+  offerFavoriteButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    marginRight: 10,
+  },
+  offerFavoriteButtonActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(201, 169, 98, 0.14)',
   },
   offerLeft: {
     flexDirection: 'row',

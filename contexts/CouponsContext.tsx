@@ -8,6 +8,7 @@ import { getTierFromBalance, isTierAtLeast } from '@/lib/tier';
 
 const COUPONS_STORAGE_PREFIX = 'coupons_v1';
 const TIER_PROGRESS_STORAGE_PREFIX = 'coupon_tier_progress_v1';
+const FAVORITES_STORAGE_KEY = 'coupon_favorites_v1';
 
 const TIER_UPGRADE_GIFTS: Partial<Record<(typeof couponCatalog)[number]['tier'], string[]>> = {
   gold: ['c3'],
@@ -76,6 +77,17 @@ function safeParseCoupons(value: string | null): UserCoupon[] | null {
   }
 }
 
+function safeParseStringArray(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((v) => typeof v === 'string');
+  } catch {
+    return [];
+  }
+}
+
 function isExpired(definition: CouponDefinition, now: Date) {
   const until = new Date(definition.validTo);
   return Number.isFinite(until.valueOf()) && now > until;
@@ -96,14 +108,25 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
   const { user, spendPoints } = useAuth();
   const [coupons, setCoupons] = useState<UserCoupon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   const effectiveTier = useMemo(() => {
     if (!user) return 'silver';
     return getTierFromBalance(user.balance);
   }, [user]);
 
+  const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+
   const storageKey = user ? `${COUPONS_STORAGE_PREFIX}:${user.id}` : null;
   const tierProgressKey = user ? `${TIER_PROGRESS_STORAGE_PREFIX}:${user.id}` : null;
+
+  const persistFavorites = useCallback(async (next: string[]) => {
+    try {
+      await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const persist = useCallback(
     async (next: UserCoupon[]) => {
@@ -116,6 +139,22 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     },
     [storageKey]
   );
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
+        const parsed = safeParseStringArray(stored);
+        if (isMounted) setFavoriteIds(parsed);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const hydrate = useCallback(async () => {
     if (!user || !storageKey || !tierProgressKey) {
@@ -322,6 +361,26 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     return { definition, state };
   }, [coupons, instancesByCouponId]);
 
+  const isFavorite = useCallback((couponId: string) => favoriteSet.has(couponId), [favoriteSet]);
+
+  const toggleFavorite = useCallback(
+    (couponId: string) => {
+      if (!couponId) return;
+      setFavoriteIds((current) => {
+        const nextSet = new Set(current);
+        if (nextSet.has(couponId)) {
+          nextSet.delete(couponId);
+        } else {
+          nextSet.add(couponId);
+        }
+        const next = Array.from(nextSet);
+        void persistFavorites(next);
+        return next;
+      });
+    },
+    [persistFavorites]
+  );
+
   return {
     isLoading,
     coupons,
@@ -331,5 +390,8 @@ export const [CouponsProvider, useCoupons] = createContextHook(() => {
     markCouponUsed,
     refresh: hydrate,
     getCoupon,
+    favoriteIds,
+    isFavorite,
+    toggleFavorite,
   };
 });

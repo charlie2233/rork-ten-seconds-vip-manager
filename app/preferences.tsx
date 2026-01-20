@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Moon, Volume2, Vibrate, Globe, Eye, ChevronRight, User } from 'lucide-react-native';
+import { Moon, Volume2, Vibrate, Globe, Eye, ChevronRight, User, ZapOff } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useI18n, Locale } from '@/contexts/I18nContext';
 import Colors from '@/constants/colors';
@@ -37,10 +37,21 @@ const FONT_SIZES: { key: FontSize; labelKey: string }[] = [
 export default function PreferencesScreen() {
   const { t, locale, setLocale } = useI18n();
   const { user, setUserName } = useAuth();
-  const { theme, setTheme, fontSize, setFontSize, hideBalance, setHideBalance, backgroundGradient } =
-    useSettings();
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const {
+    theme,
+    setTheme,
+    fontSize,
+    setFontSize,
+    hideBalance,
+    setHideBalance,
+    backgroundGradient,
+    soundEnabled,
+    setSoundEnabled,
+    vibrationEnabled,
+    setVibrationEnabled,
+    reduceMotion,
+    setReduceMotion,
+  } = useSettings();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
   const [showFontSheet, setShowFontSheet] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
@@ -109,6 +120,21 @@ export default function PreferencesScreen() {
               <Switch
                 value={hideBalance}
                 onValueChange={setHideBalance}
+                trackColor={{ false: Colors.border, true: Colors.primary }}
+                thumbColor={Colors.text}
+              />
+            </View>
+
+            <View style={styles.toggleRow}>
+              <View style={styles.rowLeft}>
+                <View style={styles.rowIcon}>
+                  <ZapOff size={20} color={Colors.primary} />
+                </View>
+                <Text style={styles.rowLabel}>{t('preferences.reduceMotion')}</Text>
+              </View>
+              <Switch
+                value={reduceMotion}
+                onValueChange={setReduceMotion}
                 trackColor={{ false: Colors.border, true: Colors.primary }}
                 thumbColor={Colors.text}
               />
