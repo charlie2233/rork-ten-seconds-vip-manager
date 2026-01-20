@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, EyeOff, CreditCard, Lock, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSecurity } from '@/contexts/SecurityContext';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
 import TopBar from '@/components/TopBar';
@@ -22,12 +23,24 @@ export default function LoginScreen() {
   const { login, enterGuestMode, isLoggingIn, loginError } = useAuth();
   const { t } = useI18n();
   const { backgroundGradient } = useSettings();
+  const { 
+    isAccountLocked, 
+    getRemainingAttempts, 
+    lockoutRemaining, 
+    maxAttempts,
+    recordLoginAttempt,
+    createSession 
+  } = useSecurity();
   const [memberId, setMemberId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
   const handleLogin = async () => {
+    if (isAccountLocked()) {
+      setErrorKey('auth.accountLocked');
+      return;
+    }
     if (!memberId.trim()) {
       setErrorKey('auth.memberIdRequired');
       return;
@@ -39,13 +52,21 @@ export default function LoginScreen() {
     setErrorKey(null);
     try {
       await login(memberId, password);
+      await recordLoginAttempt(memberId, true);
+      await createSession();
       router.replace('/');
     } catch (e: any) {
-      const key =
-        typeof e?.message === 'string' && e.message.startsWith('auth.')
-          ? e.message
-          : 'auth.loginFailed';
-      setErrorKey(key);
+      await recordLoginAttempt(memberId, false);
+      const remaining = getRemainingAttempts();
+      if (remaining <= 0) {
+        setErrorKey('auth.accountLocked');
+      } else {
+        const key =
+          typeof e?.message === 'string' && e.message.startsWith('auth.')
+            ? e.message
+            : 'auth.loginFailed';
+        setErrorKey(key);
+      }
     }
   };
 
@@ -133,14 +154,27 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {displayedErrorKey && (
-            <Text style={styles.errorText}>{t(displayedErrorKey)}</Text>
-          )}
+          {isAccountLocked() && lockoutRemaining > 0 ? (
+            <View style={styles.lockoutContainer}>
+              <Text style={styles.lockoutText}>
+                {t('auth.accountLockedTimer', { minutes: Math.ceil(lockoutRemaining / 60) })}
+              </Text>
+            </View>
+          ) : displayedErrorKey ? (
+            <View>
+              <Text style={styles.errorText}>{t(displayedErrorKey)}</Text>
+              {getRemainingAttempts() < maxAttempts && getRemainingAttempts() > 0 && (
+                <Text style={styles.attemptsText}>
+                  {t('auth.remainingAttempts', { count: getRemainingAttempts() })}
+                </Text>
+              )}
+            </View>
+          ) : null}
 
           <TouchableOpacity
-            style={[styles.loginButton, isLoggingIn && styles.loginButtonDisabled]}
+            style={[styles.loginButton, (isLoggingIn || isAccountLocked()) && styles.loginButtonDisabled]}
             onPress={handleLogin}
-            disabled={isLoggingIn}
+            disabled={isLoggingIn || isAccountLocked()}
             activeOpacity={0.8}
             testID="login-button"
           >
@@ -284,5 +318,22 @@ const styles = StyleSheet.create({
   footerText: {
     color: Colors.textMuted,
     fontSize: 12,
+  },
+  lockoutContainer: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+  },
+  lockoutText: {
+    color: Colors.error,
+    fontSize: 14,
+    textAlign: 'center' as const,
+    fontWeight: '500' as const,
+  },
+  attemptsText: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    textAlign: 'center' as const,
+    marginTop: 4,
   },
 });

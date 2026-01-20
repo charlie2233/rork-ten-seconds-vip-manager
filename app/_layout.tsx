@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { SecurityProvider } from "@/contexts/SecurityContext";
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { I18nProvider, useI18n } from "@/contexts/I18nContext";
@@ -81,13 +82,15 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <I18nProvider>
             <SettingsProvider>
-              <AuthProvider>
-                <CouponsProvider>
-                  <NotificationsProvider>
-                    <RootLayoutNav />
-                  </NotificationsProvider>
-                </CouponsProvider>
-              </AuthProvider>
+              <SecurityProvider>
+                <AuthProvider>
+                  <CouponsProvider>
+                    <NotificationsProvider>
+                      <RootLayoutNav />
+                    </NotificationsProvider>
+                  </CouponsProvider>
+                </AuthProvider>
+              </SecurityProvider>
             </SettingsProvider>
           </I18nProvider>
         </GestureHandlerRootView>

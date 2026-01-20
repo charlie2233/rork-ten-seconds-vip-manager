@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -17,15 +18,50 @@ import {
   Eye,
   Shield,
   KeyRound,
+  Trash2,
+  Monitor,
+  TabletSmartphone,
 } from 'lucide-react-native';
 import { useI18n } from '@/contexts/I18nContext';
 import Colors from '@/constants/colors';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useSecurity, Session } from '@/contexts/SecurityContext';
 import TopBar from '@/components/TopBar';
+
+function formatSessionDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
+
+function getDeviceIcon(platform: string) {
+  if (platform === 'ios') return TabletSmartphone;
+  if (platform === 'android') return Smartphone;
+  return Monitor;
+}
 
 export default function SecurityScreen() {
   const { t } = useI18n();
   const { hideBalance, setHideBalance, backgroundGradient, biometricEnabled, setBiometricEnabled } = useSettings();
+  const { 
+    sessions, 
+    isLoadingSessions, 
+    revokeSession, 
+    revokeAllOtherSessions,
+    getRemainingAttempts,
+    maxAttempts,
+    lockoutRemaining,
+    isAccountLocked,
+  } = useSecurity();
 
   const handleChangePassword = () => {
     Alert.alert(t('security.changePassword'), t('security.changePasswordHint'));
@@ -35,9 +71,52 @@ export default function SecurityScreen() {
     Alert.alert(t('security.paymentPassword'), t('security.paymentPasswordHint'));
   };
 
-  const handleViewDevices = () => {
-    Alert.alert(t('security.linkedDevices'), t('security.linkedDevicesHint'));
+  const handleRevokeSession = (session: Session) => {
+    if (session.isCurrent) {
+      Alert.alert(
+        t('security.cannotRevokeCurrent'),
+        t('security.cannotRevokeCurrentDesc')
+      );
+      return;
+    }
+
+    Alert.alert(
+      t('security.revokeSessionTitle'),
+      t('security.revokeSessionMessage', { device: session.deviceName }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('security.revoke'),
+          style: 'destructive',
+          onPress: () => revokeSession(session.id),
+        },
+      ]
+    );
   };
+
+  const handleRevokeAllOther = () => {
+    const otherSessions = sessions.filter((s) => !s.isCurrent);
+    if (otherSessions.length === 0) {
+      Alert.alert(t('security.noOtherSessions'), t('security.noOtherSessionsDesc'));
+      return;
+    }
+
+    Alert.alert(
+      t('security.revokeAllTitle'),
+      t('security.revokeAllMessage', { count: otherSessions.length }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('security.revokeAll'),
+          style: 'destructive',
+          onPress: () => revokeAllOtherSessions(),
+        },
+      ]
+    );
+  };
+
+  const currentSession = sessions.find((s) => s.isCurrent);
+  const otherSessions = sessions.filter((s) => !s.isCurrent);
 
   return (
     <View style={styles.container}>
@@ -134,24 +213,106 @@ export default function SecurityScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('security.devicesSection')}</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('security.devicesSection')}</Text>
+            {otherSessions.length > 0 && (
+              <TouchableOpacity onPress={handleRevokeAllOther}>
+                <Text style={styles.revokeAllText}>{t('security.revokeAll')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={styles.card}>
-            <TouchableOpacity
-              style={[styles.menuItem, styles.lastItem]}
-              onPress={handleViewDevices}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuLeft}>
-                <View style={styles.menuIcon}>
-                  <Smartphone size={20} color={Colors.primary} />
-                </View>
-                <View>
-                  <Text style={styles.menuLabel}>{t('security.linkedDevices')}</Text>
-                  <Text style={styles.menuHint}>{t('security.linkedDevicesDesc')}</Text>
-                </View>
+            {isLoadingSessions ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color={Colors.primary} />
               </View>
-              <ChevronRight size={20} color={Colors.textMuted} />
-            </TouchableOpacity>
+            ) : sessions.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>{t('security.noSessions')}</Text>
+              </View>
+            ) : (
+              <>
+                {currentSession && (
+                  <View style={[styles.sessionItem, otherSessions.length === 0 && styles.lastItem]}>
+                    <View style={styles.sessionLeft}>
+                      <View style={[styles.sessionIcon, styles.currentSessionIcon]}>
+                        {React.createElement(getDeviceIcon(currentSession.platform), {
+                          size: 20,
+                          color: Colors.success,
+                        })}
+                      </View>
+                      <View style={styles.sessionInfo}>
+                        <View style={styles.sessionNameRow}>
+                          <Text style={styles.sessionName}>{currentSession.deviceName}</Text>
+                          <View style={styles.currentBadge}>
+                            <Text style={styles.currentBadgeText}>{t('security.currentDevice')}</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.sessionMeta}>
+                          {t('security.lastActive')}: {formatSessionDate(currentSession.lastActiveAt)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {otherSessions.map((session, index) => {
+                  const DeviceIcon = getDeviceIcon(session.platform);
+                  const isLast = index === otherSessions.length - 1;
+                  return (
+                    <TouchableOpacity
+                      key={session.id}
+                      style={[styles.sessionItem, isLast && styles.lastItem]}
+                      onPress={() => handleRevokeSession(session)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.sessionLeft}>
+                        <View style={styles.sessionIcon}>
+                          <DeviceIcon size={20} color={Colors.textSecondary} />
+                        </View>
+                        <View style={styles.sessionInfo}>
+                          <Text style={styles.sessionName}>{session.deviceName}</Text>
+                          <Text style={styles.sessionMeta}>
+                            {t('security.lastActive')}: {formatSessionDate(session.lastActiveAt)}
+                          </Text>
+                        </View>
+                      </View>
+                      <Trash2 size={18} color={Colors.error} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('security.loginProtection')}</Text>
+          <View style={styles.card}>
+            <View style={[styles.protectionItem, styles.lastItem]}>
+              <View style={styles.protectionInfo}>
+                <Text style={styles.protectionLabel}>{t('security.bruteForceProtection')}</Text>
+                <Text style={styles.protectionDesc}>
+                  {isAccountLocked()
+                    ? t('security.accountLockedFor', { minutes: Math.ceil(lockoutRemaining / 60) })
+                    : t('security.attemptsRemaining', { 
+                        current: getRemainingAttempts(), 
+                        max: maxAttempts 
+                      })}
+                </Text>
+              </View>
+              <View style={[
+                styles.protectionStatus,
+                isAccountLocked() ? styles.protectionStatusLocked : styles.protectionStatusOk
+              ]}>
+                <Text style={[
+                  styles.protectionStatusText,
+                  isAccountLocked() ? styles.protectionStatusTextLocked : styles.protectionStatusTextOk
+                ]}>
+                  {isAccountLocked() ? t('security.locked') : t('security.active')}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
@@ -171,31 +332,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-  placeholder: {
-    width: 40,
-  },
   scrollView: {
     flex: 1,
   },
@@ -205,10 +341,22 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
+    marginBottom: 12,
+  },
+  revokeAllText: {
+    fontSize: 13,
+    color: Colors.error,
+    fontWeight: '500' as const,
     marginBottom: 12,
   },
   card: {
@@ -260,6 +408,115 @@ const styles = StyleSheet.create({
   menuHint: {
     fontSize: 12,
     color: Colors.textMuted,
+  },
+  loadingContainer: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.textMuted,
+  },
+  sessionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  sessionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sessionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(156, 163, 175, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  currentSessionIcon: {
+    backgroundColor: 'rgba(76, 175, 80, 0.12)',
+  },
+  sessionInfo: {
+    flex: 1,
+  },
+  sessionNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sessionName: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: Colors.text,
+  },
+  currentBadge: {
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  currentBadgeText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: Colors.success,
+  },
+  sessionMeta: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  protectionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  protectionInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  protectionLabel: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  protectionDesc: {
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  protectionStatus: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  protectionStatusOk: {
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+  },
+  protectionStatusLocked: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+  },
+  protectionStatusText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  protectionStatusTextOk: {
+    color: Colors.success,
+  },
+  protectionStatusTextLocked: {
+    color: Colors.error,
   },
   securityTip: {
     flexDirection: 'row',
