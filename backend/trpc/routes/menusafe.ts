@@ -2,68 +2,38 @@ import * as z from "zod";
 import { createTRPCRouter, publicProcedure } from "../create-context";
 
 /**
- * MenuSafe (MS) API response structure (based on typical POS integrations)
+ * MenuSafe (MS) API response - only member ID and balance needed
+ * Other user data (name, tier, points, etc.) is managed in our app
  */
-interface MenuSafeUser {
-  CardNo: string;
-  CustomerName: string;
-  Mobile: string;
-  Balance: number;
-  Points: number;
-  GradeName: string;
-  CreateTime: string;
+interface MenuSafeMember {
+  CardNo: string;   // Member ID
+  Balance: number;  // Current balance
 }
 
 // Mock MenuSafe database for demonstration
-const mockMenuSafeUsers: MenuSafeUser[] = [
-  {
-    CardNo: 'VIP8888',
-    CustomerName: '张三',
-    Mobile: '13800138000',
-    Balance: 1250.50,
-    Points: 500,
-    GradeName: '黄金会员',
-    CreateTime: '2024-05-20',
-  },
-  {
-    CardNo: 'VIP9999',
-    CustomerName: '李四',
-    Mobile: '13912345678',
-    Balance: 88.00,
-    Points: 120,
-    GradeName: '普通会员',
-    CreateTime: '2025-01-01',
-  }
+const mockMenuSafeMembers: MenuSafeMember[] = [
+  { CardNo: 'VIP8888', Balance: 1250.50 },
+  { CardNo: 'VIP9999', Balance: 88.00 },
+  { CardNo: 'VIP1234', Balance: 520.00 },
 ];
 
 /**
- * Helper to fetch from MenuSafe API if credentials exist
+ * Fetch member balance from MenuSafe by member ID (CardNo)
  */
-async function fetchMenuSafeUser(params: { phone?: string; cardNo?: string }): Promise<MenuSafeUser | null> {
+async function fetchMenuSafeBalance(memberId: string): Promise<MenuSafeMember | null> {
   const apiKey = process.env.MENUSAFE_API_KEY;
   const baseUrl = process.env.MENUSAFE_API_URL || 'https://api.menusafe.com/v1';
 
   // If no API key is configured, fallback to mock data
   if (!apiKey) {
     console.warn('[MenuSafe] No API key configured, using mock data.');
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
-    
-    if (params.phone) {
-      return mockMenuSafeUsers.find(u => u.Mobile === params.phone) || null;
-    }
-    if (params.cardNo) {
-      return mockMenuSafeUsers.find(u => u.CardNo === params.cardNo) || null;
-    }
-    return null;
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return mockMenuSafeMembers.find(m => m.CardNo === memberId) || null;
   }
 
   // Real API implementation
   try {
-    const query = new URLSearchParams();
-    if (params.phone) query.append('mobile', params.phone);
-    if (params.cardNo) query.append('cardNo', params.cardNo);
-
-    const response = await fetch(`${baseUrl}/members?${query.toString()}`, {
+    const response = await fetch(`${baseUrl}/members/${memberId}/balance`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -76,7 +46,7 @@ async function fetchMenuSafeUser(params: { phone?: string; cardNo?: string }): P
     }
 
     const data = await response.json();
-    return data as MenuSafeUser;
+    return { CardNo: memberId, Balance: data.balance ?? data.Balance };
   } catch (error) {
     console.error('[MenuSafe] Fetch failed:', error);
     return null;
@@ -85,125 +55,54 @@ async function fetchMenuSafeUser(params: { phone?: string; cardNo?: string }): P
 
 export const menusafeRouter = createTRPCRouter({
   /**
-   * Search for a user in the legacy MenuSafe system.
-   * This would typically call the MenuSafe API.
+   * Get balance from MenuSafe by member ID
+   * This is the primary sync endpoint - only fetches what we need
    */
-  searchByPhone: publicProcedure
-    .input(z.object({ phone: z.string() }))
-    .query(async ({ input }: { input: { phone: string } }) => {
-      const user = await fetchMenuSafeUser({ phone: input.phone });
-      return user;
-    }),
-
-  /**
-   * Import a user from MenuSafe into our current Rork system.
-   */
-  importUser: publicProcedure
-    .input(z.object({ phone: z.string() }))
-    .mutation(async ({ input }: { input: { phone: string } }) => {
-      // 1. Fetch from MenuSafe
-      const menusafeUser = await fetchMenuSafeUser({ phone: input.phone });
+  getBalance: publicProcedure
+    .input(z.object({ memberId: z.string() }))
+    .query(async ({ input }: { input: { memberId: string } }) => {
+      const member = await fetchMenuSafeBalance(input.memberId);
+      if (!member) return null;
       
-      if (!menusafeUser) {
-        throw new Error("User not found in MenuSafe system");
-      }
-
-      // 2. Map MenuSafe fields to Rork User fields
-      const tierMap: Record<string, 'silver' | 'gold' | 'diamond' | 'platinum' | 'blackGold'> = {
-        '普通会员': 'silver',
-        '黄金会员': 'gold',
-        '钻石会员': 'diamond',
-        '铂金会员': 'platinum',
-        '黑金会员': 'blackGold',
-      };
-
-      const importedUser = {
-        id: `ms_${menusafeUser.CardNo}`,
-        memberId: menusafeUser.CardNo,
-        name: menusafeUser.CustomerName,
-        phone: menusafeUser.Mobile,
-        balance: menusafeUser.Balance,
-        points: menusafeUser.Points,
-        tier: tierMap[menusafeUser.GradeName] || 'silver',
-        joinDate: menusafeUser.CreateTime,
-      };
-
-      // 3. Create initial "Migration" transaction to reflect the balance
-      // This ensures the ledger matches the user's balance
-      const migrationTransaction = {
-        id: `tx_migrate_${menusafeUser.CardNo}`,
-        type: 'deposit' as const,
-        amount: menusafeUser.Balance,
-        description: 'MenuSafe System Migration Balance',
-        date: new Date().toISOString(),
-        balance: menusafeUser.Balance,
-      };
-
-      // 4. Persist to our database (mocked for now)
-      console.log('[Migration] Imported user from MenuSafe:', importedUser);
-      console.log('[Migration] Created initial transaction:', migrationTransaction);
-
-      // In a real scenario, you'd insert this into your main DB
-      // and possibly invalidate caches.
-      // Example with a hypothetical DB:
-      // await db.transaction(async (tx) => {
-      //   await tx.users.create({ data: importedUser });
-      //   await tx.transactions.create({ 
-      //     data: { ...migrationTransaction, userId: importedUser.id } 
-      //   });
-      // });
-
       return {
-        success: true,
-        user: importedUser,
-        initialTransaction: migrationTransaction,
+        memberId: member.CardNo,
+        balance: member.Balance,
       };
     }),
 
   /**
-   * Batch import procedure (for admin use)
-   * This can be called from a script or an admin dashboard.
+   * Sync balance from MenuSafe and update local state
+   * Returns the latest balance for the given member ID
    */
-  batchImport: publicProcedure
-    .input(z.object({ users: z.array(z.any()) }))
-    .mutation(async ({ input }: { input: { users: any[] } }) => {
-      console.log(`[Migration] Batch importing ${input.users.length} users...`);
-      // Logic for batch insertion would go here
-      return { importedCount: input.users.length };
-    }),
-
-  /**
-   * Synchronize balance and points from MenuSafe for an existing user.
-   */
-  syncData: publicProcedure
+  syncBalance: publicProcedure
     .input(z.object({ memberId: z.string() }))
     .mutation(async ({ input }: { input: { memberId: string } }) => {
-      const menusafeUser = await fetchMenuSafeUser({ cardNo: input.memberId });
+      const member = await fetchMenuSafeBalance(input.memberId);
       
-      if (!menusafeUser) {
-        throw new Error("Could not find matching user in MenuSafe for sync");
+      if (!member) {
+        throw new Error("Member not found in MenuSafe");
       }
 
+      console.log(`[MenuSafe] Synced balance for ${input.memberId}: ¥${member.Balance}`);
+
       return {
-        balance: menusafeUser.Balance,
-        points: menusafeUser.Points,
+        memberId: member.CardNo,
+        balance: member.Balance,
         lastSync: new Date().toISOString(),
       };
     }),
 
   /**
-   * Lightweight balance check for auto-renewal polling.
-   * This is optimized for frequent calls.
+   * Validate if a member ID exists in MenuSafe
+   * Used during registration/linking flow
    */
-  getLatestBalance: publicProcedure
+  validateMemberId: publicProcedure
     .input(z.object({ memberId: z.string() }))
     .query(async ({ input }: { input: { memberId: string } }) => {
-       const menusafeUser = await fetchMenuSafeUser({ cardNo: input.memberId });
-       if (!menusafeUser) return null;
-       
-       return {
-         balance: menusafeUser.Balance,
-         points: menusafeUser.Points,
-       };
+      const member = await fetchMenuSafeBalance(input.memberId);
+      return {
+        exists: member !== null,
+        balance: member?.Balance ?? null,
+      };
     }),
 });

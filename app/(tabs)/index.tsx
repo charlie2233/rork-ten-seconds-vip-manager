@@ -92,7 +92,7 @@ export default function HomeScreen() {
     };
   }, [shimmerAnim, glowAnim, pulseAnim]);
 
-  const { data: latestBalance } = trpc.menusafe.getLatestBalance.useQuery(
+  const { data: latestBalance } = trpc.menusafe.getBalance.useQuery(
     { memberId: user?.memberId ?? '' },
     { 
       enabled: !!user?.memberId,

@@ -97,7 +97,7 @@ export default function MemberCodeScreen() {
     };
   }, [shimmerAnim, tiltAnim, scaleAnim]);
 
-  const menusafeQuery = trpc.menusafe.getLatestBalance.useQuery(
+  const menusafeQuery = trpc.menusafe.getBalance.useQuery(
     { memberId: user?.memberId || '' },
     {
       enabled: !!user?.memberId,
