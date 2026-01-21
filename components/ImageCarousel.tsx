@@ -12,6 +12,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import Colors from '@/constants/colors';
+import Skeleton from '@/components/Skeleton';
 
 export type CarouselImage = {
   key: string;
@@ -36,6 +37,7 @@ export default function ImageCarousel({
   const scrollRef = useRef<ScrollView>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [loaded, setLoaded] = useState<Record<string, boolean>>({});
   const count = images.length;
 
   const canAutoPlay = autoPlay && count > 1 && containerWidth > 0;
@@ -46,6 +48,14 @@ export default function ImageCarousel({
       setContainerWidth(nextWidth);
     }
   }, [containerWidth]);
+
+  useEffect(() => {
+    setLoaded({});
+  }, [count]);
+
+  const markLoaded = useCallback((key: string) => {
+    setLoaded((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+  }, []);
 
   const scrollToIndex = useCallback(
     (index: number, animated: boolean) => {
@@ -105,23 +115,43 @@ export default function ImageCarousel({
   return (
     <View style={[styles.container, style]} onLayout={onLayout}>
       <View style={[styles.carousel, { height }]}>
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onMomentumScrollEnd}
-          scrollEventThrottle={16}
-        >
-          {images.map((img) => (
-            <View key={img.key} style={{ width: containerWidth || 1, height }}>
-              <Image source={img.source} style={styles.image} resizeMode="cover" />
-            </View>
-          ))}
-        </ScrollView>
+        {containerWidth ? (
+          <>
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={onMomentumScrollEnd}
+              scrollEventThrottle={16}
+            >
+              {images.map((img) => {
+                const isLoaded = !!loaded[img.key];
+                return (
+                  <View key={img.key} style={{ width: containerWidth, height }}>
+                    <Image
+                      source={img.source}
+                      style={styles.image}
+                      resizeMode="cover"
+                      onLoadEnd={() => markLoaded(img.key)}
+                      onError={() => markLoaded(img.key)}
+                    />
+                    {!isLoaded ? (
+                      <View pointerEvents="none" style={styles.loadingOverlay}>
+                        <Skeleton style={StyleSheet.absoluteFill} borderRadius={0} />
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </ScrollView>
 
-        {count > 1 ? <View style={styles.dotsRow}>{dots}</View> : null}
+            {count > 1 ? <View style={styles.dotsRow}>{dots}</View> : null}
+          </>
+        ) : (
+          <Skeleton style={StyleSheet.absoluteFill} borderRadius={0} />
+        )}
       </View>
     </View>
   );
@@ -142,6 +172,9 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   dotsRow: {
     position: 'absolute',
