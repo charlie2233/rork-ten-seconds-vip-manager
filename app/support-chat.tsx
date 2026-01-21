@@ -54,22 +54,15 @@ export default function SupportChatScreen() {
     return {
       get_member_summary: {
         description:
-          'Get the current member account summary (balance, points, tier). Balance is read from MenuSafe, points are managed by our app, and tier is derived from balance.',
-        zodSchema: z.object({
-          memberId: z.string().min(1).optional(),
-        }),
-        execute: async (input: unknown) => {
-          const { memberId } = (input ?? {}) as { memberId?: string };
-          const resolvedMemberId = memberId ?? user?.memberId;
-          if (!resolvedMemberId) {
-            throw new Error('User is not logged in (missing memberId).');
-          }
-          if (memberId && user?.memberId && memberId !== user.memberId) {
-            throw new Error('Only the logged-in memberId is supported.');
+          'Get the current logged-in member account summary (balance, points, tier). This tool can ONLY retrieve the current user\'s own information for privacy reasons.',
+        zodSchema: z.object({}),
+        execute: async (_input: unknown) => {
+          if (!user?.memberId) {
+            throw new Error('User is not logged in. Please ask them to log in first.');
           }
 
           const result = await trpcClient.menusafe.getBalance.query({
-            memberId: resolvedMemberId,
+            memberId: user.memberId,
           });
 
           const balance = result?.balance ?? 0;
@@ -77,7 +70,6 @@ export default function SupportChatScreen() {
           const tier = getTierFromBalance(balance);
 
           return JSON.stringify({
-            memberId: resolvedMemberId,
             tier,
             balance,
             points,
@@ -98,7 +90,7 @@ export default function SupportChatScreen() {
             userId: user.id,
             count: count ?? 5,
           });
-          return JSON.stringify({ userId: user.id, transactions: result });
+          return JSON.stringify({ transactions: result });
         },
       },
       get_coupon_wallet: {
@@ -194,15 +186,6 @@ export default function SupportChatScreen() {
 
   const visibleMessages = messages.filter(m => m.role !== 'system');
 
-  const renderToolOutput = (output: unknown) => {
-    if (typeof output === 'string') return output;
-    try {
-      return JSON.stringify(output, null, 2);
-    } catch {
-      return String(output);
-    }
-  };
-
   const renderMessageContent = (message: (typeof messages)[number]) => {
     if ('parts' in message && Array.isArray(message.parts)) {
       const renderedParts = message.parts
@@ -221,7 +204,7 @@ export default function SupportChatScreen() {
           if (part.type === 'tool') {
             const state = (part as any).state as string | undefined;
             const toolName = (part as any).toolName ?? (part as any).name ?? 'tool';
-            const output = (part as any).output;
+
             const errorText = (part as any).errorText ?? (part as any).error ?? null;
 
             if (state === 'output-error') {
@@ -234,12 +217,7 @@ export default function SupportChatScreen() {
             }
 
             if (state === 'output-available') {
-              return (
-                <View key={`${message.id}-${i}`} style={styles.toolCard}>
-                  <Text style={styles.toolTitle}>{String(toolName)}</Text>
-                  <Text style={styles.toolOutput}>{renderToolOutput(output)}</Text>
-                </View>
-              );
+              return null;
             }
 
             return (
@@ -523,12 +501,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700' as const,
   },
-  toolOutput: {
-    color: Colors.text,
-    fontSize: 12,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    lineHeight: 16,
-  },
+
   toolErrorText: {
     color: Colors.error,
     fontSize: 12,
