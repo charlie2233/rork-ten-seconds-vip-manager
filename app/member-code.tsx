@@ -28,6 +28,14 @@ import { getVipCardTheme } from '@/lib/vipCardTheme';
 import { CardTexture } from '@/components/CardTexture';
 import { useSettings } from '@/contexts/SettingsContext';
 import TopBar from '@/components/TopBar';
+import OfflineBanner from '@/components/OfflineBanner';
+import { formatShortDateTime } from '@/lib/datetime';
+import { isProbablyOffline } from '@/lib/offline';
+import {
+  loadMenusafeBalanceSnapshot,
+  saveMenusafeBalanceSnapshot,
+  type MenusafeBalanceSnapshot,
+} from '@/lib/menusafeBalanceCache';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = Math.min(width - 48, 400);
@@ -38,7 +46,7 @@ export default function MemberCodeScreen() {
   const { hideBalance, backgroundGradient } = useSettings();
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [syncedBalance, setSyncedBalance] = useState<number | null>(null);
+  const [balanceSnapshot, setBalanceSnapshot] = useState<MenusafeBalanceSnapshot | null>(null);
   
   // Animation values
   const shimmerAnim = useRef(new Animated.Value(0)).current;
@@ -107,12 +115,33 @@ export default function MemberCodeScreen() {
   );
 
   useEffect(() => {
-    if (menusafeQuery.data) {
-      setSyncedBalance(menusafeQuery.data.balance);
-    }
-  }, [menusafeQuery.data]);
+    let isMounted = true;
+    (async () => {
+      if (!user?.memberId) {
+        if (isMounted) setBalanceSnapshot(null);
+        return;
+      }
+      const loaded = await loadMenusafeBalanceSnapshot(user.memberId);
+      if (isMounted) setBalanceSnapshot(loaded);
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.memberId]);
 
-  const displayBalance = syncedBalance ?? user?.balance ?? 0;
+  useEffect(() => {
+    if (!user?.memberId) return;
+    const nextBalance = menusafeQuery.data?.balance;
+    if (typeof nextBalance !== 'number' || !Number.isFinite(nextBalance)) return;
+    (async () => {
+      const saved = await saveMenusafeBalanceSnapshot(user.memberId, nextBalance);
+      setBalanceSnapshot(saved);
+    })();
+  }, [menusafeQuery.data?.balance, user?.memberId]);
+
+  const isOffline = !!menusafeQuery.error && isProbablyOffline(menusafeQuery.error);
+  const displayBalance =
+    menusafeQuery.data?.balance ?? balanceSnapshot?.balance ?? user?.balance ?? 0;
   const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
@@ -498,6 +527,23 @@ export default function MemberCodeScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
+          {isOffline ? (
+            <OfflineBanner
+              title={t('offline.title')}
+              message={t('offline.message')}
+              lastUpdated={
+                balanceSnapshot?.updatedAt
+                  ? t('offline.lastUpdated', {
+                      time: formatShortDateTime(balanceSnapshot.updatedAt, locale),
+                    })
+                  : undefined
+              }
+              onRetry={() => menusafeQuery.refetch()}
+              retryLabel={t('offline.retry')}
+              style={{ marginBottom: 12 }}
+            />
+          ) : null}
+
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
                <Text style={styles.statLabel}>{t('memberCode.balance')}</Text>
@@ -518,7 +564,7 @@ export default function MemberCodeScreen() {
             </View>
           </View>
           
-          {menusafeQuery.isError && (
+          {menusafeQuery.isError && !isOffline && (
              <View style={styles.errorBanner}>
                <AlertCircle size={14} color="#FF6B6B" />
                <Text style={styles.errorBannerText}>{t('memberCode.syncError')}</Text>

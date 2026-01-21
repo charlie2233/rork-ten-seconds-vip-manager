@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,14 @@ import TopBar from '@/components/TopBar';
 import BrandBanner from '@/components/BrandBanner';
 import ContextualHelpChips from '@/components/ContextualHelpChips';
 import { useSettings } from '@/contexts/SettingsContext';
+import OfflineBanner from '@/components/OfflineBanner';
+import { formatShortDateTime } from '@/lib/datetime';
+import { isProbablyOffline } from '@/lib/offline';
+import {
+  loadMenusafeBalanceSnapshot,
+  saveMenusafeBalanceSnapshot,
+  type MenusafeBalanceSnapshot,
+} from '@/lib/menusafeBalanceCache';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -40,6 +48,7 @@ export default function HomeScreen() {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
+  const [balanceSnapshot, setBalanceSnapshot] = useState<MenusafeBalanceSnapshot | null>(null);
 
   useEffect(() => {
     const shimmer = Animated.loop(
@@ -93,7 +102,22 @@ export default function HomeScreen() {
     };
   }, [shimmerAnim, glowAnim, pulseAnim]);
 
-  const { data: latestBalance } = trpc.menusafe.getBalance.useQuery(
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      if (!user?.memberId) {
+        if (isMounted) setBalanceSnapshot(null);
+        return;
+      }
+      const loaded = await loadMenusafeBalanceSnapshot(user.memberId);
+      if (isMounted) setBalanceSnapshot(loaded);
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.memberId]);
+
+  const menusafeBalanceQuery = trpc.menusafe.getBalance.useQuery(
     { memberId: user?.memberId ?? '' },
     { 
       enabled: !!user?.memberId,
@@ -102,7 +126,28 @@ export default function HomeScreen() {
     }
   );
 
-  const displayBalance = latestBalance?.balance ?? user?.balance ?? 0;
+  useEffect(() => {
+    if (!user?.memberId) return;
+    const nextBalance = menusafeBalanceQuery.data?.balance;
+    if (typeof nextBalance !== 'number' || !Number.isFinite(nextBalance)) return;
+    (async () => {
+      const saved = await saveMenusafeBalanceSnapshot(user.memberId, nextBalance);
+      setBalanceSnapshot(saved);
+    })();
+  }, [menusafeBalanceQuery.data?.balance, user?.memberId]);
+
+  const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
+    { userId: user?.id, count: 3 },
+    { enabled: !!user }
+  );
+
+  const isOffline =
+    !!user &&
+    ((menusafeBalanceQuery.error && isProbablyOffline(menusafeBalanceQuery.error)) ||
+      (recentTransactionsQuery.error && isProbablyOffline(recentTransactionsQuery.error)));
+
+  const displayBalance =
+    menusafeBalanceQuery.data?.balance ?? balanceSnapshot?.balance ?? user?.balance ?? 0;
   const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
@@ -119,10 +164,6 @@ export default function HomeScreen() {
     : 100;
   const remainingToNext = nextTierMin ? Math.max(0, nextTierMin - displayBalance) : 0;
 
-  const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
-    { userId: user?.id, count: 3 },
-    { enabled: !!user }
-  );
   const recentTransactions = recentTransactionsQuery.data ?? [];
 
   const memberCode = useMemo(() => (user?.memberId ?? '').trim(), [user?.memberId]);
@@ -254,6 +295,23 @@ export default function HomeScreen() {
             subtitle={storeAddress}
             style={{ marginBottom: 16 }}
           />
+          {isOffline ? (
+            <OfflineBanner
+              title={t('offline.title')}
+              message={t('offline.message')}
+              lastUpdated={
+                balanceSnapshot?.updatedAt
+                  ? t('offline.lastUpdated', { time: formatShortDateTime(balanceSnapshot.updatedAt, locale) })
+                  : undefined
+              }
+              retryLabel={t('offline.retry')}
+              onRetry={() => {
+                menusafeBalanceQuery.refetch();
+                recentTransactionsQuery.refetch();
+              }}
+              style={{ marginBottom: 14 }}
+            />
+          ) : null}
           <Text style={[styles.greeting, { fontSize: 16 * fontScale }]}>{t('home.welcomeBack')}</Text>
           <Text style={[styles.userName, { fontSize: 28 * fontScale }]}>{user?.name ?? ''}</Text>
         </View>

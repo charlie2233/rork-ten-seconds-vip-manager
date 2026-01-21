@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -30,8 +30,16 @@ import EmptyState from '@/components/EmptyState';
 import Skeleton from '@/components/Skeleton';
 import TopBar from '@/components/TopBar';
 import BrandBanner from '@/components/BrandBanner';
+import OfflineBanner from '@/components/OfflineBanner';
 import { couponCatalog } from '@/mocks/data';
 import { useSettings } from '@/contexts/SettingsContext';
+import { formatShortDateTime } from '@/lib/datetime';
+import { isProbablyOffline } from '@/lib/offline';
+import {
+  loadTransactionsSnapshot,
+  saveTransactionsSnapshot,
+  type TransactionsSnapshot,
+} from '@/lib/transactionsCache';
 
 type FilterType = 'all' | 'deposit' | 'spend' | 'points';
 
@@ -139,13 +147,46 @@ export default function TransactionsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [howOpen, setHowOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [transactionsSnapshot, setTransactionsSnapshot] = useState<TransactionsSnapshot | null>(null);
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
 
   const transactionsQuery = trpc.transactions.list.useQuery(
     { userId: user?.id, limit: 50 },
     { enabled: !!user }
   );
-  const transactions = useMemo(() => transactionsQuery.data ?? [], [transactionsQuery.data]);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      if (!user?.id) {
+        if (isMounted) setTransactionsSnapshot(null);
+        return;
+      }
+      const loaded = await loadTransactionsSnapshot(user.id);
+      if (isMounted) setTransactionsSnapshot(loaded);
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const next = transactionsQuery.data;
+    if (!next) return;
+    (async () => {
+      const saved = await saveTransactionsSnapshot(user.id, next);
+      setTransactionsSnapshot(saved);
+    })();
+  }, [transactionsQuery.data, user?.id]);
+
+  const isOffline =
+    !!user && !!transactionsQuery.error && isProbablyOffline(transactionsQuery.error);
+
+  const transactions = useMemo(
+    () => transactionsQuery.data ?? transactionsSnapshot?.transactions ?? [],
+    [transactionsQuery.data, transactionsSnapshot?.transactions]
+  );
 
   const billingTransactions = transactions.filter((tx) => tx.type !== 'bonus');
 
@@ -284,6 +325,23 @@ export default function TransactionsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <BrandBanner title={t('transactions.title')} style={{ marginBottom: 16 }} />
+
+        {user && isOffline ? (
+          <OfflineBanner
+            title={t('offline.title')}
+            message={t('offline.message')}
+            lastUpdated={
+              transactionsSnapshot?.updatedAt
+                ? t('offline.lastUpdated', {
+                    time: formatShortDateTime(transactionsSnapshot.updatedAt, locale),
+                  })
+                : undefined
+            }
+            onRetry={() => transactionsQuery.refetch()}
+            retryLabel={t('offline.retry')}
+            style={{ marginBottom: 16 }}
+          />
+        ) : null}
 
         {!user ? (
           <AuthGateCard
@@ -500,7 +558,7 @@ export default function TransactionsScreen() {
                     </View>
                   ))
                 )
-              ) : transactionsQuery.isLoading ? (
+              ) : transactionsQuery.isLoading && !transactionsSnapshot ? (
                 <>
                   {Array.from({ length: 4 }).map((_, index) => (
                     <View
