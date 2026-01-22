@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   ChevronDown,
   ChevronUp,
+  Lock,
   RotateCcw,
   Share2,
   Sparkles,
@@ -344,11 +345,45 @@ export default function TransactionsScreen() {
         ) : null}
 
         {!user ? (
-          <AuthGateCard
-            title={t('transactions.loginRequired')}
-            message={t('auth.gate.billing.message')}
-            style={{ marginBottom: 20 }}
-          />
+          <>
+            <AuthGateCard
+              title={t('transactions.loginRequired')}
+              message={t('auth.gate.billing.message')}
+              style={{ marginBottom: 20 }}
+            />
+
+            <View style={styles.guestPreview}>
+              <View style={styles.guestStatsRow}>
+                {[0, 1].map((i) => (
+                  <View key={`guest-stat-${i}`} style={styles.guestStatCard}>
+                    <View style={styles.guestStatHeader}>
+                      <Lock size={16} color={Colors.textMuted} />
+                      <Skeleton style={{ height: 12, width: 92, borderRadius: 6 }} />
+                    </View>
+                    <Skeleton style={{ height: 20, width: '65%', borderRadius: 8 }} />
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.guestListCard}>
+                {[0, 1, 2].map((i) => (
+                  <View
+                    key={`guest-row-${i}`}
+                    style={[
+                      styles.guestRow,
+                      i === 2 ? styles.guestRowLast : null,
+                    ]}
+                  >
+                    <View style={styles.guestRowLeft}>
+                      <Skeleton style={{ height: 14, width: '72%', borderRadius: 8 }} />
+                      <Skeleton style={{ height: 12, width: '45%', borderRadius: 8, marginTop: 8 }} />
+                    </View>
+                    <Skeleton style={{ height: 16, width: 72, borderRadius: 8 }} />
+                  </View>
+                ))}
+              </View>
+            </View>
+          </>
         ) : (
           <>
             <View style={styles.statsRow}>
@@ -780,6 +815,51 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     padding: 16,
     marginBottom: 14,
+  },
+  guestPreview: {
+    gap: 14,
+    marginBottom: 12,
+  },
+  guestStatsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  guestStatCard: {
+    flex: 1,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    padding: 16,
+  },
+  guestStatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  guestListCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    overflow: 'hidden',
+  },
+  guestRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  guestRowLast: {
+    borderBottomWidth: 0,
+  },
+  guestRowLeft: {
+    flex: 1,
+    marginRight: 16,
   },
   pointsCenterHeader: {
     flexDirection: 'row',

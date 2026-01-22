@@ -28,9 +28,9 @@ type SegmentKey = CouponStatus;
 type SortKey = 'default' | 'expiringSoon' | 'newest' | 'recentlyUsed';
 
 const COUPON_BANNERS = [
-  { key: 'classic', source: require('../../banners/banner-classic.jpg') },
-  { key: 'spicy', source: require('../../banners/banner-spicy.jpg') },
-  { key: 'golden', source: require('../../banners/banner-golden.jpg') },
+  { key: 'classic', source: require('../../banners/optimized/banner-classic.jpg') },
+  { key: 'spicy', source: require('../../banners/optimized/banner-spicy.jpg') },
+  { key: 'golden', source: require('../../banners/optimized/banner-golden.jpg') },
 ];
 
 const MAX_VISIBLE_COUPONS = 3;
@@ -245,66 +245,91 @@ export default function CouponsScreen() {
 
         <ImageCarousel images={COUPON_BANNERS} height={170} style={styles.bannerCarousel} />
 
-        <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Search size={16} color={Colors.textMuted} />
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder={t('coupons.searchPlaceholder')}
-              placeholderTextColor={Colors.textMuted}
-              style={[styles.searchInput, { fontSize: 13 * fontScale }]}
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="search"
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.sortPill}
-            onPress={() => setSortSheetOpen(true)}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.sortText, { fontSize: 12 * fontScale }]}>{t(`coupons.sort.${sortKey}`)}</Text>
-            <ChevronDown size={16} color={Colors.textMuted} />
-          </TouchableOpacity>
-        </View>
-
         {!user ? (
-          <AuthGateCard
-            title={t('coupons.loginRequired.title')}
-            message={t('coupons.loginRequired.message')}
-            style={{ marginBottom: 18 }}
-          />
-        ) : null}
+          <>
+            <AuthGateCard
+              title={t('coupons.loginRequired.title')}
+              message={t('coupons.loginRequired.message')}
+              style={{ marginTop: 16, marginBottom: 18 }}
+            />
 
-        <View style={styles.segmentContainer}>
-          {SEGMENTS.map((segment) => {
-            const isActive = activeSegment === segment.key;
-            return (
+            <View style={styles.guestCouponsPreview}>
+              {[0, 1, 2].map((i) => (
+                <View key={`guest-coupon-${i}`} style={styles.guestCouponCard}>
+                  <View style={styles.guestCouponHeader}>
+                    <View style={styles.guestCouponTitleRow}>
+                      <Lock size={16} color={Colors.textMuted} />
+                      <Skeleton style={{ height: 14, width: '62%', borderRadius: 8 }} />
+                    </View>
+                    <Skeleton style={{ height: 12, width: '40%', borderRadius: 8, marginTop: 10 }} />
+                  </View>
+
+                  <View style={styles.guestCouponFooter}>
+                    <Skeleton style={{ height: 12, width: 110, borderRadius: 8 }} />
+                    <View style={styles.guestCouponPill}>
+                      <Skeleton style={{ height: 12, width: 72, borderRadius: 8 }} />
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={styles.searchRow}>
+              <View style={styles.searchBox}>
+                <Search size={16} color={Colors.textMuted} />
+                <TextInput
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder={t('coupons.searchPlaceholder')}
+                  placeholderTextColor={Colors.textMuted}
+                  style={[styles.searchInput, { fontSize: 13 * fontScale }]}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="search"
+                />
+              </View>
+
               <TouchableOpacity
-                key={segment.key}
-                style={[styles.segmentButton, isActive && styles.segmentButtonActive]}
-                onPress={() => setActiveSegment(segment.key)}
-                activeOpacity={0.7}
+                style={styles.sortPill}
+                onPress={() => setSortSheetOpen(true)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
               >
-                <Text
-                  style={[
-                    styles.segmentText,
-                    { fontSize: 13 * fontScale },
-                    isActive && styles.segmentTextActive,
-                  ]}
-                >
-                  {t(segment.labelKey)}
+                <Text style={[styles.sortText, { fontSize: 12 * fontScale }]}>
+                  {t(`coupons.sort.${sortKey}`)}
                 </Text>
+                <ChevronDown size={16} color={Colors.textMuted} />
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            </View>
 
-        <View style={styles.couponList}>
-          <View style={styles.filtersRow}>
+            <View style={styles.segmentContainer}>
+              {SEGMENTS.map((segment) => {
+                const isActive = activeSegment === segment.key;
+                return (
+                  <TouchableOpacity
+                    key={segment.key}
+                    style={[styles.segmentButton, isActive && styles.segmentButtonActive]}
+                    onPress={() => setActiveSegment(segment.key)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.segmentText,
+                        { fontSize: 13 * fontScale },
+                        isActive && styles.segmentTextActive,
+                      ]}
+                    >
+                      {t(segment.labelKey)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.couponList}>
+              <View style={styles.filtersRow}>
             {activeSegment === 'available' ? (
               <TouchableOpacity
                 style={[styles.filterChip, expiringSoonOnly && styles.filterChipActive]}
@@ -671,6 +696,8 @@ export default function CouponsScreen() {
             )}
           </View>
         )}
+          </>
+        )}
 
 	        <ContextualHelpChips
           chips={['howItWorks', 'aiChat']}
@@ -771,6 +798,41 @@ const styles = StyleSheet.create({
   },
   bannerCarousel: {
     marginBottom: 18,
+  },
+  guestCouponsPreview: {
+    gap: 12,
+    marginBottom: 18,
+  },
+  guestCouponCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    padding: 16,
+  },
+  guestCouponHeader: {
+    marginBottom: 14,
+  },
+  guestCouponTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  guestCouponFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  guestCouponPill: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    minHeight: 34,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchRow: {
     flexDirection: 'row',

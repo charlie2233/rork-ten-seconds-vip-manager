@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Image } from 'expo-image';
 import {
-  Image,
   LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -40,6 +40,8 @@ export default function ImageCarousel({
   const [loaded, setLoaded] = useState<Record<string, boolean>>({});
   const count = images.length;
 
+  const prefetchSignature = useMemo(() => images.map((img) => img.key).join('|'), [images]);
+
   const canAutoPlay = autoPlay && count > 1 && containerWidth > 0;
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
@@ -52,6 +54,35 @@ export default function ImageCarousel({
   useEffect(() => {
     setLoaded({});
   }, [count]);
+
+  useEffect(() => {
+    if (count === 0) return;
+    (async () => {
+      try {
+        const uris = images
+          .map((img) => {
+            const src = img.source as any;
+            if (typeof src === 'string') return src;
+            if (src && typeof src === 'object' && typeof src.uri === 'string') return src.uri;
+            return null;
+          })
+          .filter((v): v is string => typeof v === 'string' && v.length > 0);
+
+        if (uris.length) {
+          await Image.prefetch(uris, 'memory-disk').catch(() => false);
+        }
+
+        await Promise.all(
+          images
+            .map((img) => img.source)
+            .filter((src) => typeof src === 'number')
+            .map((src) => Image.loadAsync(src).catch(() => null))
+        );
+      } catch {
+        // ignore
+      }
+    })();
+  }, [count, images, prefetchSignature]);
 
   const markLoaded = useCallback((key: string) => {
     setLoaded((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
@@ -133,7 +164,9 @@ export default function ImageCarousel({
                     <Image
                       source={img.source}
                       style={styles.image}
-                      resizeMode="cover"
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                      transition={180}
                       onLoadEnd={() => markLoaded(img.key)}
                       onError={() => markLoaded(img.key)}
                     />

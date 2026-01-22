@@ -22,6 +22,7 @@ import Colors from '@/constants/colors';
 import * as bwipjs from 'bwip-js/generic';
 import { useI18n } from '@/contexts/I18nContext';
 import AuthGateCard from '@/components/AuthGateCard';
+import Skeleton from '@/components/Skeleton';
 import { trpc } from '@/lib/trpc';
 import { getTierFromBalance } from '@/lib/tier';
 import { getVipCardTheme } from '@/lib/vipCardTheme';
@@ -286,6 +287,26 @@ export default function MemberCodeScreen() {
             message={t('memberCode.loginHint')}
             style={{ width: '100%', maxWidth: 380 }}
           />
+
+          <View style={styles.guestCodePreview}>
+            <View style={styles.guestCodeCard}>
+              <View style={styles.guestCodeHeader}>
+                <Skeleton style={{ height: 12, width: 140, borderRadius: 8 }} />
+                <Skeleton style={{ height: 12, width: 80, borderRadius: 8 }} />
+              </View>
+
+              <View style={styles.guestCodeBody}>
+                <Skeleton style={styles.guestQrSkeleton} borderRadius={16} />
+                <View style={styles.guestCodeMeta}>
+                  <Skeleton style={{ height: 12, width: 120, borderRadius: 8 }} />
+                  <Skeleton style={{ height: 12, width: 92, borderRadius: 8, marginTop: 10 }} />
+                  <Skeleton style={{ height: 34, width: 120, borderRadius: 18, marginTop: 14 }} />
+                </View>
+              </View>
+
+              <Skeleton style={styles.guestBarcodeSkeleton} borderRadius={12} />
+            </View>
+          </View>
         </View>
       </View>
     );
@@ -899,6 +920,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+  },
+  guestCodePreview: {
+    width: '100%',
+    maxWidth: 380,
+    marginTop: 16,
+  },
+  guestCodeCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    padding: 16,
+  },
+  guestCodeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 14,
+  },
+  guestCodeBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 14,
+  },
+  guestQrSkeleton: {
+    width: 138,
+    height: 138,
+  },
+  guestCodeMeta: {
+    flex: 1,
+  },
+  guestBarcodeSkeleton: {
+    height: 42,
+    marginTop: 16,
   },
   errorText: {
     color: '#FFF',

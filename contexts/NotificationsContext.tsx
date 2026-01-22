@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoupons, CouponWithState } from '@/contexts/CouponsContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { trpc } from '@/lib/trpc';
 
 const NOTIFICATION_SETTINGS_KEY = 'notification_settings_v1';
 const SCHEDULED_NOTIFICATIONS_KEY = 'scheduled_notifications_v1';
@@ -109,6 +110,9 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
   const [scheduledCouponIds, setScheduledCouponIds] = useState<string[]>([]);
   const [previousTier, setPreviousTier] = useState<string | null>(null);
 
+  const registerPushTokenMutation = trpc.notifications.registerPushToken.useMutation();
+  const sendPushNotificationMutation = trpc.notifications.sendNotification.useMutation();
+
   const userStorageKey = user ? `${NOTIFICATION_SETTINGS_KEY}:${user.id}` : null;
   const notificationsStorageKey = user ? `notifications_history_v1:${user.id}` : null;
   const scheduledKey = user ? `${SCHEDULED_NOTIFICATIONS_KEY}:${user.id}` : null;
@@ -132,6 +136,17 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
       const granted = finalStatus === 'granted';
       setHasPermission(granted);
       console.log('[NotificationsContext] Permission status:', finalStatus);
+
+      if (granted && user?.id) {
+        try {
+          const tokenData = await Notifications.getExpoPushTokenAsync();
+          console.log('[NotificationsContext] Push Token:', tokenData.data);
+          registerPushTokenMutation.mutate({ userId: user.id, token: tokenData.data });
+        } catch (error) {
+          console.error('[NotificationsContext] Error getting push token:', error);
+        }
+      }
+
       return granted;
     } catch (error) {
       console.error('[NotificationsContext] Error requesting permission:', error);
@@ -375,11 +390,26 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
           days: daysUntilExpiry,
         });
 
-        await scheduleLocalNotification(title, body, triggerDate, {
-          type: 'couponExpiring',
-          couponId: coupon.definition.id,
-          instanceId,
-        });
+        // Use backend push notification for expired coupons if permission granted
+        if (Platform.OS !== 'web' && hasPermission && user?.id) {
+           sendPushNotificationMutation.mutate({
+             userId: user.id,
+             title,
+             body,
+             data: {
+               type: 'couponExpiring',
+               couponId: coupon.definition.id,
+               instanceId,
+             },
+           });
+        } else {
+          // Fallback to local
+          await scheduleLocalNotification(title, body, triggerDate, {
+            type: 'couponExpiring',
+            couponId: coupon.definition.id,
+            instanceId,
+          });
+        }
 
         newScheduledIds.push(instanceId);
       }
@@ -413,18 +443,27 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
       });
 
       if (Platform.OS !== 'web' && hasPermission) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
+        if (user?.id) {
+          sendPushNotificationMutation.mutate({
+            userId: user.id,
             title,
             body,
             data: { type: 'tierUpgrade', tier: newTier },
-            sound: true,
-          },
-          trigger: null,
-        });
+          });
+        } else {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title,
+              body,
+              data: { type: 'tierUpgrade', tier: newTier },
+              sound: true,
+            },
+            trigger: null,
+          });
+        }
       }
     },
-    [settings.enabled, settings.tierUpgrade, t, addNotification, hasPermission]
+    [settings.enabled, settings.tierUpgrade, t, addNotification, hasPermission, user?.id, sendPushNotificationMutation]
   );
 
   useEffect(() => {
@@ -464,18 +503,27 @@ export const [NotificationsProvider, useNotifications] = createContextHook(() =>
         const title = t('notifications.promoExpiring.title');
         const body = t(promoKey);
 
-        await Notifications.scheduleNotificationAsync({
-          content: {
+        if (user?.id) {
+          sendPushNotificationMutation.mutate({
+            userId: user.id,
             title,
             body,
             data: { type: 'promoExpiring', promoKey },
-            sound: true,
-          },
-          trigger: null,
-        });
+          });
+        } else {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title,
+              body,
+              data: { type: 'promoExpiring', promoKey },
+              sound: true,
+            },
+            trigger: null,
+          });
+        }
       }
     },
-    [settings.enabled, settings.promoExpiring, t, addNotification, hasPermission]
+    [settings.enabled, settings.promoExpiring, t, addNotification, hasPermission, user?.id, sendPushNotificationMutation]
   );
 
   const unreadCount = useMemo(
