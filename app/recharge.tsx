@@ -36,6 +36,7 @@ export default function RechargeScreen() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
+  const controlHeight = Math.round(56 + Math.max(0, (fontScale - 1) * 14));
 
   const parsedCustomAmount = useMemo(() => {
     const parsed = Number.parseInt(customAmount, 10);
@@ -79,8 +80,8 @@ export default function RechargeScreen() {
               <Wallet size={24} color={Colors.primary} />
             </View>
             <View>
-              <Text style={styles.balanceLabel}>{t('recharge.currentBalance')}</Text>
-              <Text style={styles.balanceValue}>
+              <Text style={[styles.balanceLabel, { fontSize: 13 * fontScale }]}>{t('recharge.currentBalance')}</Text>
+              <Text style={[styles.balanceValue, { fontSize: 26 * fontScale }]}>
                 {hideBalance
                   ? '$••••'
                   : `$${(user?.balance ?? 0).toLocaleString(numberLocale, {
@@ -108,19 +109,32 @@ export default function RechargeScreen() {
                   setCustomAmount('');
                 }}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  option.bonus > 0
+                    ? `${t('recharge.rechargeAmount')}: $${option.amount}, ${t('recharge.bonusAmount')}: $${option.bonus}`
+                    : `${t('recharge.rechargeAmount')}: $${option.amount}`
+                }
+                accessibilityState={{ selected: isSelected }}
               >
                 {isSelected && (
                   <View style={styles.checkMark}>
                     <Check size={14} color={Colors.background} />
                   </View>
                 )}
-                <Text style={[styles.optionAmount, isSelected && styles.optionAmountSelected]}>
+                <Text
+                  style={[
+                    styles.optionAmount,
+                    { fontSize: 18 * fontScale },
+                    isSelected && styles.optionAmountSelected,
+                  ]}
+                >
                   ${option.amount}
                 </Text>
                 {option.bonus > 0 && (
                   <View style={styles.bonusBadge}>
                     <Gift size={12} color={Colors.secondary} />
-                    <Text style={styles.bonusText}>+${option.bonus}</Text>
+                    <Text style={[styles.bonusText, { fontSize: 12 * fontScale }]}>+${option.bonus}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -129,11 +143,11 @@ export default function RechargeScreen() {
         </View>
 
         <View style={styles.customSection}>
-          <Text style={styles.customLabel}>{t('recharge.customAmount')}</Text>
+          <Text style={[styles.customLabel, { fontSize: 14 * fontScale }]}>{t('recharge.customAmount')}</Text>
           <View style={styles.customInputWrapper}>
-            <Text style={styles.currencyPrefix}>$</Text>
+            <Text style={[styles.currencyPrefix, { fontSize: 20 * fontScale }]}>$</Text>
             <TextInput
-              style={styles.customInput}
+              style={[styles.customInput, { height: controlHeight, fontSize: 18 * fontScale }]}
               placeholder={t('recharge.customPlaceholder')}
               placeholderTextColor={Colors.textMuted}
               keyboardType="number-pad"
@@ -144,9 +158,9 @@ export default function RechargeScreen() {
               }}
             />
           </View>
-          <Text style={styles.minHint}>{t('recharge.minHint')}</Text>
-          <Text style={styles.storeOnlyHint}>{t('recharge.storeOnlyHint')}</Text>
-          <Text style={styles.pointsRateHint}>
+          <Text style={[styles.minHint, { fontSize: 12 * fontScale }]}>{t('recharge.minHint')}</Text>
+          <Text style={[styles.storeOnlyHint, { fontSize: 12 * fontScale }]}>{t('recharge.storeOnlyHint')}</Text>
+          <Text style={[styles.pointsRateHint, { fontSize: 12 * fontScale, lineHeight: 16 * fontScale }]}>
             {t('recharge.pointsRateHint', { tier: t(`tier.${tierAfter}`), rate: pointsRate })}
           </Text>
         </View>
@@ -154,8 +168,8 @@ export default function RechargeScreen() {
         {(selectedAmount || customAmount) && (
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>{t('recharge.rechargeAmount')}</Text>
-              <Text style={styles.summaryValue}>
+              <Text style={[styles.summaryLabel, { fontSize: 14 * fontScale }]}>{t('recharge.rechargeAmount')}</Text>
+              <Text style={[styles.summaryValue, { fontSize: 16 * fontScale }]}>
                 ${selectedAmount || customAmount}
               </Text>
             </View>
@@ -163,20 +177,20 @@ export default function RechargeScreen() {
               <View style={styles.summaryRow}>
                 <View style={styles.bonusRow}>
                   <Sparkles size={16} color={Colors.primary} />
-                  <Text style={styles.summaryBonusLabel}>{t('recharge.bonusAmount')}</Text>
+                  <Text style={[styles.summaryBonusLabel, { fontSize: 14 * fontScale }]}>{t('recharge.bonusAmount')}</Text>
                 </View>
-                <Text style={styles.summaryBonusValue}>+${totalBonus}</Text>
+                <Text style={[styles.summaryBonusValue, { fontSize: 16 * fontScale }]}>+${totalBonus}</Text>
               </View>
             )}
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>{t('recharge.pointsEarned')}</Text>
-              <Text style={[styles.summaryValue, { color: Colors.primary }]}>
+              <Text style={[styles.summaryLabel, { fontSize: 14 * fontScale }]}>{t('recharge.pointsEarned')}</Text>
+              <Text style={[styles.summaryValue, { color: Colors.primary, fontSize: 16 * fontScale }]}>
                 +{pointsEarned.toLocaleString(numberLocale)}
               </Text>
             </View>
             <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>{t('recharge.totalCredit')}</Text>
-              <Text style={styles.totalValue}>
+              <Text style={[styles.totalLabel, { fontSize: 16 * fontScale }]}>{t('recharge.totalCredit')}</Text>
+              <Text style={[styles.totalValue, { fontSize: 22 * fontScale }]}>
                 ${(selectedAmount || parseInt(customAmount, 10) || 0) + totalBonus}
               </Text>
             </View>
@@ -191,14 +205,16 @@ export default function RechargeScreen() {
           style={styles.rechargeButton}
           onPress={handleRecharge}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('recharge.confirmButton')}
         >
           <LinearGradient
             colors={[Colors.primary, Colors.primaryDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.rechargeGradient}
+            style={[styles.rechargeGradient, { height: controlHeight }]}
           >
-            <Text style={styles.rechargeButtonText}>{t('recharge.confirmButton')}</Text>
+            <Text style={[styles.rechargeButtonText, { fontSize: 18 * fontScale }]}>{t('recharge.confirmButton')}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>

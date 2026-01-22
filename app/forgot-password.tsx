@@ -162,8 +162,10 @@ export default function ForgotPasswordScreen() {
               style={styles.resendButton}
               onPress={handleResend}
               disabled={countdown > 0}
+              activeOpacity={0.75}
               accessibilityRole="button"
               accessibilityLabel={t('forgot.resend')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text
                 style={[
@@ -344,6 +346,9 @@ const styles = StyleSheet.create({
   resendButton: {
     alignItems: 'center',
     marginBottom: 24,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
   resendText: {
     fontSize: 14,

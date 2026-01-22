@@ -6,7 +6,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import Colors from '@/constants/colors';
 import { useSettings } from '@/contexts/SettingsContext';
 
-type ChipType = 'howItWorks' | 'faq' | 'aiChat';
+type ChipType = 'howItWorks' | 'faq' | 'aiChat' | 'quickTour';
 
 interface ChipConfig {
   type: ChipType;
@@ -18,6 +18,14 @@ interface ChipConfig {
 }
 
 const CHIP_CONFIGS: ChipConfig[] = [
+  {
+    type: 'quickTour',
+    icon: Sparkles,
+    labelKey: 'helpChips.quickTour',
+    route: '/onboarding',
+    color: Colors.secondary,
+    bgColor: 'rgba(212, 57, 58, 0.12)',
+  },
   {
     type: 'howItWorks',
     icon: BookOpen,
@@ -83,11 +91,7 @@ export default function ContextualHelpChips({
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <View style={[styles.chipIconContainer, { backgroundColor: config.bgColor }]}>
-              {config.type === 'aiChat' ? (
-                <Sparkles size={compact ? 14 : 16} color={config.color} />
-              ) : (
-                <IconComponent size={compact ? 14 : 16} color={config.color} />
-              )}
+              <IconComponent size={compact ? 14 : 16} color={config.color} />
             </View>
             <Text
               style={[

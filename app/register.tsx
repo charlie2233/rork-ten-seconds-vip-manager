@@ -177,6 +177,8 @@ export default function RegisterScreen() {
             activeOpacity={0.7}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: agreed }}
+            accessibilityLabel={`${t('register.agreePrefix')} ${t('register.terms')} ${t('register.and')} ${t('register.privacy')}`}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <View
               style={[styles.checkbox, agreed && styles.checkboxChecked]}
@@ -306,6 +308,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginTop: 8,
+    minHeight: 44,
+    paddingVertical: 8,
   },
   checkbox: {
     width: 22,

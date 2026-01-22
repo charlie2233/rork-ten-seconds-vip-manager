@@ -134,7 +134,7 @@ export default function CouponDetailScreen() {
         <TopBar title={t('couponDetail.title')} leftAction="back" />
         <View style={styles.content}>
           <View style={styles.notFoundBox}>
-            <Text style={styles.notFoundText}>{t('notFound.message')}</Text>
+            <Text style={[styles.notFoundText, { fontSize: 14 * fontScale }]}>{t('notFound.message')}</Text>
           </View>
         </View>
       </View>
@@ -249,21 +249,23 @@ export default function CouponDetailScreen() {
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleBlock}>
               <Text style={[styles.couponTitle, { fontSize: 18 * fontScale }]}>{t(definition.title)}</Text>
-              <Text style={styles.couponDesc}>{t(definition.description)}</Text>
+              <Text style={[styles.couponDesc, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+                {t(definition.description)}
+              </Text>
             </View>
             {status !== 'available' && (
               <View style={styles.statusPill}>
-                <Text style={styles.statusText}>{statusLabelWithTime}</Text>
+                <Text style={[styles.statusText, { fontSize: 12 * fontScale }]}>{statusLabelWithTime}</Text>
               </View>
             )}
           </View>
 
           <View style={styles.metaRow}>
-            <Text style={styles.metaText}>
+            <Text style={[styles.metaText, { fontSize: 12 * fontScale }]}>
               {t('coupons.validTo', { date: definition.validTo })}
             </Text>
             {definition.minSpendText ? (
-              <Text style={styles.metaText}>{t(definition.minSpendText)}</Text>
+              <Text style={[styles.metaText, { fontSize: 12 * fontScale }]}>{t(definition.minSpendText)}</Text>
             ) : null}
           </View>
         </View>
@@ -271,14 +273,14 @@ export default function CouponDetailScreen() {
         <View style={styles.codeCard}>
           {canRedeem ? (
             <>
-              <Text style={styles.hintText}>{t('couponDetail.redeemHint')}</Text>
+              <Text style={[styles.hintText, { fontSize: 12 * fontScale }]}>{t('couponDetail.redeemHint')}</Text>
 
               <View style={styles.qrBox}>
                 {qrSvg ? (
                   <SvgXml xml={qrSvg} width="100%" height="100%" />
                 ) : (
                   <View style={styles.codeError}>
-                    <Text style={styles.codeErrorText}>{t('code.qrFailed')}</Text>
+                    <Text style={[styles.codeErrorText, { fontSize: 12 * fontScale }]}>{t('code.qrFailed')}</Text>
                   </View>
                 )}
               </View>
@@ -288,15 +290,26 @@ export default function CouponDetailScreen() {
                   <SvgXml xml={barcodeSvg} width="100%" height="100%" />
                 ) : (
                   <View style={styles.codeError}>
-                    <Text style={styles.codeErrorText}>{t('code.barcodeFailed')}</Text>
+                    <Text style={[styles.codeErrorText, { fontSize: 12 * fontScale }]}>{t('code.barcodeFailed')}</Text>
                   </View>
                 )}
               </View>
 
-              <TouchableOpacity style={styles.codeRow} onPress={copyToClipboard} activeOpacity={0.7}>
-                <Text style={styles.codeLabel}>{t('couponDetail.codeLabel')}</Text>
+              <TouchableOpacity
+                style={styles.codeRow}
+                onPress={copyToClipboard}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('common.copy')}: ${redeemCode ?? ''}`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={[styles.codeLabel, { fontSize: 13 * fontScale }]}>{t('couponDetail.codeLabel')}</Text>
                 <View style={styles.codeValueContainer}>
-                  <Text style={styles.codeValue} numberOfLines={1} ellipsizeMode="middle">
+                  <Text
+                    style={[styles.codeValue, { fontSize: 13 * fontScale }]}
+                    numberOfLines={1}
+                    ellipsizeMode="middle"
+                  >
                     {redeemCode ?? ''}
                   </Text>
                   {copied ? (
@@ -312,15 +325,17 @@ export default function CouponDetailScreen() {
               <View style={styles.codeLockedIcon}>
                 <Lock size={18} color={Colors.textMuted} />
               </View>
-              <Text style={styles.codeLockedTitle}>{statusLabelWithTime}</Text>
-              <Text style={styles.codeLockedText}>{lockedHint}</Text>
+              <Text style={[styles.codeLockedTitle, { fontSize: 14 * fontScale }]}>{statusLabelWithTime}</Text>
+              <Text style={[styles.codeLockedText, { fontSize: 12 * fontScale, lineHeight: 18 * fontScale }]}>
+                {lockedHint}
+              </Text>
             </View>
           )}
 
           {status === 'unclaimed' && !isUnlocked && (
             <View style={styles.lockRow}>
               <Lock size={16} color={Colors.textMuted} />
-              <Text style={styles.lockText}>
+              <Text style={[styles.lockText, { fontSize: 12 * fontScale }]}>
                 {t('coupons.requiresTier', { tier: t(`tier.${definition.tier}`) })}
               </Text>
             </View>
@@ -329,7 +344,7 @@ export default function CouponDetailScreen() {
           {status === 'unclaimed' && isUnlocked && !canAfford && costPoints > 0 && (
             <View style={styles.lockRow}>
               <Lock size={16} color={Colors.textMuted} />
-              <Text style={styles.lockText}>
+              <Text style={[styles.lockText, { fontSize: 12 * fontScale }]}>
                 {t('coupons.needMorePoints', { count: missingPoints })}
               </Text>
             </View>
@@ -346,7 +361,7 @@ export default function CouponDetailScreen() {
             onPress={() => void claimNow()}
             accessibilityRole="button"
           >
-            <Text style={styles.primaryButtonText}>
+            <Text style={[styles.primaryButtonText, { fontSize: 16 * fontScale }]}>
               {!isUnlocked
                 ? t('coupons.locked')
                 : !canAfford
@@ -364,9 +379,9 @@ export default function CouponDetailScreen() {
             accessibilityRole="button"
           >
             {canRedeem ? (
-              <Text style={styles.primaryButtonText}>{t('couponDetail.markUsed')}</Text>
+              <Text style={[styles.primaryButtonText, { fontSize: 16 * fontScale }]}>{t('couponDetail.markUsed')}</Text>
             ) : (
-              <Text style={styles.primaryButtonText}>{statusLabel}</Text>
+              <Text style={[styles.primaryButtonText, { fontSize: 16 * fontScale }]}>{statusLabel}</Text>
             )}
           </PressableScale>
         )}
@@ -399,15 +414,15 @@ export default function CouponDetailScreen() {
             >
               <Sparkles size={26} color={Colors.background} />
             </LinearGradient>
-            <Text style={styles.redeemedTitle}>
+            <Text style={[styles.redeemedTitle, { fontSize: 18 * fontScale }]}>
               {toastType === 'redeemed' ? t('couponDetail.redeemedTitle') : t('couponDetail.claimedTitle')}
             </Text>
-            <Text style={styles.redeemedSubtitle}>
+            <Text style={[styles.redeemedSubtitle, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
               {toastType === 'redeemed'
                 ? t('couponDetail.redeemedMessage')
                 : t('couponDetail.claimedMessage', { coupon: t(definition.title) })}
             </Text>
-            <Text style={styles.redeemedCountdown}>
+            <Text style={[styles.redeemedCountdown, { fontSize: 12 * fontScale }]}>
               {t('common.closingIn', { seconds: String(toastSeconds) })}
             </Text>
           </View>
@@ -566,6 +581,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 44,
+    paddingVertical: 6,
   },
   codeLabel: {
     color: Colors.textSecondary,
@@ -660,9 +677,9 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   topIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.surface,

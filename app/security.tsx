@@ -220,7 +220,14 @@ export default function SecurityScreen() {
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('security.devicesSection')}</Text>
             {otherSessions.length > 0 && (
-              <TouchableOpacity onPress={handleRevokeAllOther} accessibilityRole="button">
+              <TouchableOpacity
+                style={styles.revokeAllButton}
+                onPress={handleRevokeAllOther}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={t('security.revokeAll')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Text style={[styles.revokeAllText, { fontSize: 13 * fontScale }]}>{t('security.revokeAll')}</Text>
               </TouchableOpacity>
             )}
@@ -366,7 +373,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.error,
     fontWeight: '500' as const,
-    marginBottom: 12,
+  },
+  revokeAllButton: {
+    minHeight: 44,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
   },
   card: {
     backgroundColor: Colors.surface,

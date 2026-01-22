@@ -9,6 +9,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn, Sparkles, Crown, Star } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
@@ -38,6 +39,7 @@ import {
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
 const CARD_HEIGHT = 240;
+const ONBOARDING_SEEN_KEY = 'onboarding_seen_v1';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -49,6 +51,42 @@ export default function HomeScreen() {
   const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
   const [balanceSnapshot, setBalanceSnapshot] = useState<MenusafeBalanceSnapshot | null>(null);
+  const [showTourPrompt, setShowTourPrompt] = useState(false);
+
+  const markOnboardingHandled = async () => {
+    try {
+      await AsyncStorage.setItem(ONBOARDING_SEEN_KEY, '1');
+    } catch {
+      // ignore
+    }
+  };
+
+  const openQuickTour = async () => {
+    await markOnboardingHandled();
+    setShowTourPrompt(false);
+    router.push('/onboarding');
+  };
+
+  const dismissQuickTour = async () => {
+    await markOnboardingHandled();
+    setShowTourPrompt(false);
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const seen = await AsyncStorage.getItem(ONBOARDING_SEEN_KEY);
+        if (seen === '1') return;
+        if (isMounted) setShowTourPrompt(true);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const shimmer = Animated.loop(
@@ -293,6 +331,21 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <BrandBanner
             subtitle={storeAddress}
+            right={
+              <TouchableOpacity
+                style={styles.quickTourButton}
+                onPress={() => void openQuickTour()}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={t('onboarding.title')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Sparkles size={16} color={Colors.primary} />
+                <Text style={[styles.quickTourText, { fontSize: 12 * fontScale }]} numberOfLines={1}>
+                  {t('onboarding.title')}
+                </Text>
+              </TouchableOpacity>
+            }
             style={{ marginBottom: 16 }}
           />
           {isOffline ? (
@@ -312,6 +365,63 @@ export default function HomeScreen() {
               style={{ marginBottom: 14 }}
             />
           ) : null}
+
+          {showTourPrompt ? (
+            <View style={styles.tourPromptCard}>
+              <View style={styles.tourPromptHeader}>
+                <View style={styles.tourPromptIcon}>
+                  <Sparkles size={18} color={Colors.background} />
+                </View>
+                <View style={styles.tourPromptTextBlock}>
+                  <Text style={[styles.tourPromptTitle, { fontSize: 14 * fontScale }]}>
+                    {t('onboarding.prompt.title')}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tourPromptBody,
+                      { fontSize: 12 * fontScale, lineHeight: 16 * fontScale },
+                    ]}
+                  >
+                    {t('onboarding.prompt.body')}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.tourPromptActions}>
+                <TouchableOpacity
+                  style={styles.tourPromptSecondary}
+                  onPress={() => void dismissQuickTour()}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('onboarding.prompt.noThanks')}
+                >
+                  <Text style={[styles.tourPromptSecondaryText, { fontSize: 13 * fontScale }]}>
+                    {t('onboarding.prompt.noThanks')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.tourPromptPrimary}
+                  onPress={() => void openQuickTour()}
+                  activeOpacity={0.9}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('onboarding.prompt.start')}
+                >
+                  <LinearGradient
+                    colors={[Colors.primary, Colors.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.tourPromptPrimaryGradient}
+                  >
+                    <Text style={[styles.tourPromptPrimaryText, { fontSize: 13 * fontScale }]}>
+                      {t('onboarding.prompt.start')}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
+
           <Text style={[styles.greeting, { fontSize: 16 * fontScale }]}>{t('home.welcomeBack')}</Text>
           <Text style={[styles.userName, { fontSize: 28 * fontScale }]}>{user?.name ?? ''}</Text>
         </View>
@@ -713,6 +823,92 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 24,
+  },
+  quickTourButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    minHeight: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(201, 169, 98, 0.35)',
+    backgroundColor: 'rgba(201, 169, 98, 0.10)',
+  },
+  quickTourText: {
+    color: Colors.primary,
+    fontWeight: '800' as const,
+    letterSpacing: 0.2,
+  },
+  tourPromptCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    padding: 14,
+    marginBottom: 14,
+  },
+  tourPromptHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  tourPromptIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+  },
+  tourPromptTextBlock: {
+    flex: 1,
+    gap: 4,
+  },
+  tourPromptTitle: {
+    color: Colors.text,
+    fontWeight: '900' as const,
+  },
+  tourPromptBody: {
+    color: Colors.textSecondary,
+    fontWeight: '600' as const,
+  },
+  tourPromptActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  tourPromptSecondary: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  tourPromptSecondaryText: {
+    color: Colors.textSecondary,
+    fontWeight: '800' as const,
+  },
+  tourPromptPrimary: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  tourPromptPrimaryGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  tourPromptPrimaryText: {
+    color: Colors.background,
+    fontWeight: '900' as const,
+    letterSpacing: 0.2,
   },
   greeting: {
     fontSize: 16,

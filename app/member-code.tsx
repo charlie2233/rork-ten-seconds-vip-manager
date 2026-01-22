@@ -273,6 +273,8 @@ export default function MemberCodeScreen() {
               onPress={() => router.back()}
               activeOpacity={0.8}
               accessibilityRole="button"
+              accessibilityLabel={t('common.close')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <X size={18} color="#FFF" />
               <Text style={[styles.closePillText, { color: '#FFF', fontSize: 12 * fontScale }]}>
@@ -367,6 +369,8 @@ export default function MemberCodeScreen() {
             onPress={() => router.back()}
             activeOpacity={0.8}
             accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <X size={18} color="#FFF" />
             <Text style={[styles.closePillText, { color: '#FFF', fontSize: 12 * fontScale }]}>
@@ -523,6 +527,9 @@ export default function MemberCodeScreen() {
                       style={styles.codeTextContainer}
                       onPress={copyToClipboard}
                       activeOpacity={0.6}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t('common.copy')}: ${memberCode}`}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <Text style={[styles.codeText, { fontSize: 14 * fontScale }]}>{memberCode}</Text>
                       {copied ? <Check size={14} color={Colors.success} /> : <Copy size={14} color="#666" />}
@@ -535,6 +542,10 @@ export default function MemberCodeScreen() {
                  <TouchableOpacity 
                     style={styles.refreshBtn}
                     onPress={handleRefresh}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.refresh')}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                  >
                     <RefreshCw size={14} color={cardTheme.textMuted} />
                     <Text style={[styles.refreshLabel, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
@@ -555,6 +566,8 @@ export default function MemberCodeScreen() {
             style={styles.walletButton}
             onPress={handleAddToWallet}
             activeOpacity={0.9}
+            accessibilityRole="button"
+            accessibilityLabel={t('memberCode.addToWallet')}
           >
             <LinearGradient
               colors={['#111', '#333']}
@@ -638,10 +651,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 36,
-    borderRadius: 18,
+    minHeight: 44,
+    borderRadius: 22,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     justifyContent: 'center',
   },
   closePillText: {
@@ -813,7 +826,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 4,
+    minHeight: 44,
+    paddingVertical: 10,
     paddingHorizontal: 10,
     borderRadius: 8,
     backgroundColor: '#F5F5F5',
@@ -835,6 +849,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    minHeight: 44,
+    paddingHorizontal: 8,
   },
   refreshLabel: {
     fontSize: 11,

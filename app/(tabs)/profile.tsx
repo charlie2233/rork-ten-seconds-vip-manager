@@ -63,6 +63,7 @@ const menuSections: MenuSection[] = [
       { icon: Shield, labelKey: 'profile.item.security', value: '', route: '/security' },
       { icon: Settings, labelKey: 'profile.item.preferences', value: '', route: '/preferences' },
       { icon: Info, labelKey: 'profile.item.howItWorks', value: '', route: '/how-it-works' },
+      { icon: Sparkles, labelKey: 'profile.item.quickTour', value: '', route: '/onboarding' },
     ],
   },
   {

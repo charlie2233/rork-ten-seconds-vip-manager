@@ -423,6 +423,9 @@ export default function TransactionsScreen() {
                   onPress={() => setActiveFilter(option.key)}
                   activeOpacity={0.7}
                   accessibilityRole="button"
+                  accessibilityLabel={t(option.labelKey)}
+                  accessibilityState={{ selected: activeFilter === option.key }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Text
                     style={[
@@ -730,6 +733,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -879,9 +884,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   shareButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.backgroundLight,
@@ -949,6 +954,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 44,
     paddingVertical: 10,
   },
   howTitle: {

@@ -114,6 +114,7 @@ export default function NotificationsScreen() {
           <TouchableOpacity 
             style={styles.headerAction}
             onPress={markAllAsRead}
+            activeOpacity={0.75}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
             accessibilityLabel={t('notifications.markAllRead')}
@@ -204,7 +205,9 @@ export default function NotificationsScreen() {
             </Text>
             {notifications.length > 0 && (
               <TouchableOpacity 
+                style={styles.headerAction}
                 onPress={clearNotifications}
+                activeOpacity={0.75}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 accessibilityRole="button"
                 accessibilityLabel={t('notifications.clearAll')}
@@ -293,7 +296,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.screenPadding,
   },
   headerAction: {
-    padding: 4,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   permissionBanner: {
     flexDirection: 'row',

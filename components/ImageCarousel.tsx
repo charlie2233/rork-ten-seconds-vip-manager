@@ -219,7 +219,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dotButton: {
-    padding: 6,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dot: {
     width: 6,

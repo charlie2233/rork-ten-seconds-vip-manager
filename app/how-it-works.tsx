@@ -3,6 +3,7 @@ import { Gift, Sparkles, Wallet, HelpCircle } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import BrandBanner from '@/components/BrandBanner';
+import ContextualHelpChips from '@/components/ContextualHelpChips';
 import TopBar from '@/components/TopBar';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,11 +46,13 @@ export default function HowItWorksScreen() {
             <View style={styles.iconCircle}>
               <Wallet size={18} color={Colors.primary} />
             </View>
-            <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
-              {t('howItWorks.balance.title')}
-            </Text>
+          <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
+            {t('howItWorks.balance.title')}
+          </Text>
           </View>
-          <Text style={styles.sectionBody}>{t('howItWorks.balance.body')}</Text>
+          <Text style={[styles.sectionBody, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+            {t('howItWorks.balance.body')}
+          </Text>
         </View>
 
         <View style={styles.sectionCard}>
@@ -57,11 +60,13 @@ export default function HowItWorksScreen() {
             <View style={styles.iconCircle}>
               <Sparkles size={18} color={Colors.primary} />
             </View>
-            <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
-              {t('howItWorks.points.title')}
-            </Text>
+          <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
+            {t('howItWorks.points.title')}
+          </Text>
           </View>
-          <Text style={styles.sectionBody}>{t('howItWorks.points.body')}</Text>
+          <Text style={[styles.sectionBody, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+            {t('howItWorks.points.body')}
+          </Text>
         </View>
 
         <View style={styles.sectionCard}>
@@ -69,11 +74,13 @@ export default function HowItWorksScreen() {
             <View style={styles.iconCircle}>
               <Gift size={18} color={Colors.primary} />
             </View>
-            <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
-              {t('howItWorks.coupons.title')}
-            </Text>
+          <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
+            {t('howItWorks.coupons.title')}
+          </Text>
           </View>
-          <Text style={styles.sectionBody}>{t('howItWorks.coupons.body')}</Text>
+          <Text style={[styles.sectionBody, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+            {t('howItWorks.coupons.body')}
+          </Text>
         </View>
 
         <View style={styles.tableCard}>
@@ -81,14 +88,14 @@ export default function HowItWorksScreen() {
             {t('howItWorks.tiers.title')}
           </Text>
 
-          <View style={styles.tableHeaderRow}>
-            <Text style={[styles.tableHeaderCell, { flex: 1.2 }]}>
+        <View style={styles.tableHeaderRow}>
+            <Text style={[styles.tableHeaderCell, { flex: 1.2, fontSize: 12 * fontScale }]}>
               {t('howItWorks.tableHeader.tier')}
             </Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.4, textAlign: 'right' }]}>
+            <Text style={[styles.tableHeaderCell, { flex: 1.4, textAlign: 'right', fontSize: 12 * fontScale }]}>
               {t('howItWorks.tableHeader.minBalance')}
             </Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.1, textAlign: 'right' }]}>
+            <Text style={[styles.tableHeaderCell, { flex: 1.1, textAlign: 'right', fontSize: 12 * fontScale }]}>
               {t('howItWorks.tableHeader.pointsRate')}
             </Text>
           </View>
@@ -104,13 +111,19 @@ export default function HowItWorksScreen() {
                   index === TIER_ORDER.length - 1 && styles.tableRowLast,
                 ]}
               >
-                <Text style={[styles.tableCell, { flex: 1.2 }, isCurrent && styles.tableCellCurrent]}>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    { flex: 1.2, fontSize: 13 * fontScale },
+                    isCurrent && styles.tableCellCurrent,
+                  ]}
+                >
                   {t(`tier.${tier}`)}
                 </Text>
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1.4, textAlign: 'right' },
+                    { flex: 1.4, textAlign: 'right', fontSize: 13 * fontScale },
                     isCurrent && styles.tableCellCurrent,
                   ]}
                 >
@@ -119,7 +132,7 @@ export default function HowItWorksScreen() {
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1.1, textAlign: 'right' },
+                    { flex: 1.1, textAlign: 'right', fontSize: 13 * fontScale },
                     isCurrent && styles.tableCellCurrent,
                   ]}
                 >
@@ -135,12 +148,21 @@ export default function HowItWorksScreen() {
             <View style={styles.iconCircle}>
               <HelpCircle size={18} color={Colors.primary} />
             </View>
-            <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
-              {t('onboarding.help.title')}
-            </Text>
+          <Text style={[styles.sectionTitle, { fontSize: 15 * fontScale }]}>
+            {t('onboarding.help.title')}
+          </Text>
           </View>
-          <Text style={styles.sectionBody}>{t('onboarding.help.body')}</Text>
+          <Text style={[styles.sectionBody, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+            {t('onboarding.help.body')}
+          </Text>
         </View>
+
+        <ContextualHelpChips
+          chips={['quickTour', 'faq', 'aiChat']}
+          showTitle
+          scrollable={false}
+          style={{ marginTop: 2 }}
+        />
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -250,4 +272,3 @@ const styles = StyleSheet.create({
     fontWeight: '900' as const,
   },
 });
-

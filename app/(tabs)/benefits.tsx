@@ -296,6 +296,8 @@ export default function CouponsScreen() {
                 onPress={() => setSortSheetOpen(true)}
                 activeOpacity={0.8}
                 accessibilityRole="button"
+                accessibilityLabel={t(`coupons.sort.${sortKey}`)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text style={[styles.sortText, { fontSize: 12 * fontScale }]}>
                   {t(`coupons.sort.${sortKey}`)}
@@ -313,6 +315,10 @@ export default function CouponsScreen() {
                     style={[styles.segmentButton, isActive && styles.segmentButtonActive]}
                     onPress={() => setActiveSegment(segment.key)}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(segment.labelKey)}
+                    accessibilityState={{ selected: isActive }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Text
                       style={[
@@ -336,6 +342,9 @@ export default function CouponsScreen() {
                 onPress={() => setExpiringSoonOnly((v) => !v)}
                 activeOpacity={0.75}
                 accessibilityRole="button"
+                accessibilityLabel={t('coupons.filter.expiringSoon7')}
+                accessibilityState={{ selected: expiringSoonOnly }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text
                   style={[
@@ -354,6 +363,9 @@ export default function CouponsScreen() {
               onPress={() => setFavoritesOnly((v) => !v)}
               activeOpacity={0.75}
               accessibilityRole="button"
+              accessibilityLabel={t('coupons.filter.favorites')}
+              accessibilityState={{ selected: favoritesOnly }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Star
                 size={14}
@@ -376,6 +388,9 @@ export default function CouponsScreen() {
               onPress={() => setFreeOnly((v) => !v)}
               activeOpacity={0.75}
               accessibilityRole="button"
+              accessibilityLabel={t('coupons.filter.free')}
+              accessibilityState={{ selected: freeOnly }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
             <Text
               style={[
@@ -439,6 +454,8 @@ export default function CouponsScreen() {
                       setSelectedClaimId(state.id);
                       setDetailsOpen(true);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(definition.title)}
                   >
                     <View style={styles.couponLeft}>
                       <View
@@ -515,6 +532,13 @@ export default function CouponsScreen() {
                   style={styles.expandButton}
                   onPress={() => setIsExpanded((prev) => !prev)}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isExpanded
+                      ? t('coupons.showLess')
+                      : t('coupons.showMore', { count: remainingCount })
+                  }
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Text style={[styles.expandText, { fontSize: 13 * fontScale }]}>
                     {isExpanded
@@ -542,6 +566,9 @@ export default function CouponsScreen() {
                 onPress={() => setUnlockedOffersOnly((v) => !v)}
                 activeOpacity={0.75}
                 accessibilityRole="button"
+                accessibilityLabel={t('coupons.filter.unlocked')}
+                accessibilityState={{ selected: unlockedOffersOnly }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text
                   style={[
@@ -595,6 +622,8 @@ export default function CouponsScreen() {
                       setSelectedClaimId(null);
                       setDetailsOpen(true);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(definition.title)}
                   >
                     <PressableScale
                       containerStyle={[
@@ -887,6 +916,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
@@ -1003,6 +1033,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
