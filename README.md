@@ -7,6 +7,10 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 **Platform**: Native iOS & Android app, exportable to web
 **Framework**: Expo Router + React Native
 
+## Status
+
+- STILL WAITING FOR MENUSAFE API (URL + API key) to enable live balance lookup.
+
 ## How can I edit this code?
 
 There are several ways of editing your native mobile application.
