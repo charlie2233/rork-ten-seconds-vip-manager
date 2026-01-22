@@ -4,6 +4,7 @@ import { HelpCircle, BookOpen, MessageSquare, Sparkles } from 'lucide-react-nati
 import { router } from 'expo-router';
 import { useI18n } from '@/contexts/I18nContext';
 import Colors from '@/constants/colors';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type ChipType = 'howItWorks' | 'faq' | 'aiChat';
 
@@ -59,6 +60,7 @@ export default function ContextualHelpChips({
   compact = false,
 }: ContextualHelpChipsProps) {
   const { t } = useI18n();
+  const { fontScale } = useSettings();
 
   const visibleChips = CHIP_CONFIGS.filter((config) => chips.includes(config.type));
 
@@ -76,6 +78,9 @@ export default function ContextualHelpChips({
             ]}
             onPress={() => router.push(config.route as any)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t(config.labelKey)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <View style={[styles.chipIconContainer, { backgroundColor: config.bgColor }]}>
               {config.type === 'aiChat' ? (
@@ -84,7 +89,12 @@ export default function ContextualHelpChips({
                 <IconComponent size={compact ? 14 : 16} color={config.color} />
               )}
             </View>
-            <Text style={[styles.chipText, { color: config.color }, compact && styles.chipTextCompact]}>
+            <Text
+              style={[
+                styles.chipText,
+                { color: config.color, fontSize: (compact ? 12 : 13) * fontScale },
+              ]}
+            >
               {t(config.labelKey)}
             </Text>
           </TouchableOpacity>
@@ -96,7 +106,7 @@ export default function ContextualHelpChips({
   return (
     <View style={[styles.container, style]}>
       {showTitle && (
-        <Text style={styles.title}>{t('helpChips.title')}</Text>
+        <Text style={[styles.title, { fontSize: 13 * fontScale }]}>{t('helpChips.title')}</Text>
       )}
       {scrollable ? (
         <ScrollView
@@ -142,12 +152,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     gap: 8,
+    minHeight: 44,
   },
   chipCompact: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
     gap: 6,
+    minHeight: 44,
   },
   chipIconContainer: {
     width: 24,
@@ -159,8 +171,5 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 13,
     fontWeight: '600' as const,
-  },
-  chipTextCompact: {
-    fontSize: 12,
   },
 });

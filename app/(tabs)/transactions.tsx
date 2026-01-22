@@ -143,7 +143,7 @@ function PointsBarChart({ values }: { values: number[] }) {
 export default function TransactionsScreen() {
   const { user, pointsHistory } = useAuth();
   const { t, locale } = useI18n();
-  const { backgroundGradient, hideBalance } = useSettings();
+  const { backgroundGradient, hideBalance, fontScale } = useSettings();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [howOpen, setHowOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -357,8 +357,8 @@ export default function TransactionsScreen() {
                   colors={['rgba(76, 175, 80, 0.15)', 'rgba(76, 175, 80, 0.05)']}
                   style={styles.statGradient}
                 >
-                  <Text style={styles.statLabel}>{t('transactions.totalDeposit')}</Text>
-                  <Text style={[styles.statValue, { color: Colors.success }]}>
+                  <Text style={[styles.statLabel, { fontSize: 12 * fontScale }]}>{t('transactions.totalDeposit')}</Text>
+                  <Text style={[styles.statValue, { color: Colors.success, fontSize: 20 * fontScale }]}>
                     {hideBalance ? '+$••••' : `+$${totalDeposit.toFixed(2)}`}
                   </Text>
                 </LinearGradient>
@@ -369,8 +369,8 @@ export default function TransactionsScreen() {
                   colors={['rgba(201, 169, 98, 0.15)', 'rgba(201, 169, 98, 0.05)']}
                   style={styles.statGradient}
                 >
-                  <Text style={styles.statLabel}>{t('transactions.totalSpend')}</Text>
-                  <Text style={[styles.statValue, { color: Colors.primary }]}>
+                  <Text style={[styles.statLabel, { fontSize: 12 * fontScale }]}>{t('transactions.totalSpend')}</Text>
+                  <Text style={[styles.statValue, { color: Colors.primary, fontSize: 20 * fontScale }]}>
                     {hideBalance ? '-$••••' : `-$${totalSpend.toFixed(2)}`}
                   </Text>
                 </LinearGradient>
@@ -392,6 +392,7 @@ export default function TransactionsScreen() {
                   <Text
                     style={[
                       styles.filterText,
+                      { fontSize: 13 * fontScale },
                       activeFilter === option.key && styles.filterTextActive,
                     ]}
                   >
@@ -405,8 +406,8 @@ export default function TransactionsScreen() {
               <View style={styles.pointsCenterCard}>
                 <View style={styles.pointsCenterHeader}>
                   <View>
-                    <Text style={styles.pointsCenterTitle}>{t('pointsCenter.title')}</Text>
-                    <Text style={styles.pointsCenterSubtitle}>
+                    <Text style={[styles.pointsCenterTitle, { fontSize: 16 * fontScale }]}>{t('pointsCenter.title')}</Text>
+                    <Text style={[styles.pointsCenterSubtitle, { fontSize: 12 * fontScale }]}>
                       {t('pointsCenter.thisMonth', { month: pointsSummary.monthLabel })}
                     </Text>
                   </View>
@@ -424,34 +425,34 @@ export default function TransactionsScreen() {
                   </TouchableOpacity>
                 </View>
                 {shareCopied ? (
-                  <Text style={styles.shareCopiedText}>{t('common.copied')}</Text>
+                  <Text style={[styles.shareCopiedText, { fontSize: 12 * fontScale }]}>{t('common.copied')}</Text>
                 ) : null}
 
                 <View style={styles.pointsBalanceRow}>
-                  <Text style={styles.pointsBalanceValue}>
+                  <Text style={[styles.pointsBalanceValue, { fontSize: 30 * fontScale }]}>
                     {(user.points ?? 0).toLocaleString(numberLocale)}
                   </Text>
-                  <Text style={styles.pointsBalanceUnit}>{t('points.unit')}</Text>
+                  <Text style={[styles.pointsBalanceUnit, { fontSize: 13 * fontScale }]}>{t('points.unit')}</Text>
                 </View>
 
                 <View style={styles.pointsSummaryRow}>
                   <View style={styles.pointsSummaryItem}>
-                    <Text style={styles.pointsSummaryLabel}>{t('pointsCenter.earned')}</Text>
-                    <Text style={[styles.pointsSummaryValue, { color: Colors.success }]}>
+                    <Text style={[styles.pointsSummaryLabel, { fontSize: 11 * fontScale }]}>{t('pointsCenter.earned')}</Text>
+                    <Text style={[styles.pointsSummaryValue, { color: Colors.success, fontSize: 14 * fontScale }]}>
                       +{pointsSummary.earned.toLocaleString(numberLocale)}
                     </Text>
                   </View>
                   <View style={styles.pointsSummaryDivider} />
                   <View style={styles.pointsSummaryItem}>
-                    <Text style={styles.pointsSummaryLabel}>{t('pointsCenter.spent')}</Text>
-                    <Text style={[styles.pointsSummaryValue, { color: Colors.error }]}>
+                    <Text style={[styles.pointsSummaryLabel, { fontSize: 11 * fontScale }]}>{t('pointsCenter.spent')}</Text>
+                    <Text style={[styles.pointsSummaryValue, { color: Colors.error, fontSize: 14 * fontScale }]}>
                       -{pointsSummary.spent.toLocaleString(numberLocale)}
                     </Text>
                   </View>
                   <View style={styles.pointsSummaryDivider} />
                   <View style={styles.pointsSummaryItem}>
-                    <Text style={styles.pointsSummaryLabel}>{t('pointsCenter.net')}</Text>
-                    <Text style={styles.pointsSummaryValue}>
+                    <Text style={[styles.pointsSummaryLabel, { fontSize: 11 * fontScale }]}>{t('pointsCenter.net')}</Text>
+                    <Text style={[styles.pointsSummaryValue, { fontSize: 14 * fontScale }]}>
                       {pointsSummary.net >= 0 ? '+' : ''}
                       {pointsSummary.net.toLocaleString(numberLocale)}
                     </Text>
@@ -478,7 +479,7 @@ export default function TransactionsScreen() {
                   accessibilityLabel={t('pointsCenter.howTitle')}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={styles.howTitle}>{t('pointsCenter.howTitle')}</Text>
+                  <Text style={[styles.howTitle, { fontSize: 13 * fontScale }]}>{t('pointsCenter.howTitle')}</Text>
                   {howOpen ? (
                     <ChevronUp size={18} color={Colors.textSecondary} />
                   ) : (
@@ -488,15 +489,15 @@ export default function TransactionsScreen() {
 
                 {howOpen ? (
                   <View style={styles.howContent}>
-                    <Text style={styles.howSectionTitle}>{t('pointsCenter.howEarnTitle')}</Text>
-                    <Text style={styles.howBullet}>• {t('pointsCenter.howEarn1')}</Text>
-                    <Text style={styles.howBullet}>• {t('pointsCenter.howEarn2')}</Text>
+                    <Text style={[styles.howSectionTitle, { fontSize: 12 * fontScale }]}>{t('pointsCenter.howEarnTitle')}</Text>
+                    <Text style={[styles.howBullet, { fontSize: 12 * fontScale, lineHeight: 18 * fontScale }]}>• {t('pointsCenter.howEarn1')}</Text>
+                    <Text style={[styles.howBullet, { fontSize: 12 * fontScale, lineHeight: 18 * fontScale }]}>• {t('pointsCenter.howEarn2')}</Text>
 
                     <View style={{ height: 10 }} />
 
-                    <Text style={styles.howSectionTitle}>{t('pointsCenter.howSpendTitle')}</Text>
-                    <Text style={styles.howBullet}>• {t('pointsCenter.howSpend1')}</Text>
-                    <Text style={styles.howBullet}>• {t('pointsCenter.howSpend2')}</Text>
+                    <Text style={[styles.howSectionTitle, { fontSize: 12 * fontScale }]}>{t('pointsCenter.howSpendTitle')}</Text>
+                    <Text style={[styles.howBullet, { fontSize: 12 * fontScale, lineHeight: 18 * fontScale }]}>• {t('pointsCenter.howSpend1')}</Text>
+                    <Text style={[styles.howBullet, { fontSize: 12 * fontScale, lineHeight: 18 * fontScale }]}>• {t('pointsCenter.howSpend2')}</Text>
                   </View>
                 ) : null}
               </View>
@@ -530,16 +531,17 @@ export default function TransactionsScreen() {
                       </View>
 
                       <View style={styles.transactionContent}>
-                        <Text style={styles.transactionDesc} numberOfLines={1}>
+                        <Text style={[styles.transactionDesc, { fontSize: 14 * fontScale }]} numberOfLines={1}>
                           {renderPointsDescription(item)}
                         </Text>
-                        <Text style={styles.transactionDate}>{item.date}</Text>
+                        <Text style={[styles.transactionDate, { fontSize: 12 * fontScale }]}>{item.date}</Text>
                       </View>
 
                       <View style={styles.transactionRight}>
                         <Text
                           style={[
                             styles.transactionAmount,
+                            { fontSize: 16 * fontScale },
                             item.delta >= 0 ? styles.positiveAmount : styles.negativeAmount,
                           ]}
                         >
@@ -547,12 +549,12 @@ export default function TransactionsScreen() {
                           {Math.abs(item.delta).toLocaleString(numberLocale)} {t('points.unit')}
                         </Text>
                         {'balance' in item && typeof item.balance === 'number' ? (
-                          <Text style={styles.transactionBalance}>
+                          <Text style={[styles.transactionBalance, { fontSize: 11 * fontScale }]}>
                             {t('points.balancePrefix')}: {item.balance.toLocaleString(numberLocale)}{' '}
                             {t('points.unit')}
                           </Text>
                         ) : (
-                          <Text style={styles.transactionBalance} />
+                          <Text style={[styles.transactionBalance, { fontSize: 11 * fontScale }]} />
                         )}
                       </View>
                     </View>
@@ -611,16 +613,17 @@ export default function TransactionsScreen() {
                   </View>
                   
                   <View style={styles.transactionContent}>
-                    <Text style={styles.transactionDesc} numberOfLines={1}>
+                    <Text style={[styles.transactionDesc, { fontSize: 14 * fontScale }]} numberOfLines={1}>
                       {transaction.description}
                     </Text>
-                    <Text style={styles.transactionDate}>{transaction.date}</Text>
+                    <Text style={[styles.transactionDate, { fontSize: 12 * fontScale }]}>{transaction.date}</Text>
                   </View>
                   
                   <View style={styles.transactionRight}>
                     <Text
                       style={[
                         styles.transactionAmount,
+                        { fontSize: 16 * fontScale },
                         transaction.amount > 0
                           ? styles.positiveAmount
                           : styles.negativeAmount,
@@ -632,7 +635,7 @@ export default function TransactionsScreen() {
                           : '$••••'
                         : `${transaction.amount > 0 ? '+' : ''}$${Math.abs(transaction.amount).toFixed(2)}`}
                     </Text>
-                    <Text style={styles.transactionBalance}>
+                    <Text style={[styles.transactionBalance, { fontSize: 11 * fontScale }]}>
                       {t('transactions.balancePrefix')}: {hideBalance ? '$••••' : `$${transaction.balance.toFixed(2)}`}
                     </Text>
                   </View>

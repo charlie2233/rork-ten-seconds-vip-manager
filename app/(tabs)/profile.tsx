@@ -222,6 +222,8 @@ export default function ProfileScreen() {
             }]}
             activeOpacity={0.9}
             onPress={() => router.push('/member-code')}
+            accessibilityRole="button"
+            accessibilityLabel={t('memberCode.title')}
           >
             {/* Main Card Background */}
             <LinearGradient
@@ -279,15 +281,17 @@ export default function ProfileScreen() {
                     colors={cardTheme.chipGradient}
                     style={styles.avatar}
                   >
-                    <Text style={[styles.avatarText, { color: '#000' }]}>
+                    <Text style={[styles.avatarText, { color: '#000', fontSize: 24 * fontScale }]}>
                       {user.name.charAt(0)}
                     </Text>
                   </LinearGradient>
                   <View>
-                     <Text style={[styles.profileName, { color: cardTheme.text }]}>{user.name}</Text>
+                     <Text style={[styles.profileName, { color: cardTheme.text, fontSize: 20 * fontScale }]}>
+                       {user.name}
+                     </Text>
                      <View style={styles.tierBadgeRow}>
                         {getTierIcon()}
-                        <Text style={[styles.profileTier, { color: cardTheme.accent }]}>
+                        <Text style={[styles.profileTier, { color: cardTheme.accent, fontSize: 12 * fontScale }]}>
                           {t(`tier.${effectiveTier}`)}
                         </Text>
                      </View>
@@ -301,11 +305,17 @@ export default function ProfileScreen() {
 
               <View style={styles.cardFooter}>
                  <View style={styles.memberIdContainer}>
-                    <Text style={[styles.memberIdLabel, { color: cardTheme.textMuted }]}>{t('memberCode.memberCardNo')}</Text>
-                    <Text style={[styles.memberIdValue, { color: cardTheme.text }]}>{user.memberId}</Text>
+                    <Text style={[styles.memberIdLabel, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
+                      {t('memberCode.memberCardNo')}
+                    </Text>
+                    <Text style={[styles.memberIdValue, { color: cardTheme.text, fontSize: 16 * fontScale }]}>
+                      {user.memberId}
+                    </Text>
                  </View>
                  <View style={styles.tapHint}>
-                    <Text style={[styles.tapHintText, { color: cardTheme.accent }]}>{t('profile.tapToView')}</Text>
+                    <Text style={[styles.tapHintText, { color: cardTheme.accent, fontSize: 12 * fontScale }]}>
+                      {t('profile.tapToView')}
+                    </Text>
                     <ChevronRight size={14} color={cardTheme.accent} />
                  </View>
               </View>
@@ -316,6 +326,8 @@ export default function ProfileScreen() {
             style={styles.loginCard}
             onPress={() => router.push('/login')}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('auth.login')}
           >
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}
@@ -328,8 +340,8 @@ export default function ProfileScreen() {
                 <LogIn size={24} color={Colors.background} />
               </View>
               <View>
-                <Text style={styles.loginTitle}>{t('auth.login')}</Text>
-                <Text style={styles.loginSubtitle}>{t('profile.signInHint')}</Text>
+                <Text style={[styles.loginTitle, { fontSize: 18 * fontScale }]}>{t('auth.login')}</Text>
+                <Text style={[styles.loginSubtitle, { fontSize: 13 * fontScale }]}>{t('profile.signInHint')}</Text>
               </View>
               <ChevronRight size={20} color={Colors.background} style={{ marginLeft: 'auto' }} />
             </View>
@@ -347,8 +359,8 @@ export default function ProfileScreen() {
               <View style={styles.infoIcon}>
                 <CreditCard size={18} color={Colors.primary} />
               </View>
-              <Text style={styles.infoLabel}>{t('profile.memberId')}</Text>
-              <Text style={styles.infoValue}>{user.memberId}</Text>
+              <Text style={[styles.infoLabel, { fontSize: 14 * fontScale }]}>{t('profile.memberId')}</Text>
+              <Text style={[styles.infoValue, { fontSize: 14 * fontScale }]}>{user.memberId}</Text>
             </View>
             
             <View style={styles.infoDivider} />
@@ -357,8 +369,8 @@ export default function ProfileScreen() {
               <View style={styles.infoIcon}>
                 <Phone size={18} color={Colors.primary} />
               </View>
-              <Text style={styles.infoLabel}>{t('profile.phone')}</Text>
-              <Text style={styles.infoValue}>{user.phone}</Text>
+              <Text style={[styles.infoLabel, { fontSize: 14 * fontScale }]}>{t('profile.phone')}</Text>
+              <Text style={[styles.infoValue, { fontSize: 14 * fontScale }]}>{user.phone}</Text>
             </View>
             
             <View style={styles.infoDivider} />
@@ -367,15 +379,15 @@ export default function ProfileScreen() {
               <View style={styles.infoIcon}>
                 <Calendar size={18} color={Colors.primary} />
               </View>
-              <Text style={styles.infoLabel}>{t('profile.joinDate')}</Text>
-              <Text style={styles.infoValue}>{user.joinDate}</Text>
+              <Text style={[styles.infoLabel, { fontSize: 14 * fontScale }]}>{t('profile.joinDate')}</Text>
+              <Text style={[styles.infoValue, { fontSize: 14 * fontScale }]}>{user.joinDate}</Text>
             </View>
           </View>
         ) : null}
 
         {sections.map((section) => (
           <View key={section.titleKey} style={styles.menuSection}>
-            <Text style={styles.sectionTitle}>{t(section.titleKey)}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t(section.titleKey)}</Text>
             <View style={styles.menuCard}>
               {section.items.map((item, index) => {
                 const IconComponent = item.icon;
@@ -394,14 +406,16 @@ export default function ProfileScreen() {
                         router.push(item.route as any);
                       }
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(item.labelKey)}
                   >
                     <View style={styles.menuIcon}>
                       <IconComponent size={20} color={Colors.textSecondary} />
                     </View>
-                    <Text style={styles.menuLabel}>{t(item.labelKey)}</Text>
+                    <Text style={[styles.menuLabel, { fontSize: 15 * fontScale }]}>{t(item.labelKey)}</Text>
                     <View style={styles.menuRight}>
                       {item.value && (
-                        <Text style={styles.menuValue}>{item.value}</Text>
+                        <Text style={[styles.menuValue, { fontSize: 14 * fontScale }]}>{item.value}</Text>
                       )}
                       <ChevronRight size={18} color={Colors.textMuted} />
                     </View>
@@ -417,13 +431,17 @@ export default function ProfileScreen() {
             style={styles.logoutButton}
             onPress={handleLogout}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.logout')}
           >
             <LogOut size={20} color={Colors.error} />
-            <Text style={styles.logoutText}>{t('profile.logout')}</Text>
+            <Text style={[styles.logoutText, { fontSize: 16 * fontScale }]}>{t('profile.logout')}</Text>
           </TouchableOpacity>
         )}
 
-        <Text style={styles.version}>{t('profile.version', { version: '1.0.0' })}</Text>
+        <Text style={[styles.version, { fontSize: 12 * fontScale }]}>
+          {t('profile.version', { version: '1.0.0' })}
+        </Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>

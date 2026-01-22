@@ -78,6 +78,7 @@ function getTierSurface(tier: User['tier']): Surface {
 
 function TierPreviewCard({ tier, isCurrent }: { tier: User['tier']; isCurrent: boolean }) {
   const { t } = useI18n();
+  const { fontScale } = useSettings();
   const theme = useMemo(() => getVipCardTheme(tier), [tier]);
   const surface = useMemo(() => getTierSurface(tier), [tier]);
 
@@ -125,10 +126,13 @@ function TierPreviewCard({ tier, isCurrent }: { tier: User['tier']; isCurrent: b
         </View>
 
         <View style={styles.previewContent}>
-          <Text style={[styles.previewBrand, { color: theme.textMuted }]} numberOfLines={1}>
+          <Text
+            style={[styles.previewBrand, { color: theme.textMuted, fontSize: 11 * fontScale }]}
+            numberOfLines={1}
+          >
             {t('brand.shortName')} · {t('common.vip')}
           </Text>
-          <Text style={[styles.previewTier, { color: theme.text }]} numberOfLines={1}>
+          <Text style={[styles.previewTier, { color: theme.text, fontSize: 18 * fontScale }]} numberOfLines={1}>
             {t(`tier.${tier}`)}
           </Text>
           <View style={styles.previewFooter}>
@@ -146,7 +150,9 @@ function TierPreviewCard({ tier, isCurrent }: { tier: User['tier']; isCurrent: b
 
         {isCurrent ? (
           <View style={styles.currentBadge}>
-            <Text style={[styles.currentBadgeText, { color: theme.text }]}>{t('profile.vipLevelsCurrent')}</Text>
+            <Text style={[styles.currentBadgeText, { color: theme.text, fontSize: 11 * fontScale }]}>
+              {t('profile.vipLevelsCurrent')}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -173,7 +179,9 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
     <View style={styles.section}>
       <View style={styles.headerRow}>
         <Text style={[styles.title, { fontSize: 16 * fontScale }]}>{t('profile.vipLevelsTitle')}</Text>
-        <Text style={[styles.subtitle, { fontSize: 12 * fontScale }]}>{t('profile.vipLevelsSubtitle')}</Text>
+        <Text style={[styles.subtitle, { fontSize: 12 * fontScale, lineHeight: 16 * fontScale }]}>
+          {t('profile.vipLevelsSubtitle')}
+        </Text>
       </View>
 
       {currentTier && typeof currentBalance === 'number' && Number.isFinite(currentBalance) ? (
@@ -194,10 +202,10 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
             return (
               <View style={styles.progressCard}>
                 <View style={styles.progressTopRow}>
-                  <Text style={styles.progressNext} numberOfLines={1}>
+                  <Text style={[styles.progressNext, { fontSize: 13 * fontScale }]} numberOfLines={1}>
                     {t('profile.vipProgressNext', { tier: nextTierName })}
                   </Text>
-                  <Text style={styles.progressPercent} numberOfLines={1}>
+                  <Text style={[styles.progressPercent, { fontSize: 12 * fontScale }]} numberOfLines={1}>
                     {percentText}
                   </Text>
                 </View>
@@ -211,7 +219,7 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
                   />
                 </View>
 
-                <Text style={styles.progressHint}>
+                <Text style={[styles.progressHint, { fontSize: 12 * fontScale }]}>
                   {t('profile.vipProgressNeed', { amount: remainingText, tier: nextTierName })}
                 </Text>
               </View>
@@ -219,12 +227,12 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
           })()
         ) : (
           <View style={styles.progressCard}>
-            <Text style={styles.progressNext}>{t('profile.vipProgressMax')}</Text>
+            <Text style={[styles.progressNext, { fontSize: 13 * fontScale }]}>{t('profile.vipProgressMax')}</Text>
           </View>
         )
       ) : (
         <View style={styles.progressCard}>
-          <Text style={styles.progressNext}>{t('profile.vipProgressLoginHint')}</Text>
+          <Text style={[styles.progressNext, { fontSize: 13 * fontScale }]}>{t('profile.vipProgressLoginHint')}</Text>
         </View>
       )}
 
@@ -236,10 +244,10 @@ export default function VipLevelsShowcase({ currentTier = null, currentBalance =
         {TIER_ORDER.map((tier) => (
           <View key={tier} style={styles.item}>
             <TierPreviewCard tier={tier} isCurrent={!!currentTier && currentTier === tier} />
-            <Text style={styles.itemLine}>
+            <Text style={[styles.itemLine, { fontSize: 12 * fontScale }]}>
               {t('profile.vipLevelsRequirement', { amount: TIER_MIN_BALANCE[tier] })}
             </Text>
-            <Text style={styles.itemLineMuted}>
+            <Text style={[styles.itemLineMuted, { fontSize: 12 * fontScale }]}>
               {t('profile.vipLevelsPointsRate', { rate: getPointsPerDollar(tier) })}
             </Text>
           </View>

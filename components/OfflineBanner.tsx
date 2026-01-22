@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Colors from '@/constants/colors';
 import Layout from '@/constants/layout';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type Props = {
   title: string;
@@ -29,6 +30,8 @@ export default function OfflineBanner({
   retryLabel,
   style,
 }: Props) {
+  const { fontScale } = useSettings();
+
   return (
     <View style={[styles.card, style]}>
       <LinearGradient
@@ -41,9 +44,15 @@ export default function OfflineBanner({
         </View>
 
         <View style={styles.textBlock}>
-          <Text style={styles.title}>{title}</Text>
-          {message ? <Text style={styles.message}>{message}</Text> : null}
-          {lastUpdated ? <Text style={styles.meta}>{lastUpdated}</Text> : null}
+          <Text style={[styles.title, { fontSize: 13 * fontScale }]}>{title}</Text>
+          {message ? (
+            <Text style={[styles.message, { fontSize: 12 * fontScale, lineHeight: 16 * fontScale }]}>
+              {message}
+            </Text>
+          ) : null}
+          {lastUpdated ? (
+            <Text style={[styles.meta, { fontSize: 11 * fontScale }]}>{lastUpdated}</Text>
+          ) : null}
         </View>
 
         {onRetry ? (
@@ -52,9 +61,11 @@ export default function OfflineBanner({
             onPress={onRetry}
             activeOpacity={0.85}
             accessibilityRole="button"
+            accessibilityLabel={retryLabel ?? 'Retry'}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <RotateCcw size={16} color={Colors.background} />
-            <Text style={styles.retryText}>{retryLabel ?? 'Retry'}</Text>
+            <Text style={[styles.retryText, { fontSize: 12 * fontScale }]}>{retryLabel ?? 'Retry'}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -112,7 +123,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
-    height: 32,
+    height: 40,
     borderRadius: 999,
     backgroundColor: Colors.warning,
   },
@@ -122,4 +133,3 @@ const styles = StyleSheet.create({
     fontWeight: '900' as const,
   },
 });
-

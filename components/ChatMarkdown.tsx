@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import Colors from '@/constants/colors';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type Variant = 'assistant' | 'user';
 
@@ -39,6 +40,7 @@ function splitByCodeFences(input: string): Block[] {
 }
 
 export default function ChatMarkdown({ text, variant }: Props) {
+  const { fontScale } = useSettings();
   const webWrapStyle: any =
     Platform.OS === 'web'
       ? {
@@ -80,6 +82,14 @@ export default function ChatMarkdown({ text, variant }: Props) {
   }, [variant]);
 
   const blocks = useMemo(() => splitByCodeFences(text), [text]);
+  const scaled = useMemo(
+    () => ({
+      text: { fontSize: 14 * fontScale, lineHeight: 20 * fontScale },
+      inlineCode: { fontSize: 13 * fontScale },
+      codeText: { fontSize: 12 * fontScale, lineHeight: 16 * fontScale },
+    }),
+    [fontScale]
+  );
 
   let keyIndex = 0;
   const nextKey = () => `md_${keyIndex++}`;
@@ -111,14 +121,15 @@ export default function ChatMarkdown({ text, variant }: Props) {
         const code = input.slice(codeIdx + 1, end);
         out.push(
           <Text
-            key={nextKey()}
-            style={[
-              styles.inlineCode,
-              {
-                backgroundColor: theme.inlineCodeBg,
-                borderColor: theme.inlineCodeBorder,
-                color: theme.inlineCodeText,
-              },
+              key={nextKey()}
+              style={[
+                styles.inlineCode,
+                scaled.inlineCode,
+                {
+                  backgroundColor: theme.inlineCodeBg,
+                  borderColor: theme.inlineCodeBorder,
+                  color: theme.inlineCodeText,
+                },
             ]}
           >
             {code}
@@ -164,7 +175,10 @@ export default function ChatMarkdown({ text, variant }: Props) {
                 { backgroundColor: theme.codeBg, borderColor: theme.codeBorder },
               ]}
             >
-              <Text style={[styles.codeText, webCodeWrapStyle, { color: theme.codeText }]} selectable>
+              <Text
+                style={[styles.codeText, scaled.codeText, webCodeWrapStyle, { color: theme.codeText }]}
+                selectable
+              >
                 {block.content}
               </Text>
             </View>
@@ -172,7 +186,11 @@ export default function ChatMarkdown({ text, variant }: Props) {
         }
 
         return (
-          <Text key={nextKey()} style={[styles.text, webWrapStyle, { color: theme.textColor }]} selectable>
+          <Text
+            key={nextKey()}
+            style={[styles.text, scaled.text, webWrapStyle, { color: theme.textColor }]}
+            selectable
+          >
             {renderInline(block.content, false)}
           </Text>
         );

@@ -22,7 +22,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 export default function LoginScreen() {
   const { login, enterGuestMode, isLoggingIn, loginError } = useAuth();
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const { 
     isAccountLocked, 
     getRemainingAttempts, 
@@ -71,6 +71,7 @@ export default function LoginScreen() {
   };
 
   const displayedErrorKey = errorKey ?? loginError;
+  const controlHeight = Math.round(56 + Math.max(0, (fontScale - 1) * 14));
 
   return (
     <View style={styles.container}>
@@ -89,6 +90,9 @@ export default function LoginScreen() {
               router.replace('/');
             }}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             testID="login-close"
           >
             <X size={18} color={Colors.textSecondary} />
@@ -106,10 +110,10 @@ export default function LoginScreen() {
               colors={[Colors.primary, Colors.primaryDark]}
               style={styles.logoGradient}
             >
-              <Text style={styles.logoText}>{t('brand.shortName')}</Text>
+              <Text style={[styles.logoText, { fontSize: 36 * fontScale }]}>{t('brand.shortName')}</Text>
             </LinearGradient>
           </View>
-          <Text style={styles.subtitle}>{t('auth.subtitle')}</Text>
+          <Text style={[styles.subtitle, { fontSize: 16 * fontScale }]}>{t('auth.subtitle')}</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -118,7 +122,7 @@ export default function LoginScreen() {
               <CreditCard size={20} color={Colors.textSecondary} />
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { fontSize: 16 * fontScale, height: controlHeight }]}
               placeholder={t('auth.memberId')}
               placeholderTextColor={Colors.textMuted}
               value={memberId}
@@ -134,7 +138,7 @@ export default function LoginScreen() {
               <Lock size={20} color={Colors.textSecondary} />
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { fontSize: 16 * fontScale, height: controlHeight }]}
               placeholder={t('auth.password')}
               placeholderTextColor={Colors.textMuted}
               value={password}
@@ -145,6 +149,9 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={styles.eyeButton}
               onPress={() => setShowPassword(!showPassword)}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               {showPassword ? (
                 <EyeOff size={20} color={Colors.textSecondary} />
@@ -156,15 +163,15 @@ export default function LoginScreen() {
 
           {isAccountLocked() && lockoutRemaining > 0 ? (
             <View style={styles.lockoutContainer}>
-              <Text style={styles.lockoutText}>
+              <Text style={[styles.lockoutText, { fontSize: 14 * fontScale }]}>
                 {t('auth.accountLockedTimer', { minutes: Math.ceil(lockoutRemaining / 60) })}
               </Text>
             </View>
           ) : displayedErrorKey ? (
             <View>
-              <Text style={styles.errorText}>{t(displayedErrorKey)}</Text>
+              <Text style={[styles.errorText, { fontSize: 14 * fontScale }]}>{t(displayedErrorKey)}</Text>
               {getRemainingAttempts() < maxAttempts && getRemainingAttempts() > 0 && (
-                <Text style={styles.attemptsText}>
+                <Text style={[styles.attemptsText, { fontSize: 12 * fontScale }]}>
                   {t('auth.remainingAttempts', { count: getRemainingAttempts() })}
                 </Text>
               )}
@@ -182,28 +189,28 @@ export default function LoginScreen() {
               colors={[Colors.primary, Colors.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.loginGradient}
+              style={[styles.loginGradient, { height: controlHeight }]}
             >
               {isLoggingIn ? (
                 <ActivityIndicator color={Colors.background} />
               ) : (
-                <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
+                <Text style={[styles.loginButtonText, { fontSize: 18 * fontScale }]}>{t('auth.login')}</Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
 
           <View style={styles.linksContainer}>
-            <TouchableOpacity onPress={() => router.push('/forgot-password')}>
-              <Text style={styles.linkText}>{t('auth.forgotPassword')}</Text>
+            <TouchableOpacity onPress={() => router.push('/forgot-password')} accessibilityRole="button">
+              <Text style={[styles.linkText, { fontSize: 14 * fontScale }]}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.linkText}>{t('auth.register')}</Text>
+            <TouchableOpacity onPress={() => router.push('/register')} accessibilityRole="button">
+              <Text style={[styles.linkText, { fontSize: 14 * fontScale }]}>{t('auth.register')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>{t('auth.firstLoginHint')}</Text>
+          <Text style={[styles.footerText, { fontSize: 12 * fontScale }]}>{t('auth.firstLoginHint')}</Text>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -216,9 +223,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.surface,
@@ -269,7 +276,6 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 56,
     fontSize: 16,
     color: Colors.text,
   },

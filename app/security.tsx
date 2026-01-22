@@ -51,7 +51,7 @@ function getDeviceIcon(platform: string) {
 
 export default function SecurityScreen() {
   const { t } = useI18n();
-  const { hideBalance, setHideBalance, backgroundGradient, biometricEnabled, setBiometricEnabled } = useSettings();
+  const { hideBalance, setHideBalance, backgroundGradient, biometricEnabled, setBiometricEnabled, fontScale } = useSettings();
   const { 
     sessions, 
     isLoadingSessions, 
@@ -133,20 +133,22 @@ export default function SecurityScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('security.accountSection')}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('security.accountSection')}</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.menuItem}
               onPress={handleChangePassword}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('security.changePassword')}
             >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIcon}>
                   <Lock size={20} color={Colors.primary} />
                 </View>
                 <View>
-                  <Text style={styles.menuLabel}>{t('security.loginPassword')}</Text>
-                  <Text style={styles.menuHint}>{t('security.loginPasswordHint')}</Text>
+                  <Text style={[styles.menuLabel, { fontSize: 15 * fontScale }]}>{t('security.loginPassword')}</Text>
+                  <Text style={[styles.menuHint, { fontSize: 12 * fontScale }]}>{t('security.loginPasswordHint')}</Text>
                 </View>
               </View>
               <ChevronRight size={20} color={Colors.textMuted} />
@@ -156,14 +158,16 @@ export default function SecurityScreen() {
               style={[styles.menuItem, styles.lastItem]}
               onPress={handleChangePaymentPassword}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('security.paymentPassword')}
             >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIcon}>
                   <KeyRound size={20} color={Colors.primary} />
                 </View>
                 <View>
-                  <Text style={styles.menuLabel}>{t('security.paymentPassword')}</Text>
-                  <Text style={styles.menuHint}>{t('security.paymentPasswordDesc')}</Text>
+                  <Text style={[styles.menuLabel, { fontSize: 15 * fontScale }]}>{t('security.paymentPassword')}</Text>
+                  <Text style={[styles.menuHint, { fontSize: 12 * fontScale }]}>{t('security.paymentPasswordDesc')}</Text>
                 </View>
               </View>
               <ChevronRight size={20} color={Colors.textMuted} />
@@ -172,7 +176,7 @@ export default function SecurityScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('security.privacySection')}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('security.privacySection')}</Text>
           <View style={styles.card}>
             <View style={styles.toggleRow}>
               <View style={styles.menuLeft}>
@@ -180,8 +184,8 @@ export default function SecurityScreen() {
                   <Fingerprint size={20} color={Colors.primary} />
                 </View>
                 <View>
-                  <Text style={styles.menuLabel}>{t('security.biometric')}</Text>
-                  <Text style={styles.menuHint}>{t('security.biometricHint')}</Text>
+                  <Text style={[styles.menuLabel, { fontSize: 15 * fontScale }]}>{t('security.biometric')}</Text>
+                  <Text style={[styles.menuHint, { fontSize: 12 * fontScale }]}>{t('security.biometricHint')}</Text>
                 </View>
               </View>
               <Switch
@@ -198,8 +202,8 @@ export default function SecurityScreen() {
                   <Eye size={20} color={Colors.primary} />
                 </View>
                 <View>
-                  <Text style={styles.menuLabel}>{t('security.hideBalance')}</Text>
-                  <Text style={styles.menuHint}>{t('security.hideBalanceHint')}</Text>
+                  <Text style={[styles.menuLabel, { fontSize: 15 * fontScale }]}>{t('security.hideBalance')}</Text>
+                  <Text style={[styles.menuHint, { fontSize: 12 * fontScale }]}>{t('security.hideBalanceHint')}</Text>
                 </View>
               </View>
               <Switch
@@ -214,10 +218,10 @@ export default function SecurityScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('security.devicesSection')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('security.devicesSection')}</Text>
             {otherSessions.length > 0 && (
-              <TouchableOpacity onPress={handleRevokeAllOther}>
-                <Text style={styles.revokeAllText}>{t('security.revokeAll')}</Text>
+              <TouchableOpacity onPress={handleRevokeAllOther} accessibilityRole="button">
+                <Text style={[styles.revokeAllText, { fontSize: 13 * fontScale }]}>{t('security.revokeAll')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -228,7 +232,7 @@ export default function SecurityScreen() {
               </View>
             ) : sessions.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>{t('security.noSessions')}</Text>
+                <Text style={[styles.emptyText, { fontSize: 14 * fontScale }]}>{t('security.noSessions')}</Text>
               </View>
             ) : (
               <>
@@ -243,12 +247,12 @@ export default function SecurityScreen() {
                       </View>
                       <View style={styles.sessionInfo}>
                         <View style={styles.sessionNameRow}>
-                          <Text style={styles.sessionName}>{currentSession.deviceName}</Text>
+                          <Text style={[styles.sessionName, { fontSize: 15 * fontScale }]}>{currentSession.deviceName}</Text>
                           <View style={styles.currentBadge}>
-                            <Text style={styles.currentBadgeText}>{t('security.currentDevice')}</Text>
+                            <Text style={[styles.currentBadgeText, { fontSize: 10 * fontScale }]}>{t('security.currentDevice')}</Text>
                           </View>
                         </View>
-                        <Text style={styles.sessionMeta}>
+                        <Text style={[styles.sessionMeta, { fontSize: 12 * fontScale }]}>
                           {t('security.lastActive')}: {formatSessionDate(currentSession.lastActiveAt)}
                         </Text>
                       </View>
@@ -265,14 +269,16 @@ export default function SecurityScreen() {
                       style={[styles.sessionItem, isLast && styles.lastItem]}
                       onPress={() => handleRevokeSession(session)}
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('security.revokeSessionTitle')}
                     >
                       <View style={styles.sessionLeft}>
                         <View style={styles.sessionIcon}>
                           <DeviceIcon size={20} color={Colors.textSecondary} />
                         </View>
                         <View style={styles.sessionInfo}>
-                          <Text style={styles.sessionName}>{session.deviceName}</Text>
-                          <Text style={styles.sessionMeta}>
+                          <Text style={[styles.sessionName, { fontSize: 15 * fontScale }]}>{session.deviceName}</Text>
+                          <Text style={[styles.sessionMeta, { fontSize: 12 * fontScale }]}>
                             {t('security.lastActive')}: {formatSessionDate(session.lastActiveAt)}
                           </Text>
                         </View>
@@ -287,12 +293,12 @@ export default function SecurityScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('security.loginProtection')}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('security.loginProtection')}</Text>
           <View style={styles.card}>
             <View style={[styles.protectionItem, styles.lastItem]}>
               <View style={styles.protectionInfo}>
-                <Text style={styles.protectionLabel}>{t('security.bruteForceProtection')}</Text>
-                <Text style={styles.protectionDesc}>
+                <Text style={[styles.protectionLabel, { fontSize: 15 * fontScale }]}>{t('security.bruteForceProtection')}</Text>
+                <Text style={[styles.protectionDesc, { fontSize: 12 * fontScale }]}>
                   {isAccountLocked()
                     ? t('security.accountLockedFor', { minutes: Math.ceil(lockoutRemaining / 60) })
                     : t('security.attemptsRemaining', { 
@@ -307,6 +313,7 @@ export default function SecurityScreen() {
               ]}>
                 <Text style={[
                   styles.protectionStatusText,
+                  { fontSize: 12 * fontScale },
                   isAccountLocked() ? styles.protectionStatusTextLocked : styles.protectionStatusTextOk
                 ]}>
                   {isAccountLocked() ? t('security.locked') : t('security.active')}
@@ -318,7 +325,9 @@ export default function SecurityScreen() {
 
         <View style={styles.securityTip}>
           <Shield size={18} color={Colors.success} />
-          <Text style={styles.securityTipText}>{t('security.tipText')}</Text>
+          <Text style={[styles.securityTipText, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+            {t('security.tipText')}
+          </Text>
         </View>
 
         <View style={{ height: 40 }} />

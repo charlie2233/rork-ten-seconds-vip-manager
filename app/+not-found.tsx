@@ -8,7 +8,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 
 export default function NotFoundScreen() {
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
 
   return (
     <>
@@ -17,9 +17,9 @@ export default function NotFoundScreen() {
         <LinearGradient colors={backgroundGradient} style={StyleSheet.absoluteFill} />
         <TopBar title={t("notFound.title")} />
         <View style={styles.content}>
-          <Text style={styles.title}>{t("notFound.message")}</Text>
-          <Link href="/" style={styles.link}>
-            <Text style={styles.linkText}>{t("notFound.backHome")}</Text>
+          <Text style={[styles.title, { fontSize: 20 * fontScale }]}>{t("notFound.message")}</Text>
+          <Link href="/" style={styles.link} accessibilityRole="button">
+            <Text style={[styles.linkText, { fontSize: 16 * fontScale }]}>{t("notFound.backHome")}</Text>
           </Link>
         </View>
       </View>

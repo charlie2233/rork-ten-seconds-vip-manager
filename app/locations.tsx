@@ -28,7 +28,7 @@ function mapUrlForAddress(address: string) {
 
 export default function LocationsScreen() {
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
 
   const location = storeLocations[0];
   if (!location) return null;
@@ -70,17 +70,37 @@ export default function LocationsScreen() {
       >
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.storeName}>{t(location.name)}</Text>
+            <Text style={[styles.storeName, { fontSize: 18 * fontScale, lineHeight: 22 * fontScale }]}>
+              {t(location.name)}
+            </Text>
             <View style={styles.headerButtons}>
               {location.onlineOrderUrl ? (
-                <TouchableOpacity style={styles.orderButton} onPress={openOnlineOrder} activeOpacity={0.8}>
+                <TouchableOpacity
+                  style={styles.orderButton}
+                  onPress={openOnlineOrder}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('locations.orderOnline')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
                   <ShoppingBag size={16} color={Colors.background} />
-                  <Text style={styles.orderButtonText}>{t('locations.orderOnline')}</Text>
+                  <Text style={[styles.orderButtonText, { fontSize: 12 * fontScale }]}>
+                    {t('locations.orderOnline')}
+                  </Text>
                 </TouchableOpacity>
               ) : null}
-              <TouchableOpacity style={styles.mapButton} onPress={openMaps} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={openMaps}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={t('locations.openInMaps')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <MapPin size={16} color={Colors.background} />
-                <Text style={styles.mapButtonText}>{t('locations.openInMaps')}</Text>
+                <Text style={[styles.mapButtonText, { fontSize: 12 * fontScale }]}>
+                  {t('locations.openInMaps')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -88,10 +108,10 @@ export default function LocationsScreen() {
           <View style={styles.infoRow}>
             <MapPin size={18} color={Colors.primary} />
             <View style={styles.infoTextBlock}>
-              <Text style={styles.infoLabel}>{t('locations.address')}</Text>
-              <Text style={styles.infoValue}>{location.address}</Text>
+              <Text style={[styles.infoLabel, { fontSize: 12 * fontScale }]}>{t('locations.address')}</Text>
+              <Text style={[styles.infoValue, { fontSize: 14 * fontScale }]}>{location.address}</Text>
               {location.place ? (
-                <Text style={styles.infoSubValue}>
+                <Text style={[styles.infoSubValue, { fontSize: 12 * fontScale }]}>
                   {t('locations.locatedAt', { place: location.place })}
                 </Text>
               ) : null}
@@ -103,12 +123,12 @@ export default function LocationsScreen() {
           <View style={styles.infoRow}>
             <Clock size={18} color={Colors.primary} />
             <View style={styles.infoTextBlock}>
-              <Text style={styles.infoLabel}>{t('locations.hours')}</Text>
+              <Text style={[styles.infoLabel, { fontSize: 12 * fontScale }]}>{t('locations.hours')}</Text>
               <View style={styles.hoursTable}>
                 {WEEKDAY_ORDER.map((day) => (
                   <View key={day} style={styles.hoursRow}>
-                    <Text style={styles.hoursDay}>{t(`weekday.${day}`)}</Text>
-                    <Text style={styles.hoursTime}>{hoursByDay.get(day) ?? '--'}</Text>
+                    <Text style={[styles.hoursDay, { fontSize: 12 * fontScale }]}>{t(`weekday.${day}`)}</Text>
+                    <Text style={[styles.hoursTime, { fontSize: 12 * fontScale }]}>{hoursByDay.get(day) ?? '--'}</Text>
                   </View>
                 ))}
               </View>
@@ -118,20 +138,34 @@ export default function LocationsScreen() {
           {(location.website || location.phone) ? <View style={styles.divider} /> : null}
 
           {location.website ? (
-            <TouchableOpacity style={styles.actionRow} onPress={openWebsite} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={openWebsite}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('locations.website')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Globe size={18} color={Colors.textSecondary} />
-              <Text style={styles.actionText}>{t('locations.website')}</Text>
-              <Text style={styles.actionValue} numberOfLines={1}>
+              <Text style={[styles.actionText, { fontSize: 13 * fontScale }]}>{t('locations.website')}</Text>
+              <Text style={[styles.actionValue, { fontSize: 13 * fontScale }]} numberOfLines={1}>
                 {location.website.replace(/^https?:\/\//, '')}
               </Text>
             </TouchableOpacity>
           ) : null}
 
           {location.phone ? (
-            <TouchableOpacity style={styles.actionRow} onPress={callStore} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={callStore}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('locations.phone')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Phone size={18} color={Colors.textSecondary} />
-              <Text style={styles.actionText}>{t('locations.phone')}</Text>
-              <Text style={styles.actionValue}>{location.phone}</Text>
+              <Text style={[styles.actionText, { fontSize: 13 * fontScale }]}>{t('locations.phone')}</Text>
+              <Text style={[styles.actionValue, { fontSize: 13 * fontScale }]}>{location.phone}</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -180,9 +214,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 34,
+    height: 44,
     paddingHorizontal: 12,
-    borderRadius: 17,
+    borderRadius: 22,
     backgroundColor: Colors.secondary,
     flex: 1,
   },
@@ -196,9 +230,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 34,
+    height: 44,
     paddingHorizontal: 12,
-    borderRadius: 17,
+    borderRadius: 22,
     backgroundColor: Colors.primary,
     flex: 1,
   },
@@ -258,6 +292,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     paddingVertical: 10,
+    minHeight: 44,
   },
   actionText: {
     color: Colors.textSecondary,

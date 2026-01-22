@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
+import { useI18n } from '@/contexts/I18nContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import LanguageToggle from '@/components/LanguageToggle';
 
@@ -25,6 +26,7 @@ export default function TopBar({
   style,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const { fontScale } = useSettings();
 
   const LeftIcon = leftAction === 'close' ? X : ArrowLeft;
@@ -45,6 +47,7 @@ export default function TopBar({
               onPress={onPressLeft ?? (() => router.back())}
               activeOpacity={0.75}
               accessibilityRole="button"
+              accessibilityLabel={leftAction === 'close' ? t('common.close') : t('common.back')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <LeftIcon size={20} color={Colors.text} />
@@ -83,9 +86,9 @@ const styles = StyleSheet.create({
     minWidth: 88,
   },
   leftButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.surface,
@@ -107,4 +110,3 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 });
-

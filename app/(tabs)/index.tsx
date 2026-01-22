@@ -396,7 +396,7 @@ export default function HomeScreen() {
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
                 <View style={styles.brandRow}>
-                  <Text style={[styles.brandName, { color: cardTheme.accent }]}>
+                  <Text style={[styles.brandName, { color: cardTheme.accent, fontSize: 22 * fontScale }]}>
                     {t('brand.shortName')}
                   </Text>
                   <View style={[styles.chipContainer]}>
@@ -414,7 +414,10 @@ export default function HomeScreen() {
                     </LinearGradient>
                   </View>
                 </View>
-                <Text style={[styles.storeAddress, { color: cardTheme.textSecondary }]} numberOfLines={1}>
+                <Text
+                  style={[styles.storeAddress, { color: cardTheme.textSecondary, fontSize: 11 * fontScale }]}
+                  numberOfLines={1}
+                >
                   {storeAddress}
                 </Text>
                 
@@ -426,7 +429,7 @@ export default function HomeScreen() {
                     end={{ x: 1, y: 1 }}
                   >
                     {getTierIcon()}
-                    <Text style={styles.tierBadgeText}>
+                    <Text style={[styles.tierBadgeText, { fontSize: 12 * fontScale }]}>
                       {t(`tier.${effectiveTier}`)}
                     </Text>
                   </LinearGradient>
@@ -439,18 +442,21 @@ export default function HomeScreen() {
                 }]}
                 onPress={() => (user ? router.push('/member-code') : router.push('/login'))}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('home.action.memberCode')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <QrCode size={26} color={cardTheme.accent} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.balanceContainer}>
-              <Text style={[styles.balanceLabel, { color: cardTheme.textMuted }]}>
+              <Text style={[styles.balanceLabel, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
                 {t('home.balance')}
               </Text>
               <View style={styles.balanceRow}>
-                <Text style={[styles.currencySymbol, { color: cardTheme.text }]}>$</Text>
-                <Text style={[styles.balanceAmount, { color: cardTheme.text }]}>
+                <Text style={[styles.currencySymbol, { color: cardTheme.text, fontSize: 22 * fontScale }]}>$</Text>
+                <Text style={[styles.balanceAmount, { color: cardTheme.text, fontSize: 40 * fontScale }]}>
                   {hideBalance
                     ? '••••'
                     : displayBalance.toLocaleString(numberLocale, {
@@ -470,7 +476,7 @@ export default function HomeScreen() {
                       end={{ x: 1, y: 0 }}
                     />
                   </View>
-                  <Text style={[styles.progressText, { color: cardTheme.textMuted }]}>
+                  <Text style={[styles.progressText, { color: cardTheme.textMuted, fontSize: 10 * fontScale }]}>
                     {hideBalance ? `••• ${t('home.toNextTier')}` : `$${remainingToNext.toFixed(0)} ${t('home.toNextTier')}`}
                   </Text>
                 </View>
@@ -479,10 +485,10 @@ export default function HomeScreen() {
 
             <View style={styles.cardFooter}>
               <View style={styles.memberIdSection}>
-                <Text style={[styles.memberIdLabel, { color: cardTheme.textMuted }]}>
+                <Text style={[styles.memberIdLabel, { color: cardTheme.textMuted, fontSize: 9 * fontScale }]}>
                   {t('home.memberId')}
                 </Text>
-                <Text style={[styles.memberId, { color: cardTheme.textSecondary }]}>
+                <Text style={[styles.memberId, { color: cardTheme.textSecondary, fontSize: 13 * fontScale }]}>
                   {memberCode}
                 </Text>
                 {user ? (
@@ -495,7 +501,7 @@ export default function HomeScreen() {
                         preserveAspectRatio="xMidYMid meet"
                       />
                     ) : (
-                      <Text style={[styles.barcodeError, { color: cardTheme.textMuted }]}>
+                      <Text style={[styles.barcodeError, { color: cardTheme.textMuted, fontSize: 10 * fontScale }]}>
                         {t('home.barcodeFailed')}
                       </Text>
                     )}
@@ -504,21 +510,23 @@ export default function HomeScreen() {
                   <TouchableOpacity 
                     style={[styles.loginPrompt, { backgroundColor: `${cardTheme.accent}15` }]}
                     onPress={() => router.push('/login')}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('home.loginToShowBarcode')}
                   >
                     <LogIn size={12} color={cardTheme.accent} />
-                    <Text style={[styles.loginPromptText, { color: cardTheme.accent }]}>
+                    <Text style={[styles.loginPromptText, { color: cardTheme.accent, fontSize: 11 * fontScale }]}>
                       {t('home.loginToShowBarcode')}
                     </Text>
                   </TouchableOpacity>
                 )}
               </View>
               <View style={styles.pointsContainer}>
-                <Text style={[styles.pointsLabel, { color: cardTheme.textMuted }]}>
+                <Text style={[styles.pointsLabel, { color: cardTheme.textMuted, fontSize: 9 * fontScale }]}>
                   {t('home.points')}
                 </Text>
                 <View style={styles.pointsValueRow}>
                   <Sparkles size={14} color={cardTheme.accent} style={{ marginRight: 4 }} />
-                  <Text style={[styles.pointsValue, { color: cardTheme.accent }]}>
+                  <Text style={[styles.pointsValue, { color: cardTheme.accent, fontSize: 18 * fontScale }]}>
                     {displayPoints.toLocaleString(numberLocale)}
                   </Text>
                 </View>
@@ -538,6 +546,8 @@ export default function HomeScreen() {
             style={styles.actionButton} 
             activeOpacity={0.7}
             onPress={() => router.push('/recharge')}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.action.recharge')}
           >
             <LinearGradient
               colors={['rgba(201, 169, 98, 0.2)', 'rgba(201, 169, 98, 0.08)']}
@@ -545,13 +555,15 @@ export default function HomeScreen() {
             >
               <Wallet size={22} color={Colors.primary} />
             </LinearGradient>
-            <Text style={styles.actionText}>{t('home.action.recharge')}</Text>
+            <Text style={[styles.actionText, { fontSize: 12 * fontScale }]}>{t('home.action.recharge')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.actionButton} 
             activeOpacity={0.7}
             onPress={() => (user ? router.push('/(tabs)/benefits') : router.push('/login'))}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.action.coupons')}
           >
             <LinearGradient
               colors={['rgba(212, 57, 58, 0.2)', 'rgba(212, 57, 58, 0.08)']}
@@ -559,13 +571,15 @@ export default function HomeScreen() {
             >
               <Gift size={22} color={Colors.secondary} />
             </LinearGradient>
-            <Text style={styles.actionText}>{t('home.action.coupons')}</Text>
+            <Text style={[styles.actionText, { fontSize: 12 * fontScale }]}>{t('home.action.coupons')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.actionButton} 
             activeOpacity={0.7}
             onPress={() => (user ? router.push('/(tabs)/transactions') : router.push('/login'))}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.action.transactions')}
           >
             <LinearGradient
               colors={['rgba(76, 175, 80, 0.2)', 'rgba(76, 175, 80, 0.08)']}
@@ -573,13 +587,15 @@ export default function HomeScreen() {
             >
               <TrendingUp size={22} color={Colors.success} />
             </LinearGradient>
-            <Text style={styles.actionText}>{t('home.action.transactions')}</Text>
+            <Text style={[styles.actionText, { fontSize: 12 * fontScale }]}>{t('home.action.transactions')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.actionButton} 
             activeOpacity={0.7}
             onPress={() => (user ? router.push('/member-code') : router.push('/login'))}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.action.memberCode')}
           >
             <LinearGradient
               colors={['rgba(255, 152, 0, 0.2)', 'rgba(255, 152, 0, 0.08)']}
@@ -587,19 +603,22 @@ export default function HomeScreen() {
             >
               <QrCode size={22} color={Colors.warning} />
             </LinearGradient>
-            <Text style={styles.actionText}>{t('home.action.memberCode')}</Text>
+            <Text style={[styles.actionText, { fontSize: 12 * fontScale }]}>{t('home.action.memberCode')}</Text>
           </TouchableOpacity>
         </View>
 
         {user && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('home.recentTransactions')}</Text>
+              <Text style={[styles.sectionTitle, { fontSize: 18 * fontScale }]}>{t('home.recentTransactions')}</Text>
               <TouchableOpacity 
                 style={styles.seeAllButton}
                 onPress={() => router.push('/(tabs)/transactions')}
+                accessibilityRole="button"
+                accessibilityLabel={t('home.seeAll')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Text style={styles.seeAllText}>{t('home.seeAll')}</Text>
+                <Text style={[styles.seeAllText, { fontSize: 14 * fontScale }]}>{t('home.seeAll')}</Text>
                 <ChevronRight size={16} color={Colors.primary} />
               </TouchableOpacity>
             </View>
@@ -607,11 +626,11 @@ export default function HomeScreen() {
             <View style={styles.transactionsList}>
               {recentTransactionsQuery.isLoading ? (
                 <View style={styles.transactionItem}>
-                  <Text style={styles.transactionDesc}>{t('common.loading')}</Text>
+                  <Text style={[styles.transactionDesc, { fontSize: 14 * fontScale }]}>{t('common.loading')}</Text>
                 </View>
               ) : recentTransactions.length === 0 ? (
                 <View style={styles.transactionItem}>
-                  <Text style={styles.transactionDesc}>{t('transactions.noTransactions')}</Text>
+                  <Text style={[styles.transactionDesc, { fontSize: 14 * fontScale }]}>{t('transactions.noTransactions')}</Text>
                 </View>
               ) : (
                 recentTransactions.map((transaction, index) => (
@@ -623,15 +642,16 @@ export default function HomeScreen() {
                     ]}
                   >
                     <View style={styles.transactionLeft}>
-                      <Text style={styles.transactionDesc} numberOfLines={1}>
+                      <Text style={[styles.transactionDesc, { fontSize: 14 * fontScale }]} numberOfLines={1}>
                         {transaction.description}
                       </Text>
-                      <Text style={styles.transactionDate}>{transaction.date}</Text>
+                      <Text style={[styles.transactionDate, { fontSize: 12 * fontScale }]}>{transaction.date}</Text>
                     </View>
                     <Text
                       style={[
                         styles.transactionAmount,
                         transaction.amount > 0 ? styles.positiveAmount : styles.negativeAmount,
+                        { fontSize: 16 * fontScale },
                       ]}
                     >
                       {hideBalance
@@ -655,14 +675,16 @@ export default function HomeScreen() {
             style={styles.promoGradient}
           >
             <View style={styles.promoContent}>
-              <Text style={styles.promoTitle}>{t('home.promoTitle')}</Text>
-              <Text style={styles.promoDesc}>{t('home.promoDesc')}</Text>
+              <Text style={[styles.promoTitle, { fontSize: 16 * fontScale }]}>{t('home.promoTitle')}</Text>
+              <Text style={[styles.promoDesc, { fontSize: 12 * fontScale }]}>{t('home.promoDesc')}</Text>
             </View>
             <TouchableOpacity 
               style={styles.promoButton}
               onPress={() => router.push('/promo')}
+              accessibilityRole="button"
+              accessibilityLabel={t('home.promoCta')}
             >
-              <Text style={styles.promoButtonText}>{t('home.promoCta')}</Text>
+              <Text style={[styles.promoButtonText, { fontSize: 12 * fontScale }]}>{t('home.promoCta')}</Text>
             </TouchableOpacity>
           </LinearGradient>
         </View>
@@ -1103,6 +1125,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   promoButtonText: {
     fontSize: 12,

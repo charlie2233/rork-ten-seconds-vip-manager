@@ -3,6 +3,7 @@ import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Colors from '@/constants/colors';
 import Layout from '@/constants/layout';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type Props = {
   title: string;
@@ -19,12 +20,18 @@ export default function EmptyState({
   variant = 'card',
   style,
 }: Props) {
+  const { fontScale } = useSettings();
+
   if (variant === 'inline') {
     return (
       <View style={[styles.inline, style]}>
         {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
-        <Text style={styles.title}>{title}</Text>
-        {message ? <Text style={styles.message}>{message}</Text> : null}
+        <Text style={[styles.title, { fontSize: 14 * fontScale }]}>{title}</Text>
+        {message ? (
+          <Text style={[styles.message, { fontSize: 12 * fontScale, lineHeight: 18 * fontScale }]}>
+            {message}
+          </Text>
+        ) : null}
       </View>
     );
   }
@@ -36,8 +43,12 @@ export default function EmptyState({
         style={StyleSheet.absoluteFill}
       />
       {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
-      <Text style={styles.title}>{title}</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      <Text style={[styles.title, { fontSize: 14 * fontScale }]}>{title}</Text>
+      {message ? (
+        <Text style={[styles.message, { fontSize: 12 * fontScale, lineHeight: 18 * fontScale }]}>
+          {message}
+        </Text>
+      ) : null}
     </View>
   );
 }

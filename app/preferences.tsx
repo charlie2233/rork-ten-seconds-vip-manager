@@ -42,6 +42,7 @@ export default function PreferencesScreen() {
     setTheme,
     fontSize,
     setFontSize,
+    fontScale,
     hideBalance,
     setHideBalance,
     backgroundGradient,
@@ -76,14 +77,14 @@ export default function PreferencesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('preferences.displaySection')}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('preferences.displaySection')}</Text>
           <View style={styles.card}>
             <View style={styles.toggleRow}>
               <View style={styles.rowLeft}>
                 <View style={styles.rowIcon}>
                   <Moon size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.theme')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.theme')}</Text>
               </View>
               <Switch
                 value={theme === 'warm'}
@@ -97,15 +98,17 @@ export default function PreferencesScreen() {
               style={styles.menuRow}
               onPress={() => setShowFontSheet((v) => !v)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('preferences.fontSize')}
             >
               <View style={styles.rowLeft}>
                 <View style={styles.rowIcon}>
                   <Text style={styles.fontIconText}>Aa</Text>
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.fontSize')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.fontSize')}</Text>
               </View>
               <View style={styles.rowRight}>
-                <Text style={styles.rowValue}>{t(currentFontLabelKey)}</Text>
+                <Text style={[styles.rowValue, { fontSize: 14 * fontScale }]}>{t(currentFontLabelKey)}</Text>
                 <ChevronRight size={18} color={Colors.textMuted} />
               </View>
             </TouchableOpacity>
@@ -115,7 +118,7 @@ export default function PreferencesScreen() {
                 <View style={styles.rowIcon}>
                   <Eye size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.hideBalance')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.hideBalance')}</Text>
               </View>
               <Switch
                 value={hideBalance}
@@ -130,7 +133,7 @@ export default function PreferencesScreen() {
                 <View style={styles.rowIcon}>
                   <ZapOff size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.reduceMotion')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.reduceMotion')}</Text>
               </View>
               <Switch
                 value={reduceMotion}
@@ -151,15 +154,17 @@ export default function PreferencesScreen() {
                 setShowNameModal(true);
               }}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('preferences.userName')}
             >
               <View style={styles.rowLeft}>
                 <View style={styles.rowIcon}>
                   <User size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.userName')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.userName')}</Text>
               </View>
               <View style={styles.rowRight}>
-                <Text style={styles.rowValue}>{user?.name ?? t('auth.login')}</Text>
+                <Text style={[styles.rowValue, { fontSize: 14 * fontScale }]}>{user?.name ?? t('auth.login')}</Text>
                 <ChevronRight size={18} color={Colors.textMuted} />
               </View>
             </TouchableOpacity>
@@ -168,15 +173,17 @@ export default function PreferencesScreen() {
               style={[styles.menuRow, styles.lastRow]}
               onPress={() => setShowLanguageSheet(!showLanguageSheet)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('preferences.language')}
             >
               <View style={styles.rowLeft}>
                 <View style={styles.rowIcon}>
                   <Globe size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.language')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.language')}</Text>
               </View>
               <View style={styles.rowRight}>
-                <Text style={styles.rowValue}>{currentLanguage}</Text>
+                <Text style={[styles.rowValue, { fontSize: 14 * fontScale }]}>{currentLanguage}</Text>
                 <ChevronRight size={18} color={Colors.textMuted} />
               </View>
             </TouchableOpacity>
@@ -196,10 +203,13 @@ export default function PreferencesScreen() {
                   setLocale(lang.key);
                   setShowLanguageSheet(false);
                 }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: locale === lang.key }}
               >
                 <Text
                   style={[
                     styles.languageText,
+                    { fontSize: 15 * fontScale },
                     locale === lang.key && styles.languageTextActive,
                   ]}
                 >
@@ -222,8 +232,10 @@ export default function PreferencesScreen() {
                     setFontSize(opt.key);
                     setShowFontSheet(false);
                   }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
                 >
-                  <Text style={[styles.languageText, selected && styles.languageTextActive]}>
+                  <Text style={[styles.languageText, { fontSize: 15 * fontScale }, selected && styles.languageTextActive]}>
                     {t(opt.labelKey)}
                   </Text>
                 </TouchableOpacity>
@@ -244,9 +256,9 @@ export default function PreferencesScreen() {
               style={styles.modalCenter}
             >
               <Pressable style={styles.modalCard} onPress={() => {}}>
-                <Text style={styles.modalTitle}>{t('preferences.userName')}</Text>
+                <Text style={[styles.modalTitle, { fontSize: 16 * fontScale }]}>{t('preferences.userName')}</Text>
                 <TextInput
-                  style={styles.modalInput}
+                  style={[styles.modalInput, { fontSize: 15 * fontScale }]}
                   value={pendingName}
                   onChangeText={setPendingName}
                   placeholder={t('preferences.userNamePlaceholder')}
@@ -264,8 +276,9 @@ export default function PreferencesScreen() {
                     style={[styles.modalButton, styles.modalButtonSecondary]}
                     onPress={() => setShowNameModal(false)}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
                   >
-                    <Text style={styles.modalButtonSecondaryText}>{t('common.cancel')}</Text>
+                    <Text style={[styles.modalButtonSecondaryText, { fontSize: 14 * fontScale }]}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.modalButtonPrimary]}
@@ -274,8 +287,9 @@ export default function PreferencesScreen() {
                       setShowNameModal(false);
                     }}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
                   >
-                    <Text style={styles.modalButtonPrimaryText}>{t('common.ok')}</Text>
+                    <Text style={[styles.modalButtonPrimaryText, { fontSize: 14 * fontScale }]}>{t('common.ok')}</Text>
                   </TouchableOpacity>
                 </View>
               </Pressable>
@@ -284,14 +298,14 @@ export default function PreferencesScreen() {
         </Modal>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('preferences.soundSection')}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('preferences.soundSection')}</Text>
           <View style={styles.card}>
             <View style={styles.toggleRow}>
               <View style={styles.rowLeft}>
                 <View style={styles.rowIcon}>
                   <Volume2 size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.sound')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.sound')}</Text>
               </View>
               <Switch
                 value={soundEnabled}
@@ -306,7 +320,7 @@ export default function PreferencesScreen() {
                 <View style={styles.rowIcon}>
                   <Vibrate size={20} color={Colors.primary} />
                 </View>
-                <Text style={styles.rowLabel}>{t('preferences.vibration')}</Text>
+                <Text style={[styles.rowLabel, { fontSize: 15 * fontScale }]}>{t('preferences.vibration')}</Text>
               </View>
               <Switch
                 value={vibrationEnabled}

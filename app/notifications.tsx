@@ -82,7 +82,7 @@ function formatTimeAgo(dateString: string, t: (key: string, params?: Record<stri
 
 export default function NotificationsScreen() {
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const { isAuthenticated } = useAuth();
   const {
     settings,
@@ -115,6 +115,8 @@ export default function NotificationsScreen() {
             style={styles.headerAction}
             onPress={markAllAsRead}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.markAllRead')}
           >
             <CheckCheck size={20} color={Colors.primary} />
           </TouchableOpacity>
@@ -131,22 +133,26 @@ export default function NotificationsScreen() {
             style={styles.permissionBanner}
             onPress={handleRequestPermission}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.permissionTitle')}
           >
             <View style={styles.permissionIcon}>
               <BellRing size={24} color={Colors.secondary} />
             </View>
             <View style={styles.permissionContent}>
-              <Text style={styles.permissionTitle}>{t('notifications.permissionTitle')}</Text>
-              <Text style={styles.permissionDesc}>{t('notifications.permissionDesc')}</Text>
+              <Text style={[styles.permissionTitle, { fontSize: 15 * fontScale }]}>{t('notifications.permissionTitle')}</Text>
+              <Text style={[styles.permissionDesc, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+                {t('notifications.permissionDesc')}
+              </Text>
             </View>
           </TouchableOpacity>
         )}
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('notifications.settingsTitle')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>{t('notifications.settingsTitle')}</Text>
             <View style={styles.masterToggle}>
-              <Text style={styles.masterToggleLabel}>{t('notifications.enabled')}</Text>
+              <Text style={[styles.masterToggleLabel, { fontSize: 13 * fontScale }]}>{t('notifications.enabled')}</Text>
               <Switch
                 value={settings.enabled}
                 onValueChange={() => toggleSetting('enabled')}
@@ -171,7 +177,7 @@ export default function NotificationsScreen() {
                     <View style={styles.settingIcon}>
                       <IconComponent size={20} color={settings.enabled ? Colors.primary : Colors.textMuted} />
                     </View>
-                    <Text style={[styles.settingLabel, !settings.enabled && styles.textDisabled]}>
+                    <Text style={[styles.settingLabel, { fontSize: 15 * fontScale }, !settings.enabled && styles.textDisabled]}>
                       {t(setting.labelKey)}
                     </Text>
                   </View>
@@ -190,7 +196,7 @@ export default function NotificationsScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
+            <Text style={[styles.sectionTitle, { fontSize: 14 * fontScale }]}>
               {t('notifications.recentTitle')}
               {unreadCount > 0 && (
                 <Text style={styles.unreadBadge}> ({unreadCount})</Text>
@@ -200,6 +206,8 @@ export default function NotificationsScreen() {
               <TouchableOpacity 
                 onPress={clearNotifications}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('notifications.clearAll')}
               >
                 <Trash2 size={18} color={Colors.textMuted} />
               </TouchableOpacity>
@@ -230,6 +238,8 @@ export default function NotificationsScreen() {
                     ]}
                     activeOpacity={0.7}
                     onPress={() => markAsRead(notification.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(notification.titleKey, notification.titleParams)}
                   >
                     <View style={styles.notificationIconContainer}>
                       <IconComponent 
@@ -241,16 +251,20 @@ export default function NotificationsScreen() {
                       <View style={styles.notificationHeader}>
                         <Text style={[
                           styles.notificationTitle,
+                          { fontSize: 15 * fontScale },
                           notification.read && styles.readTitle
                         ]}>
                           {t(notification.titleKey, notification.titleParams)}
                         </Text>
                         {!notification.read && <View style={styles.unreadDot} />}
                       </View>
-                      <Text style={styles.notificationDesc} numberOfLines={2}>
+                      <Text
+                        style={[styles.notificationDesc, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}
+                        numberOfLines={2}
+                      >
                         {t(notification.descKey, notification.descParams)}
                       </Text>
-                      <Text style={styles.notificationTime}>
+                      <Text style={[styles.notificationTime, { fontSize: 12 * fontScale }]}>
                         {formatTimeAgo(notification.date, t)}
                       </Text>
                     </View>

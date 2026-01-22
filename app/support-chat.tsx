@@ -36,7 +36,7 @@ const QUICK_QUESTIONS = [
 export default function SupportChatScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const { user } = useAuth();
   const { claimedCoupons, offers } = useCoupons();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -210,8 +210,10 @@ export default function SupportChatScreen() {
             if (state === 'output-error') {
               return (
                 <View key={`${message.id}-${i}`} style={styles.toolCard}>
-                  <Text style={styles.toolTitle}>{String(toolName)}</Text>
-                  <Text style={styles.toolErrorText}>{String(errorText ?? 'Tool failed')}</Text>
+                  <Text style={[styles.toolTitle, { fontSize: 12 * fontScale }]}>{String(toolName)}</Text>
+                  <Text style={[styles.toolErrorText, { fontSize: 12 * fontScale, lineHeight: 16 * fontScale }]}>
+                    {String(errorText ?? 'Tool failed')}
+                  </Text>
                 </View>
               );
             }
@@ -223,7 +225,7 @@ export default function SupportChatScreen() {
             return (
               <View key={`${message.id}-${i}`} style={styles.toolIndicator}>
                 <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={styles.toolText}>{t('common.loading')}</Text>
+                <Text style={[styles.toolText, { fontSize: 12 * fontScale }]}>{t('common.loading')}</Text>
               </View>
             );
           }
@@ -260,9 +262,9 @@ export default function SupportChatScreen() {
         right={
           <View style={[styles.onlineStatus, { marginTop: 0 }]}>
             <View style={styles.aiIndicator}>
-              <Text style={styles.aiText}>{aiName}</Text>
+              <Text style={[styles.aiText, { fontSize: 9 * fontScale }]}>{aiName}</Text>
             </View>
-            <Text style={styles.onlineText}>{t('support.online')}</Text>
+            <Text style={[styles.onlineText, { fontSize: 11 * fontScale }]}>{t('support.online')}</Text>
           </View>
         }
       />
@@ -285,7 +287,13 @@ export default function SupportChatScreen() {
                 <Bot size={18} color={Colors.primary} />
               </View>
               <View style={[styles.messageBubble, styles.botBubble]}>
-                <Text style={[styles.messageText, styles.botText]}>
+                <Text
+                  style={[
+                    styles.messageText,
+                    styles.botText,
+                    { fontSize: 14 * fontScale, lineHeight: 20 * fontScale },
+                  ]}
+                >
                   {welcomeMessage}
                 </Text>
               </View>
@@ -342,7 +350,7 @@ export default function SupportChatScreen() {
 
           {visibleMessages.length === 0 && (
             <View style={styles.quickQuestions}>
-              <Text style={styles.quickTitle}>{t('support.quickTitle')}</Text>
+              <Text style={[styles.quickTitle, { fontSize: 13 * fontScale }]}>{t('support.quickTitle')}</Text>
               {QUICK_QUESTIONS.map((q, index) => (
                 <TouchableOpacity
                   key={index}
@@ -350,8 +358,11 @@ export default function SupportChatScreen() {
                   onPress={() => handleQuickQuestion(q)}
                   activeOpacity={0.7}
                   disabled={isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(q)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={styles.quickText}>{t(q)}</Text>
+                  <Text style={[styles.quickText, { fontSize: 13 * fontScale }]}>{t(q)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -361,7 +372,7 @@ export default function SupportChatScreen() {
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 12 }]}>
           <View style={styles.inputWrapper}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { fontSize: 15 * fontScale }]}
               placeholder={t('support.inputPlaceholder')}
               placeholderTextColor={Colors.textMuted}
               value={inputText}
@@ -379,6 +390,9 @@ export default function SupportChatScreen() {
               onPress={handleSend}
               disabled={!inputText.trim() || isLoading}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('support.send')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color={Colors.textMuted} />

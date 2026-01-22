@@ -49,7 +49,7 @@ export default function CouponsScreen() {
   const { user } = useAuth();
   const { isLoading: couponsLoading, claimedCoupons, offers, claimCoupon, isFavorite, toggleFavorite } = useCoupons();
   const { t, locale } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const [activeSegment, setActiveSegment] = useState<SegmentKey>('available');
   const [isExpanded, setIsExpanded] = useState(false);
   const [claimedCouponName, setClaimedCouponName] = useState<string | null>(null);
@@ -221,21 +221,23 @@ export default function CouponsScreen() {
                 activeOpacity={0.7}
               >
                 <Wallet size={16} color={Colors.primary} />
-                <Text style={styles.rechargeButtonText}>{t('home.action.recharge')}</Text>
+                <Text style={[styles.rechargeButtonText, { fontSize: 13 * fontScale }]}>
+                  {t('home.action.recharge')}
+                </Text>
               </TouchableOpacity>
             }
             style={{ marginBottom: 10 }}
           />
           <View style={styles.tierRow}>
             <View style={styles.tierBadge}>
-              <Text style={[styles.tierText, { color: currentTier.color }]}>
+              <Text style={[styles.tierText, { color: currentTier.color, fontSize: 12 * fontScale }]}>
                 {t(formatTierKey(effectiveTier))}
               </Text>
             </View>
             {user ? (
               <View style={styles.pointsBadge}>
-                <Text style={styles.pointsBadgeLabel}>{t('home.points')}</Text>
-                <Text style={styles.pointsBadgeValue}>{availablePoints.toLocaleString()}</Text>
+                <Text style={[styles.pointsBadgeLabel, { fontSize: 12 * fontScale }]}>{t('home.points')}</Text>
+                <Text style={[styles.pointsBadgeValue, { fontSize: 12 * fontScale }]}>{availablePoints.toLocaleString()}</Text>
               </View>
             ) : null}
           </View>
@@ -251,7 +253,7 @@ export default function CouponsScreen() {
               onChangeText={setSearchQuery}
               placeholder={t('coupons.searchPlaceholder')}
               placeholderTextColor={Colors.textMuted}
-              style={styles.searchInput}
+              style={[styles.searchInput, { fontSize: 13 * fontScale }]}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="search"
@@ -264,7 +266,7 @@ export default function CouponsScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
           >
-            <Text style={styles.sortText}>{t(`coupons.sort.${sortKey}`)}</Text>
+            <Text style={[styles.sortText, { fontSize: 12 * fontScale }]}>{t(`coupons.sort.${sortKey}`)}</Text>
             <ChevronDown size={16} color={Colors.textMuted} />
           </TouchableOpacity>
         </View>
@@ -287,7 +289,13 @@ export default function CouponsScreen() {
                 onPress={() => setActiveSegment(segment.key)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { fontSize: 13 * fontScale },
+                    isActive && styles.segmentTextActive,
+                  ]}
+                >
                   {t(segment.labelKey)}
                 </Text>
               </TouchableOpacity>
@@ -304,7 +312,13 @@ export default function CouponsScreen() {
                 activeOpacity={0.75}
                 accessibilityRole="button"
               >
-                <Text style={[styles.filterChipText, expiringSoonOnly && styles.filterChipTextActive]}>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { fontSize: 12 * fontScale },
+                    expiringSoonOnly && styles.filterChipTextActive,
+                  ]}
+                >
                   {t('coupons.filter.expiringSoon7')}
                 </Text>
               </TouchableOpacity>
@@ -321,10 +335,16 @@ export default function CouponsScreen() {
                 color={favoritesOnly ? Colors.primary : Colors.textMuted}
                 fill={favoritesOnly ? Colors.primary : 'transparent'}
               />
-              <Text style={[styles.filterChipText, favoritesOnly && styles.filterChipTextActive]}>
-                {t('coupons.filter.favorites')}
-              </Text>
-            </TouchableOpacity>
+            <Text
+              style={[
+                styles.filterChipText,
+                { fontSize: 12 * fontScale },
+                favoritesOnly && styles.filterChipTextActive,
+              ]}
+            >
+              {t('coupons.filter.favorites')}
+            </Text>
+          </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.filterChip, freeOnly && styles.filterChipActive]}
@@ -332,10 +352,16 @@ export default function CouponsScreen() {
               activeOpacity={0.75}
               accessibilityRole="button"
             >
-              <Text style={[styles.filterChipText, freeOnly && styles.filterChipTextActive]}>
-                {t('coupons.filter.free')}
-              </Text>
-            </TouchableOpacity>
+            <Text
+              style={[
+                styles.filterChipText,
+                { fontSize: 12 * fontScale },
+                freeOnly && styles.filterChipTextActive,
+              ]}
+            >
+              {t('coupons.filter.free')}
+            </Text>
+          </TouchableOpacity>
           </View>
 
           {couponsLoading && user ? (
@@ -399,6 +425,7 @@ export default function CouponsScreen() {
                         <Text
                           style={[
                             styles.couponValue,
+                            { fontSize: 18 * fontScale },
                             { color: definition.themeColor ?? Colors.primary },
                           ]}
                         >
@@ -409,13 +436,13 @@ export default function CouponsScreen() {
 
                     <View style={styles.couponContent}>
                       <View style={styles.couponHeader}>
-                        <Text style={styles.couponTitle} numberOfLines={1}>
+                        <Text style={[styles.couponTitle, { fontSize: 16 * fontScale }]} numberOfLines={1}>
                           {t(definition.title)}
                         </Text>
                         <View style={styles.couponHeaderRight}>
                           {status !== 'available' ? (
                             <View style={styles.statusPill}>
-                              <Text style={styles.statusText}>{statusLabel}</Text>
+                              <Text style={[styles.statusText, { fontSize: 11 * fontScale }]}>{statusLabel}</Text>
                             </View>
                           ) : null}
                           <PressableScale
@@ -441,11 +468,14 @@ export default function CouponsScreen() {
                           </PressableScale>
                         </View>
                       </View>
-                      <Text style={styles.couponDesc} numberOfLines={2}>
+                      <Text
+                        style={[styles.couponDesc, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}
+                        numberOfLines={2}
+                      >
                         {t(definition.description)}
                       </Text>
                       <View style={styles.couponMetaRow}>
-                        <Text style={styles.couponMetaText}>
+                        <Text style={[styles.couponMetaText, { fontSize: 12 * fontScale }]}>
                           {t('coupons.validTo', { date: definition.validTo })}
                         </Text>
                         <ChevronRight size={18} color={Colors.textMuted} />
@@ -461,7 +491,7 @@ export default function CouponsScreen() {
                   onPress={() => setIsExpanded((prev) => !prev)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.expandText}>
+                  <Text style={[styles.expandText, { fontSize: 13 * fontScale }]}>
                     {isExpanded
                       ? t('coupons.showLess')
                       : t('coupons.showMore', { count: remainingCount })}
@@ -479,7 +509,7 @@ export default function CouponsScreen() {
 
         {offers.length > 0 && (
           <View style={styles.offersSection}>
-            <Text style={styles.sectionTitle}>{t('coupons.section.offers')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 16 * fontScale }]}>{t('coupons.section.offers')}</Text>
 
             <View style={styles.offerFiltersRow}>
               <TouchableOpacity
@@ -488,7 +518,13 @@ export default function CouponsScreen() {
                 activeOpacity={0.75}
                 accessibilityRole="button"
               >
-                <Text style={[styles.filterChipText, unlockedOffersOnly && styles.filterChipTextActive]}>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { fontSize: 12 * fontScale },
+                    unlockedOffersOnly && styles.filterChipTextActive,
+                  ]}
+                >
                   {t('coupons.filter.unlocked')}
                 </Text>
               </TouchableOpacity>
@@ -560,10 +596,10 @@ export default function CouponsScreen() {
                     <View style={styles.offerLeft}>
                       <Ticket size={20} color={definition.themeColor ?? Colors.primary} />
                       <View style={styles.offerTextBlock}>
-                        <Text style={styles.offerTitle} numberOfLines={1}>
+                        <Text style={[styles.offerTitle, { fontSize: 14 * fontScale }]} numberOfLines={1}>
                           {t(definition.title)}
                         </Text>
-                        <Text style={styles.offerDesc} numberOfLines={1}>
+                        <Text style={[styles.offerDesc, { fontSize: 12 * fontScale }]} numberOfLines={1}>
                           {t(definition.minSpendText ?? definition.description)}
                         </Text>
                       </View>
@@ -596,7 +632,13 @@ export default function CouponsScreen() {
                           ) : (
                             <Lock size={14} color={Colors.textMuted} />
                           )}
-                          <Text style={[styles.claimText, !canAfford && styles.claimTextDisabled]}>
+                          <Text
+                            style={[
+                              styles.claimText,
+                              { fontSize: 12 * fontScale },
+                              !canAfford && styles.claimTextDisabled,
+                            ]}
+                          >
                             {buttonLabel}
                           </Text>
                         </PressableScale>
@@ -605,7 +647,7 @@ export default function CouponsScreen() {
                       user ? (
                         <View style={styles.lockedBadge}>
                           <Lock size={14} color={Colors.textMuted} />
-                          <Text style={styles.lockedText}>
+                          <Text style={[styles.lockedText, { fontSize: 11 * fontScale }]}>
                             {t('coupons.requiresTier', { tier: t(formatTierKey(definition.tier)) })}
                           </Text>
                         </View>
@@ -614,9 +656,12 @@ export default function CouponsScreen() {
                           style={styles.loginBadge}
                           onPress={() => router.push('/login')}
                           activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('coupons.signInToUnlock')}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                           <LogIn size={14} color={Colors.primary} />
-                          <Text style={styles.loginText}>{t('coupons.signInToUnlock')}</Text>
+                          <Text style={[styles.loginText, { fontSize: 11 * fontScale }]}>{t('coupons.signInToUnlock')}</Text>
                         </TouchableOpacity>
                       )
                     )}
@@ -666,7 +711,13 @@ export default function CouponsScreen() {
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
                 >
-                  <Text style={[styles.sortRowText, selected && styles.sortRowTextSelected]}>
+                  <Text
+                    style={[
+                      styles.sortRowText,
+                      { fontSize: 14 * fontScale },
+                      selected && styles.sortRowTextSelected,
+                    ]}
+                  >
                     {t(`coupons.sort.${key}`)}
                   </Text>
                   {selected ? <Check size={18} color={Colors.primary} /> : <View style={styles.sortSpacer} />}
@@ -693,8 +744,8 @@ export default function CouponsScreen() {
 	            >
 	              <Sparkles size={26} color={Colors.background} />
 	            </LinearGradient>
-	            <Text style={styles.claimedTitle}>{t('couponDetail.claimedTitle')}</Text>
-	            <Text style={styles.claimedSubtitle}>
+	            <Text style={[styles.claimedTitle, { fontSize: 18 * fontScale }]}>{t('couponDetail.claimedTitle')}</Text>
+	            <Text style={[styles.claimedSubtitle, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
 	              {t('couponDetail.claimedMessage', { coupon: claimedCouponName ?? '' })}
 	            </Text>
 	          </View>

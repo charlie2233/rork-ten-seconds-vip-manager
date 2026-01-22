@@ -5,14 +5,17 @@ import React, { useEffect, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useI18n } from "@/contexts/I18nContext";
+import { useSettings } from "@/contexts/SettingsContext";
 
 const ONBOARDING_SEEN_KEY = 'onboarding_seen_v1';
 
 export default function TabLayout() {
   const { t } = useI18n();
+  const { fontScale } = useSettings();
   const insets = useSafeAreaInsets();
   const tabBarBottomPadding = Math.max(14, insets.bottom);
-  const tabBarHeight = 74 + tabBarBottomPadding;
+  const tabBarExtra = Math.round(Math.max(0, (fontScale - 1) * 14));
+  const tabBarHeight = 74 + tabBarBottomPadding + tabBarExtra;
   const didCheckOnboardingRef = useRef(false);
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function TabLayout() {
           height: tabBarHeight,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 11 * fontScale,
           fontWeight: '500' as const,
           marginTop: 3,
         },

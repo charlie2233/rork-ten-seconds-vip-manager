@@ -43,7 +43,7 @@ const CARD_WIDTH = Math.min(width - 48, 400);
 export default function MemberCodeScreen() {
   const { user } = useAuth();
   const { t, locale } = useI18n();
-  const { hideBalance, backgroundGradient } = useSettings();
+  const { hideBalance, backgroundGradient, fontScale } = useSettings();
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [balanceSnapshot, setBalanceSnapshot] = useState<MenusafeBalanceSnapshot | null>(null);
@@ -274,7 +274,9 @@ export default function MemberCodeScreen() {
               accessibilityRole="button"
             >
               <X size={18} color="#FFF" />
-              <Text style={[styles.closePillText, { color: '#FFF' }]}>{t('common.close')}</Text>
+              <Text style={[styles.closePillText, { color: '#FFF', fontSize: 12 * fontScale }]}>
+                {t('common.close')}
+              </Text>
             </TouchableOpacity>
           }
         />
@@ -346,7 +348,9 @@ export default function MemberCodeScreen() {
             accessibilityRole="button"
           >
             <X size={18} color="#FFF" />
-            <Text style={[styles.closePillText, { color: '#FFF' }]}>{t('common.close')}</Text>
+            <Text style={[styles.closePillText, { color: '#FFF', fontSize: 12 * fontScale }]}>
+              {t('common.close')}
+            </Text>
           </TouchableOpacity>
         }
       />
@@ -434,10 +438,12 @@ export default function MemberCodeScreen() {
               {/* Card Header */}
               <View style={styles.cardHeader}>
                 <View>
-                  <Text style={[styles.appName, { color: cardTheme.textMuted }]}>VIP MEMBER</Text>
+                  <Text style={[styles.appName, { color: cardTheme.textMuted, fontSize: 12 * fontScale }]}>
+                    VIP MEMBER
+                  </Text>
                   <View style={styles.tierContainer}>
                     {getTierIcon()}
-                    <Text style={[styles.tierName, { color: cardTheme.accent }]}>
+                    <Text style={[styles.tierName, { color: cardTheme.accent, fontSize: 14 * fontScale }]}>
                       {t(`tier.${effectiveTier}`)}
                     </Text>
                   </View>
@@ -458,8 +464,20 @@ export default function MemberCodeScreen() {
 
               {/* User Details */}
               <View style={styles.userDetails}>
-                <Text style={[styles.userNameLabel, { color: cardTheme.textMuted }]}>{t('memberCode.member')}</Text>
-                <Text style={[styles.userName, { color: cardTheme.text, textShadowColor: cardTheme.glowColor, textShadowRadius: 10 }]}>
+                <Text style={[styles.userNameLabel, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
+                  {t('memberCode.member')}
+                </Text>
+                <Text
+                  style={[
+                    styles.userName,
+                    {
+                      color: cardTheme.text,
+                      fontSize: 24 * fontScale,
+                      textShadowColor: cardTheme.glowColor,
+                      textShadowRadius: 10,
+                    },
+                  ]}
+                >
                   {user.name}
                 </Text>
               </View>
@@ -485,7 +503,7 @@ export default function MemberCodeScreen() {
                       onPress={copyToClipboard}
                       activeOpacity={0.6}
                     >
-                      <Text style={styles.codeText}>{memberCode}</Text>
+                      <Text style={[styles.codeText, { fontSize: 14 * fontScale }]}>{memberCode}</Text>
                       {copied ? <Check size={14} color={Colors.success} /> : <Copy size={14} color="#666" />}
                     </TouchableOpacity>
                  </View>
@@ -498,11 +516,11 @@ export default function MemberCodeScreen() {
                     onPress={handleRefresh}
                  >
                     <RefreshCw size={14} color={cardTheme.textMuted} />
-                    <Text style={[styles.refreshLabel, { color: cardTheme.textMuted }]}>
+                    <Text style={[styles.refreshLabel, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
                       {t('common.refresh')}
                     </Text>
                  </TouchableOpacity>
-                 <Text style={[styles.memberSince, { color: cardTheme.textMuted }]}>
+                 <Text style={[styles.memberSince, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
                     {t('profile.joinDate')}: {user.joinDate}
                  </Text>
               </View>
@@ -523,7 +541,7 @@ export default function MemberCodeScreen() {
               start={{x:0, y:0}} end={{x:1, y:0}}
             >
               <Wallet size={20} color="#FFF" />
-              <Text style={styles.walletText}>{t('memberCode.addToWallet')}</Text>
+              <Text style={[styles.walletText, { fontSize: 16 * fontScale }]}>{t('memberCode.addToWallet')}</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -546,8 +564,8 @@ export default function MemberCodeScreen() {
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-               <Text style={styles.statLabel}>{t('memberCode.balance')}</Text>
-               <Text style={styles.statValue}>
+               <Text style={[styles.statLabel, { fontSize: 12 * fontScale }]}>{t('memberCode.balance')}</Text>
+               <Text style={[styles.statValue, { fontSize: 20 * fontScale }]}>
                  {hideBalance
                    ? '$••••'
                    : `$${displayBalance.toLocaleString(numberLocale, {
@@ -559,15 +577,17 @@ export default function MemberCodeScreen() {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-               <Text style={styles.statLabel}>{t('memberCode.points')}</Text>
-               <Text style={styles.statValue}>{displayPoints.toLocaleString(numberLocale)}</Text>
+               <Text style={[styles.statLabel, { fontSize: 12 * fontScale }]}>{t('memberCode.points')}</Text>
+               <Text style={[styles.statValue, { fontSize: 20 * fontScale }]}>
+                 {displayPoints.toLocaleString(numberLocale)}
+               </Text>
             </View>
           </View>
           
           {menusafeQuery.isError && !isOffline && (
              <View style={styles.errorBanner}>
                <AlertCircle size={14} color="#FF6B6B" />
-               <Text style={styles.errorBannerText}>{t('memberCode.syncError')}</Text>
+               <Text style={[styles.errorBannerText, { fontSize: 12 * fontScale }]}>{t('memberCode.syncError')}</Text>
              </View>
           )}
         </View>

@@ -21,11 +21,13 @@ type Step = 'phone' | 'code' | 'success';
 
 export default function ForgotPasswordScreen() {
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [countdown, setCountdown] = useState(0);
+  const controlHeight = Math.round(56 + Math.max(0, (fontScale - 1) * 14));
+  const codeHeight = Math.round(64 + Math.max(0, (fontScale - 1) * 16));
 
   const handleSendCode = () => {
     if (!phone.trim() || phone.length < 11) {
@@ -90,13 +92,15 @@ export default function ForgotPasswordScreen() {
                 <Phone size={32} color={Colors.background} />
               </LinearGradient>
             </View>
-            <Text style={styles.title}>{t('forgot.phoneTitle')}</Text>
-            <Text style={styles.subtitle}>{t('forgot.phoneSubtitle')}</Text>
+            <Text style={[styles.title, { fontSize: 24 * fontScale }]}>{t('forgot.phoneTitle')}</Text>
+            <Text style={[styles.subtitle, { fontSize: 14 * fontScale, lineHeight: 20 * fontScale }]}>
+              {t('forgot.phoneSubtitle')}
+            </Text>
 
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputPrefix}>+86</Text>
+              <Text style={[styles.inputPrefix, { fontSize: 16 * fontScale }]}>+86</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { fontSize: 16 * fontScale, height: controlHeight }]}
                 placeholder={t('forgot.phonePlaceholder')}
                 placeholderTextColor={Colors.textMuted}
                 keyboardType="phone-pad"
@@ -111,14 +115,16 @@ export default function ForgotPasswordScreen() {
               onPress={handleSendCode}
               disabled={!phone}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('forgot.sendCode')}
             >
               <LinearGradient
                 colors={[Colors.primary, Colors.primaryDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.buttonGradient}
+                style={[styles.buttonGradient, { height: controlHeight }]}
               >
-                <Text style={styles.buttonText}>{t('forgot.sendCode')}</Text>
+                <Text style={[styles.buttonText, { fontSize: 18 * fontScale }]}>{t('forgot.sendCode')}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </>
@@ -134,14 +140,14 @@ export default function ForgotPasswordScreen() {
                 <Shield size={32} color={Colors.background} />
               </LinearGradient>
             </View>
-            <Text style={styles.title}>{t('forgot.codeTitle')}</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { fontSize: 24 * fontScale }]}>{t('forgot.codeTitle')}</Text>
+            <Text style={[styles.subtitle, { fontSize: 14 * fontScale, lineHeight: 20 * fontScale }]}>
               {t('forgot.codeSubtitle', { phone: phone.slice(-4) })}
             </Text>
 
             <View style={styles.codeInputWrapper}>
               <TextInput
-                style={styles.codeInput}
+                style={[styles.codeInput, { fontSize: 28 * fontScale, height: codeHeight }]}
                 placeholder="------"
                 placeholderTextColor={Colors.textMuted}
                 keyboardType="number-pad"
@@ -156,10 +162,13 @@ export default function ForgotPasswordScreen() {
               style={styles.resendButton}
               onPress={handleResend}
               disabled={countdown > 0}
+              accessibilityRole="button"
+              accessibilityLabel={t('forgot.resend')}
             >
               <Text
                 style={[
                   styles.resendText,
+                  { fontSize: 14 * fontScale },
                   countdown > 0 && styles.resendTextDisabled,
                 ]}
               >
@@ -177,14 +186,16 @@ export default function ForgotPasswordScreen() {
               onPress={handleVerifyCode}
               disabled={code.length < 4}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('forgot.verify')}
             >
               <LinearGradient
                 colors={[Colors.primary, Colors.primaryDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.buttonGradient}
+                style={[styles.buttonGradient, { height: controlHeight }]}
               >
-                <Text style={styles.buttonText}>{t('forgot.verify')}</Text>
+                <Text style={[styles.buttonText, { fontSize: 18 * fontScale }]}>{t('forgot.verify')}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </>
@@ -197,26 +208,30 @@ export default function ForgotPasswordScreen() {
                 <CheckCircle size={48} color={Colors.success} />
               </View>
             </View>
-            <Text style={styles.title}>{t('forgot.successTitle')}</Text>
-            <Text style={styles.subtitle}>{t('forgot.successSubtitle')}</Text>
+            <Text style={[styles.title, { fontSize: 24 * fontScale }]}>{t('forgot.successTitle')}</Text>
+            <Text style={[styles.subtitle, { fontSize: 14 * fontScale, lineHeight: 20 * fontScale }]}>
+              {t('forgot.successSubtitle')}
+            </Text>
 
             <View style={styles.tempPasswordCard}>
-              <Text style={styles.tempPasswordLabel}>{t('forgot.tempPassword')}</Text>
-              <Text style={styles.tempPasswordValue}>888888</Text>
+              <Text style={[styles.tempPasswordLabel, { fontSize: 13 * fontScale }]}>{t('forgot.tempPassword')}</Text>
+              <Text style={[styles.tempPasswordValue, { fontSize: 32 * fontScale }]}>888888</Text>
             </View>
 
             <TouchableOpacity
               style={styles.primaryButton}
               onPress={() => router.replace('/login')}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('forgot.backToLogin')}
             >
               <LinearGradient
                 colors={[Colors.primary, Colors.primaryDark]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.buttonGradient}
+                style={[styles.buttonGradient, { height: controlHeight }]}
               >
-                <Text style={styles.buttonText}>{t('forgot.backToLogin')}</Text>
+                <Text style={[styles.buttonText, { fontSize: 18 * fontScale }]}>{t('forgot.backToLogin')}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </>

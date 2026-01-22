@@ -18,7 +18,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 
 export default function RegisterScreen() {
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +26,7 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const controlHeight = Math.round(56 + Math.max(0, (fontScale - 1) * 14));
 
   const handleRegister = () => {
     if (!name.trim()) {
@@ -81,11 +82,11 @@ export default function RegisterScreen() {
             colors={[Colors.primary, Colors.primaryDark]}
             style={styles.logoGradient}
           >
-            <Text style={styles.logoText}>{t('brand.shortName')}</Text>
+            <Text style={[styles.logoText, { fontSize: 28 * fontScale }]}>{t('brand.shortName')}</Text>
           </LinearGradient>
         </View>
 
-        <Text style={styles.subtitle}>{t('register.subtitle')}</Text>
+        <Text style={[styles.subtitle, { fontSize: 14 * fontScale }]}>{t('register.subtitle')}</Text>
 
         <View style={styles.form}>
           <View style={styles.inputWrapper}>
@@ -93,7 +94,7 @@ export default function RegisterScreen() {
               <User size={20} color={Colors.textSecondary} />
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { fontSize: 16 * fontScale, height: controlHeight }]}
               placeholder={t('register.namePlaceholder')}
               placeholderTextColor={Colors.textMuted}
               value={name}
@@ -106,7 +107,7 @@ export default function RegisterScreen() {
               <Phone size={20} color={Colors.textSecondary} />
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { fontSize: 16 * fontScale, height: controlHeight }]}
               placeholder={t('register.phonePlaceholder')}
               placeholderTextColor={Colors.textMuted}
               keyboardType="phone-pad"
@@ -121,7 +122,7 @@ export default function RegisterScreen() {
               <Lock size={20} color={Colors.textSecondary} />
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { fontSize: 16 * fontScale, height: controlHeight }]}
               placeholder={t('register.passwordPlaceholder')}
               placeholderTextColor={Colors.textMuted}
               secureTextEntry={!showPassword}
@@ -131,6 +132,9 @@ export default function RegisterScreen() {
             <TouchableOpacity
               style={styles.eyeButton}
               onPress={() => setShowPassword(!showPassword)}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               {showPassword ? (
                 <EyeOff size={20} color={Colors.textSecondary} />
@@ -145,7 +149,7 @@ export default function RegisterScreen() {
               <Lock size={20} color={Colors.textSecondary} />
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { fontSize: 16 * fontScale, height: controlHeight }]}
               placeholder={t('register.confirmPasswordPlaceholder')}
               placeholderTextColor={Colors.textMuted}
               secureTextEntry={!showConfirmPassword}
@@ -155,6 +159,9 @@ export default function RegisterScreen() {
             <TouchableOpacity
               style={styles.eyeButton}
               onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              accessibilityRole="button"
+              accessibilityLabel={showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               {showConfirmPassword ? (
                 <EyeOff size={20} color={Colors.textSecondary} />
@@ -168,13 +175,15 @@ export default function RegisterScreen() {
             style={styles.agreeRow}
             onPress={() => setAgreed(!agreed)}
             activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: agreed }}
           >
             <View
               style={[styles.checkbox, agreed && styles.checkboxChecked]}
             >
               {agreed && <CheckCircle size={16} color={Colors.background} />}
             </View>
-            <Text style={styles.agreeText}>
+            <Text style={[styles.agreeText, { fontSize: 13 * fontScale, lineHeight: 20 * fontScale }]}>
               {t('register.agreePrefix')}{' '}
               <Text style={styles.agreeLink}>{t('register.terms')}</Text>
               {' '}{t('register.and')}{' '}
@@ -191,16 +200,16 @@ export default function RegisterScreen() {
               colors={[Colors.primary, Colors.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={styles.registerGradient}
+              style={[styles.registerGradient, { height: controlHeight }]}
             >
-              <Text style={styles.registerButtonText}>{t('register.submit')}</Text>
+              <Text style={[styles.registerButtonText, { fontSize: 18 * fontScale }]}>{t('register.submit')}</Text>
             </LinearGradient>
           </TouchableOpacity>
 
           <View style={styles.loginRow}>
-            <Text style={styles.loginText}>{t('register.hasAccount')}</Text>
-            <TouchableOpacity onPress={() => router.replace('/login')}>
-              <Text style={styles.loginLink}>{t('register.loginNow')}</Text>
+            <Text style={[styles.loginText, { fontSize: 14 * fontScale }]}>{t('register.hasAccount')}</Text>
+            <TouchableOpacity onPress={() => router.replace('/login')} accessibilityRole="button">
+              <Text style={[styles.loginLink, { fontSize: 14 * fontScale }]}>{t('register.loginNow')}</Text>
             </TouchableOpacity>
           </View>
         </View>

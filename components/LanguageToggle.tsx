@@ -13,6 +13,7 @@ import { Check, ChevronDown, Languages } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { Locale, useI18n } from '@/contexts/I18nContext';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type Props = {
   align?: 'left' | 'right';
@@ -26,6 +27,7 @@ export default function LanguageToggle({
   align = 'left',
 }: Props) {
   const { locale, setLocale, t } = useI18n();
+  const { fontScale } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -61,7 +63,7 @@ export default function LanguageToggle({
         <Languages size={16} color={Colors.textSecondary} />
         {variant === 'full' ? (
           <>
-            <Text style={styles.text}>{currentLabel}</Text>
+            <Text style={[styles.text, { fontSize: 12 * fontScale }]}>{currentLabel}</Text>
             <ChevronDown size={16} color={Colors.textMuted} />
           </>
         ) : null}
@@ -96,7 +98,7 @@ export default function LanguageToggle({
                   accessibilityLabel={opt.label}
                   accessibilityState={{ selected }}
                 >
-                  <Text style={[styles.menuText, selected && styles.menuTextSelected]}>
+                  <Text style={[styles.menuText, { fontSize: 14 * fontScale }, selected && styles.menuTextSelected]}>
                     {opt.label}
                   </Text>
                   {selected ? <Check size={18} color={Colors.primary} /> : <View style={styles.spacer} />}
@@ -114,8 +116,8 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: 10,
     gap: 8,
-    minHeight: 32,
-    borderRadius: 16,
+    minHeight: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -125,7 +127,7 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     width: 44,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 0,
   },
   text: {

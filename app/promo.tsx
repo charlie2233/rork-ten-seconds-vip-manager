@@ -43,7 +43,7 @@ const PROMOTIONS = [
 
 export default function PromoScreen() {
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
 
   return (
     <View style={styles.container}>
@@ -71,17 +71,19 @@ export default function PromoScreen() {
               <View style={[styles.heroCircle, styles.heroCircle2]} />
             </View>
             <View style={styles.heroContent}>
-              <Text style={styles.heroTitle}>{t('promo.heroTitle')}</Text>
-              <Text style={styles.heroDesc}>{t('promo.heroDesc')}</Text>
+              <Text style={[styles.heroTitle, { fontSize: 24 * fontScale }]}>{t('promo.heroTitle')}</Text>
+              <Text style={[styles.heroDesc, { fontSize: 14 * fontScale, lineHeight: 20 * fontScale }]}>
+                {t('promo.heroDesc')}
+              </Text>
               <View style={styles.heroBadge}>
                 <Clock size={14} color={Colors.text} />
-                <Text style={styles.heroBadgeText}>{t('promo.heroTime')}</Text>
+                <Text style={[styles.heroBadgeText, { fontSize: 12 * fontScale }]}>{t('promo.heroTime')}</Text>
               </View>
             </View>
           </LinearGradient>
         </View>
 
-        <Text style={styles.sectionTitle}>{t('promo.currentPromos')}</Text>
+        <Text style={[styles.sectionTitle, { fontSize: 18 * fontScale }]}>{t('promo.currentPromos')}</Text>
 
         {PROMOTIONS.map((promo) => {
           const IconComponent = promo.icon;
@@ -91,13 +93,15 @@ export default function PromoScreen() {
               style={styles.promoCard}
               activeOpacity={0.7}
               onPress={() => router.push('/recharge')}
+              accessibilityRole="button"
+              accessibilityLabel={t(promo.titleKey)}
             >
               <View style={[styles.promoIcon, { backgroundColor: promo.bgColor }]}>
                 <IconComponent size={24} color={promo.color} />
               </View>
               <View style={styles.promoContent}>
-                <Text style={styles.promoTitle}>{t(promo.titleKey)}</Text>
-                <Text style={styles.promoDesc}>{t(promo.descKey)}</Text>
+                <Text style={[styles.promoTitle, { fontSize: 16 * fontScale }]}>{t(promo.titleKey)}</Text>
+                <Text style={[styles.promoDesc, { fontSize: 13 * fontScale }]}>{t(promo.descKey)}</Text>
               </View>
               <ChevronRight size={20} color={Colors.textMuted} />
             </TouchableOpacity>
@@ -105,12 +109,12 @@ export default function PromoScreen() {
         })}
 
         <View style={styles.rulesCard}>
-          <Text style={styles.rulesTitle}>{t('promo.rulesTitle')}</Text>
+          <Text style={[styles.rulesTitle, { fontSize: 14 * fontScale }]}>{t('promo.rulesTitle')}</Text>
           <View style={styles.rulesList}>
-            <Text style={styles.ruleItem}>• {t('promo.rule1')}</Text>
-            <Text style={styles.ruleItem}>• {t('promo.rule2')}</Text>
-            <Text style={styles.ruleItem}>• {t('promo.rule3')}</Text>
-            <Text style={styles.ruleItem}>• {t('promo.rule4')}</Text>
+            <Text style={[styles.ruleItem, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>• {t('promo.rule1')}</Text>
+            <Text style={[styles.ruleItem, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>• {t('promo.rule2')}</Text>
+            <Text style={[styles.ruleItem, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>• {t('promo.rule3')}</Text>
+            <Text style={[styles.ruleItem, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>• {t('promo.rule4')}</Text>
           </View>
         </View>
 
@@ -118,6 +122,8 @@ export default function PromoScreen() {
           style={styles.ctaButton}
           onPress={() => router.push('/recharge')}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('promo.ctaButton')}
         >
           <LinearGradient
             colors={[Colors.primary, Colors.primaryDark]}
@@ -125,7 +131,7 @@ export default function PromoScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.ctaGradient}
           >
-            <Text style={styles.ctaText}>{t('promo.ctaButton')}</Text>
+            <Text style={[styles.ctaText, { fontSize: 18 * fontScale }]}>{t('promo.ctaButton')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 

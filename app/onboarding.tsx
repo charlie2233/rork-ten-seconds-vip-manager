@@ -30,7 +30,7 @@ type Slide = {
 export default function OnboardingScreen() {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const scrollRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(1);
@@ -128,6 +128,8 @@ export default function OnboardingScreen() {
             onPress={close}
             activeOpacity={0.75}
             accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <X size={18} color={Colors.textSecondary} />
           </TouchableOpacity>
@@ -155,8 +157,10 @@ export default function OnboardingScreen() {
                 >
                   {slide.icon}
                 </LinearGradient>
-                <Text style={styles.slideTitle}>{t(slide.titleKey)}</Text>
-                <Text style={styles.slideBody}>{t(slide.bodyKey)}</Text>
+                <Text style={[styles.slideTitle, { fontSize: 20 * fontScale }]}>{t(slide.titleKey)}</Text>
+                <Text style={[styles.slideBody, { fontSize: 14 * fontScale, lineHeight: 20 * fontScale }]}>
+                  {t(slide.bodyKey)}
+                </Text>
               </View>
             </View>
           ))}
@@ -177,7 +181,7 @@ export default function OnboardingScreen() {
           activeOpacity={0.8}
           accessibilityRole="button"
         >
-          <Text style={styles.skipText}>{t('common.skip')}</Text>
+          <Text style={[styles.skipText, { fontSize: 14 * fontScale }]}>{t('common.skip')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -192,7 +196,7 @@ export default function OnboardingScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.nextGradient}
           >
-            <Text style={styles.nextText}>
+            <Text style={[styles.nextText, { fontSize: 14 * fontScale }]}>
               {isLast ? t('onboarding.getStarted') : t('common.next')}
             </Text>
           </LinearGradient>
@@ -223,9 +227,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.surface,

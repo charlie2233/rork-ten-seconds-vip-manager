@@ -72,7 +72,7 @@ const FAQ_LIST: FAQ[] = [
 
 export default function HelpCenterScreen() {
   const { t } = useI18n();
-  const { backgroundGradient } = useSettings();
+  const { backgroundGradient, fontScale } = useSettings();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -126,11 +126,11 @@ export default function HelpCenterScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>{t('help.heroTitle')}</Text>
-          <Text style={styles.heroSubtitle}>{t('help.heroSubtitle')}</Text>
+          <Text style={[styles.heroTitle, { fontSize: 24 * fontScale }]}>{t('help.heroTitle')}</Text>
+          <Text style={[styles.heroSubtitle, { fontSize: 14 * fontScale }]}>{t('help.heroSubtitle')}</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>{t('help.faqTitle')}</Text>
+        <Text style={[styles.sectionTitle, { fontSize: 16 * fontScale }]}>{t('help.faqTitle')}</Text>
 
         <View style={styles.faqList}>
           {FAQ_LIST.map((faq) => {
@@ -142,12 +142,16 @@ export default function HelpCenterScreen() {
                   style={styles.faqHeader}
                   onPress={() => toggleExpand(faq.id)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(faq.questionKey)}
+                  accessibilityState={{ expanded: isExpanded }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <View style={styles.faqLeft}>
                     <View style={styles.faqIcon}>
                       <IconComponent size={18} color={Colors.primary} />
                     </View>
-                    <Text style={styles.faqQuestion}>{t(faq.questionKey)}</Text>
+                    <Text style={[styles.faqQuestion, { fontSize: 15 * fontScale }]}>{t(faq.questionKey)}</Text>
                   </View>
                   {isExpanded ? (
                     <ChevronUp size={20} color={Colors.textMuted} />
@@ -157,7 +161,9 @@ export default function HelpCenterScreen() {
                 </TouchableOpacity>
                 {isExpanded && (
                   <View style={styles.faqAnswer}>
-                    <Text style={styles.answerText}>{t(faq.answerKey)}</Text>
+                    <Text style={[styles.answerText, { fontSize: 14 * fontScale, lineHeight: 22 * fontScale }]}>
+                      {t(faq.answerKey)}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -168,12 +174,12 @@ export default function HelpCenterScreen() {
         <View style={styles.suggestionSection}>
           <View style={styles.suggestionHeader}>
             <Lightbulb size={20} color={Colors.primary} />
-            <Text style={styles.suggestionTitle}>{t('help.suggestion.title')}</Text>
+            <Text style={[styles.suggestionTitle, { fontSize: 16 * fontScale }]}>{t('help.suggestion.title')}</Text>
           </View>
-          <Text style={styles.suggestionSubtitle}>{t('help.suggestion.subtitle')}</Text>
+          <Text style={[styles.suggestionSubtitle, { fontSize: 13 * fontScale }]}>{t('help.suggestion.subtitle')}</Text>
           <View style={styles.suggestionInputContainer}>
             <TextInput
-              style={styles.suggestionInput}
+              style={[styles.suggestionInput, { fontSize: 15 * fontScale }]}
               placeholder={t('help.suggestion.placeholder')}
               placeholderTextColor={Colors.textMuted}
               value={suggestion}
@@ -188,24 +194,28 @@ export default function HelpCenterScreen() {
             onPress={handleSendSuggestion}
             activeOpacity={0.8}
             disabled={isSending || !suggestion.trim()}
+            accessibilityRole="button"
+            accessibilityLabel={t('help.suggestion.send')}
           >
             {isSending ? (
               <ActivityIndicator size="small" color={Colors.background} />
             ) : (
               <>
                 <Send size={18} color={Colors.background} />
-                <Text style={styles.sendButtonText}>{t('help.suggestion.send')}</Text>
+                <Text style={[styles.sendButtonText, { fontSize: 15 * fontScale }]}>{t('help.suggestion.send')}</Text>
               </>
             )}
           </TouchableOpacity>
         </View>
 
         <View style={styles.contactSection}>
-          <Text style={styles.contactTitle}>{t('help.stillNeedHelp')}</Text>
+          <Text style={[styles.contactTitle, { fontSize: 14 * fontScale }]}>{t('help.stillNeedHelp')}</Text>
           <TouchableOpacity
             style={styles.contactButton}
             onPress={() => router.push('/support-chat')}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={t('help.contactSupport')}
           >
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}
@@ -214,7 +224,7 @@ export default function HelpCenterScreen() {
               style={styles.contactGradient}
             >
               <MessageCircle size={20} color={Colors.background} />
-              <Text style={styles.contactButtonText}>{t('help.contactSupport')}</Text>
+              <Text style={[styles.contactButtonText, { fontSize: 16 * fontScale }]}>{t('help.contactSupport')}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>

@@ -6,6 +6,7 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import PressableScale from '@/components/PressableScale';
 import Colors from '@/constants/colors';
 import { useI18n } from '@/contexts/I18nContext';
+import { useSettings } from '@/contexts/SettingsContext';
 
 type Props = {
   title: string;
@@ -23,6 +24,7 @@ export default function AuthGateCard({
   style,
 }: Props) {
   const { t } = useI18n();
+  const { fontScale } = useSettings();
 
   return (
     <View style={[styles.card, style]}>
@@ -30,8 +32,12 @@ export default function AuthGateCard({
         <Lock size={20} color={Colors.background} />
       </LinearGradient>
 
-      <Text style={styles.title}>{title}</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      <Text style={[styles.title, { fontSize: 16 * fontScale }]}>{title}</Text>
+      {message ? (
+        <Text style={[styles.message, { fontSize: 13 * fontScale, lineHeight: 18 * fontScale }]}>
+          {message}
+        </Text>
+      ) : null}
 
       <PressableScale
         containerStyle={styles.ctaButton}
@@ -47,7 +53,9 @@ export default function AuthGateCard({
           style={styles.ctaGradient}
         >
           <LogIn size={16} color={Colors.background} />
-          <Text style={styles.ctaText}>{ctaLabel ?? t('auth.login')}</Text>
+          <Text style={[styles.ctaText, { fontSize: 14 * fontScale }]}>
+            {ctaLabel ?? t('auth.login')}
+          </Text>
         </LinearGradient>
       </PressableScale>
     </View>
