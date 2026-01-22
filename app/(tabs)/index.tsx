@@ -11,7 +11,22 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { QrCode, Wallet, Gift, TrendingUp, ChevronRight, LogIn, Sparkles, Crown, Star } from 'lucide-react-native';
+import * as Linking from 'expo-linking';
+import {
+  QrCode,
+  Wallet,
+  Gift,
+  TrendingUp,
+  ChevronRight,
+  LogIn,
+  Sparkles,
+  Crown,
+  Star,
+  ShoppingBag,
+  MapPin,
+  Phone,
+  Info,
+} from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,6 +56,29 @@ const CARD_WIDTH = width - 48;
 const CARD_HEIGHT = 240;
 const ONBOARDING_SEEN_KEY = 'onboarding_seen_v1';
 
+function toTelUrl(phone: string) {
+  const digitsOnly = phone.replace(/\D/g, '');
+  const normalized = digitsOnly.length === 10 ? `1${digitsOnly}` : digitsOnly;
+  return `tel:+${normalized}`;
+}
+
+function mapUrlForAddress(address: string) {
+  const encoded = encodeURIComponent(address);
+  if (Platform.OS === 'ios') {
+    return `https://maps.apple.com/?q=${encoded}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+}
+
+async function openUrl(url?: string) {
+  if (!url) return;
+  try {
+    await Linking.openURL(url);
+  } catch {
+    // ignore
+  }
+}
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const { t, locale } = useI18n();
@@ -48,7 +86,10 @@ export default function HomeScreen() {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const storeAddress = storeLocations[0]?.address ?? '4535 Campus Dr, Irvine, CA 92612';
+  const location = storeLocations[0];
+  const storeAddress = location?.address ?? '4535 Campus Dr, Irvine, CA 92612';
+  const storePhone = location?.phone;
+  const onlineOrderUrl = location?.onlineOrderUrl ?? location?.website;
   const numberLocale = locale === 'zh' ? 'zh-CN' : locale === 'es' ? 'es-ES' : 'en-US';
   const [balanceSnapshot, setBalanceSnapshot] = useState<MenusafeBalanceSnapshot | null>(null);
   const [showTourPrompt, setShowTourPrompt] = useState(false);
@@ -651,6 +692,63 @@ export default function HomeScreen() {
           </LinearGradient>
         </Animated.View>
 
+        <View style={styles.ctaCard}>
+          <TouchableOpacity
+            style={[styles.ctaRow, !onlineOrderUrl && styles.ctaRowDisabled]}
+            activeOpacity={0.75}
+            disabled={!onlineOrderUrl}
+            onPress={() => openUrl(onlineOrderUrl)}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.cta.orderOnline')}
+          >
+            <View style={styles.ctaRowLeft}>
+              <View style={[styles.ctaIcon, { backgroundColor: 'rgba(201, 169, 98, 0.14)' }]}>
+                <ShoppingBag size={18} color={Colors.primary} />
+              </View>
+              <Text style={[styles.ctaText, { fontSize: 15 * fontScale }]}>{t('home.cta.orderOnline')}</Text>
+            </View>
+            <ChevronRight size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.ctaRow}
+            activeOpacity={0.75}
+            onPress={() => openUrl(mapUrlForAddress(storeAddress))}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.cta.directions')}
+          >
+            <View style={styles.ctaRowLeft}>
+              <View style={[styles.ctaIcon, { backgroundColor: 'rgba(212, 57, 58, 0.14)' }]}>
+                <MapPin size={18} color={Colors.secondary} />
+              </View>
+              <Text style={[styles.ctaText, { fontSize: 15 * fontScale }]}>{t('home.cta.directions')}</Text>
+            </View>
+            <ChevronRight size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.ctaRow, styles.ctaRowLast, !storePhone && styles.ctaRowDisabled]}
+            activeOpacity={0.75}
+            disabled={!storePhone}
+            onPress={() => openUrl(storePhone ? toTelUrl(storePhone) : undefined)}
+            accessibilityRole="button"
+            accessibilityLabel={storePhone ? `${t('home.cta.call')} ${storePhone}` : t('home.cta.call')}
+          >
+            <View style={styles.ctaRowLeft}>
+              <View style={[styles.ctaIcon, { backgroundColor: 'rgba(76, 175, 80, 0.14)' }]}>
+                <Phone size={18} color={Colors.success} />
+              </View>
+              <Text style={[styles.ctaText, { fontSize: 15 * fontScale }]}>{t('home.cta.call')}</Text>
+            </View>
+            <ChevronRight size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.storeOnlyHintRow} accessibilityRole="text">
+          <Info size={16} color={Colors.textMuted} />
+          <Text style={[styles.storeOnlyHintText, { fontSize: 12 * fontScale }]}>{t('recharge.storeOnlyHint')}</Text>
+        </View>
+
         <View style={styles.quickActions}>
           <TouchableOpacity 
             style={styles.actionButton} 
@@ -1213,6 +1311,64 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 32,
+  },
+  ctaCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    minHeight: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  ctaRowLast: {
+    borderBottomWidth: 0,
+  },
+  ctaRowDisabled: {
+    opacity: 0.5,
+  },
+  ctaRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+    paddingVertical: 12,
+  },
+  ctaIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: {
+    color: Colors.text,
+    fontWeight: '600' as const,
+  },
+  storeOnlyHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    marginBottom: 18,
+  },
+  storeOnlyHintText: {
+    flex: 1,
+    color: Colors.textSecondary,
+    fontWeight: '500' as const,
   },
   actionButton: {
     alignItems: 'center',

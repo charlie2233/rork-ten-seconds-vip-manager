@@ -12,7 +12,7 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 - STILL WAITING FOR MENUSAFE API (URL + API key) to enable live balance lookup.
 
 ## How can I edit this code?
-
+/Users/hanfei/rork-ten-seconds-vip-manager-1/README.md
 There are several ways of editing your native mobile application.
 
 ### **Use Rork**
