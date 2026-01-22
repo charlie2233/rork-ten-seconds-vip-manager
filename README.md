@@ -2,7 +2,7 @@
 
 ## Project info
 
-This is a native cross-platform mobile app created with [Rork](https://rork.com)
+This is a native cross-platform mobile app created with [Rork](https://rork.com), in collaboration with [Codex](https://usecodex.com) and [Cursor](https://cursor.com), along with contributions from my friend group.
 
 **Platform**: Native iOS & Android app, exportable to web
 **Framework**: Expo Router + React Native
