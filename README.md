@@ -1,27 +1,29 @@
-# Welcome to your Rork app
+# Ten Seconds VIP Manager
+
+Native cross-platform (iOS/Android/Web) VIP member center for Ten Seconds Rice Noodle.
 
 ## Project info
 
 This is a native cross-platform mobile app created with [Rork](https://rork.com), in collaboration with [Codex](https://usecodex.com) and [Cursor](https://cursor.com), along with contributions from my friend group.
 
-**Platform**: Native iOS & Android app, exportable to web
-**Framework**: Expo Router + React Native
+- **Platform**: Native iOS & Android app (also runs on web)
+- **Framework**: Expo Router + React Native
+- **API**: Hono + tRPC (see `backend/`)
 
 ## Status
 
-- STILL WAITING FOR MENUSAFE API (URL + API key) to enable live balance lookup.
+- MenuSafe sync is wired up, but needs `MENUSAFE_API_URL` + `MENUSAFE_API_KEY` for live balance lookup (falls back to mock data when unset).
 
 ## How can I edit this code?
-/Users/hanfei/rork-ten-seconds-vip-manager-1/README.md
 There are several ways of editing your native mobile application.
 
 ### **Use Rork**
 
-Simply visit [rork.com](https://rork.com) andCe prompt to build your app with AI.
+Simply visit [rork.com](https://rork.com) and use the prompt to build your app with AI.
 
 Changes made via Rork will be committed automatically to this GitHub repo.
 
-Whenever you make a change in your local code editor and push it to GitHub, it will be also reflected in Rork.
+Whenever you make a change in your local code editor and push it to GitHub, it will also be reflected in Rork.
 
 ### **Use your preferred code editor**
 
@@ -29,7 +31,7 @@ If you want to work locally using your own code editor, you can clone this repo 
 
 If you are new to coding and unsure which editor to use, we recommend Cursor. If you're familiar with terminals, try Claude Code.
 
-The only requirement is having Node.js & Bun installed - [install Node.js with nvm](https://github.com/nvm-sh/nvm) and [install Bun](https://bun.sh/docs/installation)
+The only requirement is having Node.js and Bun installed: [install Node.js with nvm](https://github.com/nvm-sh/nvm) and [install Bun](https://bun.sh/docs/installation).
 
 Follow these steps:
 
@@ -64,7 +66,7 @@ bun run start -- --ios
 This project is built with the most popular native mobile cross-platform technical stack:
 
 - **React Native** - Cross-platform native mobile development framework created by Meta and used for Instagram, Airbnb, and lots of top apps in the App Store
-- **Expo** - Extension of React Native + platform used by Discord, Shopify, Coinbase, Telsa, Starlink, Eightsleep, and more
+- **Expo** - Extension of React Native + platform used by Discord, Shopify, Coinbase, Tesla, Starlink, Eight Sleep, and more
 - **Expo Router** - File-based routing system for React Native with support for web, server functions and SSR
 - **TypeScript** - Type-safe JavaScript
 - **React Query** - Server state management
@@ -80,11 +82,11 @@ This project is built with the most popular native mobile cross-platform technic
 
 ### **In your browser**
 
-Run `bun start-web` to test in a web browser. Note: The browser preview is great for quick testing, but some native features may not be available.
+Run `bun run start-web` to test in a web browser. Note: The browser preview is great for quick testing, but some native features may not be available.
 
 ### **iOS Simulator / Android Emulator**
 
-You can test Rork apps in Expo Go or Rork iOS app. You don't need XCode or Android Studio for most features.
+You can test Rork apps in Expo Go or Rork iOS app. You don't need Xcode or Android Studio for most features.
 
 **When do you need Custom Development Builds?**
 
@@ -95,7 +97,7 @@ You can test Rork apps in Expo Go or Rork iOS app. You don't need XCode or Andro
 
 Learn more: [Expo Custom Development Builds Guide](https://docs.expo.dev/develop/development-builds/introduction/)
 
-If you have XCode (iOS) or Android Studio installed:
+If you have Xcode (iOS) or Android Studio installed:
 
 ```bash
 # iOS Simulator
@@ -172,7 +174,7 @@ Alternative web deployment options:
 
 ## App Features
 
-This template includes:
+This project includes:
 
 - **Cross-platform compatibility** - Works on iOS, Android, and Web
 - **File-based routing** with Expo Router
@@ -185,19 +187,16 @@ This template includes:
 ## Project Structure
 
 ```
-├── app/                    # App screens (Expo Router)
-│   ├── (tabs)/            # Tab navigation screens
-│   │   ├── _layout.tsx    # Tab layout configuration
-│   │   └── index.tsx      # Home tab screen
-│   ├── _layout.tsx        # Root layout
-│   ├── modal.tsx          # Modal screen example
-│   └── +not-found.tsx     # 404 screen
-├── assets/                # Static assets
-│   └── images/           # App icons and images
-├── constants/            # App constants and configuration
-├── app.json             # Expo configuration
-├── package.json         # Dependencies and scripts
-└── tsconfig.json        # TypeScript configuration
+├── app/                  # App screens (Expo Router)
+├── backend/              # Hono + tRPC API routes
+├── components/           # Shared UI components
+├── contexts/             # React contexts (auth, i18n, etc.)
+├── lib/                  # Utilities + business logic
+├── mocks/                # Mock data for local dev
+├── assets/               # Static assets (icons/images)
+├── app.json              # Expo configuration
+├── package.json          # Dependencies and scripts
+└── tsconfig.json         # TypeScript configuration
 ```
 
 ## Custom Development Builds
@@ -208,7 +207,7 @@ For advanced native features, you'll need to create a Custom Development Build i
 
 - **Native Authentication**: Face ID, Touch ID, Apple Sign In, Google Sign In
 - **In-App Purchases**: App Store and Google Play subscriptions
-- **Advanced Native Features**: Third-party SDKs, platform-specifc features (e.g. Widgets on iOS)
+- **Advanced Native Features**: Third-party SDKs, platform-specific features (e.g. Widgets on iOS)
 - **Background Processing**: Background tasks, location tracking
 
 ### **Creating a Custom Development Build**
@@ -225,7 +224,7 @@ eas build --profile development --platform ios
 eas build --profile development --platform android
 
 # Install the development build on your device and start developing
-bun start --dev-client
+bun run start -- --dev-client
 ```
 
 **Learn more:**
@@ -299,8 +298,8 @@ For mobile apps, you'll configure your app's deep linking scheme in `app.json`.
 
 ### **App not loading on device?**
 
-1. Make sure your phone and computer are on the same WiFi network
-2. Try using tunnel mode: `bun start -- --tunnel`
+1. Make sure your phone and computer are on the same Wi-Fi network
+2. Try using tunnel mode (already enabled here): `bun run start`
 3. Check if your firewall is blocking the connection
 
 ### **Build failing?**
