@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +27,7 @@ import {
   MapPin,
   Phone,
   Info,
+  RefreshCw,
 } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import * as bwipjs from 'bwip-js/generic';
@@ -86,6 +88,8 @@ export default function HomeScreen() {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const lastBalanceSnapshotWriteAtRef = useRef<number>(0);
+  const lastBalanceSnapshotValueRef = useRef<number | null>(null);
   const location = storeLocations[0];
   const storeAddress = location?.address ?? '4535 Campus Dr, Irvine, CA 92612';
   const storePhone = location?.phone;
@@ -200,20 +204,38 @@ export default function HomeScreen() {
     { memberId: user?.memberId ?? '' },
     { 
       enabled: !!user?.memberId,
-      refetchInterval: 5000,
+      staleTime: 30_000,
+      refetchInterval: 30_000,
+      refetchIntervalInBackground: false,
       refetchOnWindowFocus: true,
     }
   );
 
   useEffect(() => {
     if (!user?.memberId) return;
+    if (!menusafeBalanceQuery.dataUpdatedAt) return;
     const nextBalance = menusafeBalanceQuery.data?.balance;
     if (typeof nextBalance !== 'number' || !Number.isFinite(nextBalance)) return;
+
+    const updatedAtIso = new Date(menusafeBalanceQuery.dataUpdatedAt).toISOString();
+    setBalanceSnapshot({ balance: nextBalance, updatedAt: updatedAtIso });
+
+    const now = Date.now();
+    const shouldPersist =
+      lastBalanceSnapshotValueRef.current === null ||
+      lastBalanceSnapshotValueRef.current !== nextBalance ||
+      now - lastBalanceSnapshotWriteAtRef.current > 5 * 60_000;
+
+    if (!shouldPersist) return;
+
+    lastBalanceSnapshotValueRef.current = nextBalance;
+    lastBalanceSnapshotWriteAtRef.current = now;
+
     (async () => {
       const saved = await saveMenusafeBalanceSnapshot(user.memberId, nextBalance);
       setBalanceSnapshot(saved);
     })();
-  }, [menusafeBalanceQuery.data?.balance, user?.memberId]);
+  }, [menusafeBalanceQuery.data?.balance, menusafeBalanceQuery.dataUpdatedAt, user?.memberId]);
 
   const recentTransactionsQuery = trpc.transactions.getRecent.useQuery(
     { userId: user?.id, count: 3 },
@@ -230,6 +252,10 @@ export default function HomeScreen() {
   const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
+  const lastBalanceSyncIso =
+    typeof menusafeBalanceQuery.data?.balance === 'number' && Number.isFinite(menusafeBalanceQuery.data.balance)
+      ? new Date(menusafeBalanceQuery.dataUpdatedAt).toISOString()
+      : balanceSnapshot?.updatedAt;
 
   const currentTierIndex = TIER_ORDER.indexOf(effectiveTier);
   const nextTier = currentTierIndex < TIER_ORDER.length - 1 ? TIER_ORDER[currentTierIndex + 1] : null;
@@ -602,9 +628,31 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.balanceContainer}>
-              <Text style={[styles.balanceLabel, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
-                {t('home.balance')}
-              </Text>
+              <View style={styles.balanceHeaderRow}>
+                <Text style={[styles.balanceLabel, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
+                  {t('home.balance')}
+                </Text>
+                {user ? (
+                  <TouchableOpacity
+                    style={styles.balanceRefreshButton}
+                    onPress={() => {
+                      menusafeBalanceQuery.refetch();
+                      recentTransactionsQuery.refetch();
+                    }}
+                    disabled={menusafeBalanceQuery.isFetching || recentTransactionsQuery.isFetching}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('common.refresh')}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    {menusafeBalanceQuery.isFetching || recentTransactionsQuery.isFetching ? (
+                      <ActivityIndicator size="small" color={cardTheme.textMuted} />
+                    ) : (
+                      <RefreshCw size={14} color={cardTheme.textMuted} />
+                    )}
+                  </TouchableOpacity>
+                ) : null}
+              </View>
               <View style={styles.balanceRow}>
                 <Text style={[styles.currencySymbol, { color: cardTheme.text, fontSize: 22 * fontScale }]}>$</Text>
                 <Text style={[styles.balanceAmount, { color: cardTheme.text, fontSize: 40 * fontScale }]}>
@@ -616,6 +664,14 @@ export default function HomeScreen() {
                       })}
                 </Text>
               </View>
+
+              {user && (menusafeBalanceQuery.isFetching || !!lastBalanceSyncIso) ? (
+                <Text style={[styles.balanceMeta, { color: cardTheme.textMuted, fontSize: 11 * fontScale }]}>
+                  {menusafeBalanceQuery.isFetching
+                    ? t('common.syncing')
+                    : t('common.lastUpdated', { time: formatShortDateTime(lastBalanceSyncIso!, locale) })}
+                </Text>
+              ) : null}
               
               {nextTier && (
                 <View style={styles.progressContainer}>
@@ -1166,12 +1222,23 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     zIndex: 1,
   },
+  balanceHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
   balanceLabel: {
     fontSize: 11,
-    marginBottom: 4,
     letterSpacing: 1,
     textTransform: 'uppercase',
     fontWeight: '600' as const,
+  },
+  balanceRefreshButton: {
+    width: 34,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   balanceRow: {
     flexDirection: 'row',
@@ -1186,6 +1253,12 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '700' as const,
     letterSpacing: 1,
+  },
+  balanceMeta: {
+    marginTop: 6,
+    fontSize: 11,
+    fontWeight: '600' as const,
+    opacity: 0.9,
   },
   progressContainer: {
     marginTop: 12,

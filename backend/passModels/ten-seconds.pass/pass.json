@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "passTypeIdentifier": "pass.example.tenseconds",
+  "serialNumber": "placeholder",
+  "teamIdentifier": "TEAMID",
+  "organizationName": "Ten Seconds Rice Noodle",
+  "description": "Ten Seconds VIP Card",
+  "logoText": "Ten Seconds VIP",
+  "foregroundColor": "rgb(255, 255, 255)",
+  "backgroundColor": "rgb(0, 0, 0)",
+  "labelColor": "rgb(201, 169, 98)",
+  "storeCard": {}
+}
+

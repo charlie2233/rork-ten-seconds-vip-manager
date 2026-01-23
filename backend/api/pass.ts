@@ -1,63 +1,180 @@
-import { Context } from "hono";
+import type { Context } from "hono";
 
-// This would typically be imported from a library or generated dynamically
-// For this example, we'll demonstrate the structure needed.
-// You need to install 'passkit-generator' to do this for real: `npm install passkit-generator`
+type CertBundle = {
+  wwdr: Buffer;
+  signerCert: Buffer;
+  signerKey: Buffer;
+  signerKeyPassphrase?: string;
+};
+
+function sanitizeMemberId(raw: string): string | null {
+  const memberId = raw.trim();
+  if (!memberId) return null;
+  if (memberId.length > 64) return null;
+  if (!/^[A-Za-z0-9_-]+$/.test(memberId)) return null;
+  return memberId;
+}
+
+function bufferFromBase64Env(envName: string): Buffer | null {
+  const value = process.env[envName];
+  if (!value) return null;
+  try {
+    return Buffer.from(value, "base64");
+  } catch {
+    return null;
+  }
+}
+
+async function bufferFromFile(filePath: string): Promise<Buffer | null> {
+  try {
+    const { readFile } = await import("node:fs/promises");
+    return await readFile(filePath);
+  } catch {
+    return null;
+  }
+}
+
+async function loadCertificates(): Promise<CertBundle | null> {
+  const path = await import("node:path");
+  const certDir = process.env.PASSKIT_CERT_DIR ?? path.join(process.cwd(), "backend", "certs");
+
+  const wwdr =
+    bufferFromBase64Env("PASSKIT_WWDR_PEM_BASE64") ??
+    (await bufferFromFile(process.env.PASSKIT_WWDR_PEM_PATH ?? path.join(certDir, "wwdr.pem")));
+
+  const signerCert =
+    bufferFromBase64Env("PASSKIT_SIGNER_CERT_BASE64") ??
+    (await bufferFromFile(
+      process.env.PASSKIT_SIGNER_CERT_PATH ?? path.join(certDir, "signerCert.pem")
+    ));
+
+  const signerKey =
+    bufferFromBase64Env("PASSKIT_SIGNER_KEY_BASE64") ??
+    (await bufferFromFile(process.env.PASSKIT_SIGNER_KEY_PATH ?? path.join(certDir, "signerKey.pem")));
+
+  if (!wwdr || !signerCert || !signerKey) return null;
+
+  const signerKeyPassphrase = process.env.PASSKIT_SIGNER_KEY_PASSPHRASE;
+
+  return {
+    wwdr,
+    signerCert,
+    signerKey,
+    signerKeyPassphrase: signerKeyPassphrase ? signerKeyPassphrase : undefined,
+  };
+}
 
 export const appleWalletHandler = async (c: Context) => {
-  const memberId = c.req.param("memberId");
+  const memberIdParam = c.req.param("memberId");
+  const memberId = sanitizeMemberId(memberIdParam);
+  if (!memberId) {
+    return c.json({ error: "Invalid memberId" }, 400);
+  }
 
-  // In a real implementation:
-  // 1. Fetch user data from DB using memberId
-  // 2. Create a Pass using passkit-generator
-  // 3. Sign it with your Apple Developer Certificates (p12, wwdr)
+  const passTypeIdentifier = process.env.PASSKIT_PASS_TYPE_IDENTIFIER;
+  const teamIdentifier = process.env.PASSKIT_TEAM_IDENTIFIER;
+  if (!passTypeIdentifier || !teamIdentifier) {
+    return c.text(
+      [
+        "Apple Wallet pass is not configured.",
+        "",
+        "Set environment variables:",
+        "- PASSKIT_PASS_TYPE_IDENTIFIER",
+        "- PASSKIT_TEAM_IDENTIFIER",
+        "",
+        "And provide certificates via either:",
+        "- PASSKIT_CERT_DIR (default: backend/certs)",
+        "  - wwdr.pem",
+        "  - signerCert.pem",
+        "  - signerKey.pem",
+        "  - PASSKIT_SIGNER_KEY_PASSPHRASE (optional)",
+        "",
+        "Or base64 env vars:",
+        "- PASSKIT_WWDR_PEM_BASE64",
+        "- PASSKIT_SIGNER_CERT_BASE64",
+        "- PASSKIT_SIGNER_KEY_BASE64",
+      ].join("\n"),
+      501
+    );
+  }
 
-  // Example placeholder for the binary data of a .pkpass file
-  // This is just a text response for now as we don't have the certs to sign a real one
-  
-  /**
-   * IMPORTANT: To make this work, you need:
-   * 1. Apple Developer Account
-   * 2. Pass Type ID (e.g., pass.com.rork.vip)
-   * 3. Certificates (signer.p12, wwdr.pem)
-   * 4. NFC Entitlement (if you want the "beep" tap-to-pay feature)
-   */
+  let PKPass: any;
+  try {
+    ({ PKPass } = await import("passkit-generator"));
+  } catch {
+    return c.text(
+      "passkit-generator is not installed. Add it with: `bun add passkit-generator` (or `npm i passkit-generator`).",
+      501
+    );
+  }
 
-  /*
-  // Real Code Sketch:
-  import { PKPass } from 'passkit-generator';
+  const certificates = await loadCertificates();
+  if (!certificates) {
+    return c.text(
+      [
+        "Apple Wallet certificates are missing.",
+        "",
+        "Expected by default:",
+        "- backend/certs/wwdr.pem",
+        "- backend/certs/signerCert.pem",
+        "- backend/certs/signerKey.pem",
+        "",
+        "Override paths with:",
+        "- PASSKIT_CERT_DIR, PASSKIT_WWDR_PEM_PATH, PASSKIT_SIGNER_CERT_PATH, PASSKIT_SIGNER_KEY_PATH",
+        "",
+        "Or provide base64 env vars:",
+        "- PASSKIT_WWDR_PEM_BASE64, PASSKIT_SIGNER_CERT_BASE64, PASSKIT_SIGNER_KEY_BASE64",
+      ].join("\n"),
+      501
+    );
+  }
 
-  const pass = new PKPass({}, {
-    wwdr: fs.readFileSync('./certs/wwdr.pem'),
-    signer: fs.readFileSync('./certs/signer.p12'),
-    password: 'cert_password'
-  });
+  const path = await import("node:path");
+  const modelPath =
+    process.env.PASSKIT_MODEL_PATH ??
+    path.join(process.cwd(), "backend", "passModels", "ten-seconds.pass");
 
-  pass.type = 'storeCard';
-  pass.setBarcodes({
-    format: 'PKBarcodeFormatQR',
-    message: memberId,
-    messageEncoding: 'iso-8859-1'
-  });
-  
-  // For NFC (Requires Entitlement!)
-  pass.nfc = [
-    {
-      message: memberId, // Payload sent to the terminal
-      encryptionPublicKey: '...' // Provided by Apple/Terminal Provider
+  try {
+    const organizationName = process.env.PASSKIT_ORGANIZATION_NAME ?? "Ten Seconds Rice Noodle";
+    const description = process.env.PASSKIT_DESCRIPTION ?? "Ten Seconds VIP Card";
+    const logoText = process.env.PASSKIT_LOGO_TEXT ?? "Ten Seconds VIP";
+
+    const pass = await PKPass.from(
+      {
+        model: modelPath,
+        certificates,
+      },
+      {
+        serialNumber: `tenseconds-${memberId}`,
+        passTypeIdentifier,
+        teamIdentifier,
+        organizationName,
+        description,
+        logoText,
+      }
+    );
+
+    pass.setBarcodes(memberId);
+
+    // Keep fields minimal; Wallet will always show the barcode.
+    if (Array.isArray(pass.primaryFields) && pass.primaryFields.length === 0) {
+      pass.primaryFields.push({
+        key: "memberId",
+        label: "Member ID",
+        value: memberId,
+      });
     }
-  ];
 
-  const buffer = await pass.asBuffer();
-  */
+    const buffer: Buffer = pass.getAsBuffer();
+    const headers = new Headers();
+    headers.set("Content-Type", "application/vnd.apple.pkpass");
+    headers.set("Content-Disposition", `attachment; filename="ten-seconds-${memberId}.pkpass"`);
+    headers.set("Cache-Control", "no-store");
 
-  // Determine if we are just checking availability or requesting download
-  // For this demo, we'll return a 501 Not Implemented with instructions
-  // In production, this returns 'application/vnd.apple.pkpass'
-  
-  return c.text(
-    `Apple Wallet Pass Generator is set up.\n\nTo enable download:\n1. Place 'wwdr.pem' and 'signer.p12' in backend/certs/\n2. Install 'passkit-generator'\n3. Uncomment the generation logic in backend/api/pass.ts`, 
-    501
-  );
+    return new Response(buffer, { status: 200, headers });
+  } catch (error) {
+    console.error("[PassKit] Failed to generate pass:", error);
+    return c.text("Failed to generate Apple Wallet pass.", 500);
+  }
 };
 

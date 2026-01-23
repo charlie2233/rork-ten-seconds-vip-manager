@@ -48,6 +48,8 @@ export default function MemberCodeScreen() {
   const [copied, setCopied] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [balanceSnapshot, setBalanceSnapshot] = useState<MenusafeBalanceSnapshot | null>(null);
+  const lastBalanceSnapshotWriteAtRef = useRef<number>(0);
+  const lastBalanceSnapshotValueRef = useRef<number | null>(null);
   
   // Animation values
   const shimmerAnim = useRef(new Animated.Value(0)).current;
@@ -132,13 +134,29 @@ export default function MemberCodeScreen() {
 
   useEffect(() => {
     if (!user?.memberId) return;
+    if (!menusafeQuery.dataUpdatedAt) return;
     const nextBalance = menusafeQuery.data?.balance;
     if (typeof nextBalance !== 'number' || !Number.isFinite(nextBalance)) return;
+
+    const updatedAtIso = new Date(menusafeQuery.dataUpdatedAt).toISOString();
+    setBalanceSnapshot({ balance: nextBalance, updatedAt: updatedAtIso });
+
+    const now = Date.now();
+    const shouldPersist =
+      lastBalanceSnapshotValueRef.current === null ||
+      lastBalanceSnapshotValueRef.current !== nextBalance ||
+      now - lastBalanceSnapshotWriteAtRef.current > 5 * 60_000;
+
+    if (!shouldPersist) return;
+
+    lastBalanceSnapshotValueRef.current = nextBalance;
+    lastBalanceSnapshotWriteAtRef.current = now;
+
     (async () => {
       const saved = await saveMenusafeBalanceSnapshot(user.memberId, nextBalance);
       setBalanceSnapshot(saved);
     })();
-  }, [menusafeQuery.data?.balance, user?.memberId]);
+  }, [menusafeQuery.data?.balance, menusafeQuery.dataUpdatedAt, user?.memberId]);
 
   const isOffline = !!menusafeQuery.error && isProbablyOffline(menusafeQuery.error);
   const displayBalance =
@@ -146,6 +164,10 @@ export default function MemberCodeScreen() {
   const displayPoints = user?.points ?? 0;
   const effectiveTier = user ? getTierFromBalance(displayBalance) : 'silver';
   const cardTheme = useMemo(() => getVipCardTheme(effectiveTier), [effectiveTier]);
+  const lastBalanceSyncIso =
+    typeof menusafeQuery.data?.balance === 'number' && Number.isFinite(menusafeQuery.data.balance)
+      ? new Date(menusafeQuery.dataUpdatedAt).toISOString()
+      : balanceSnapshot?.updatedAt;
   const cardSurface = useMemo(() => {
     switch (effectiveTier) {
       case 'silver':
@@ -332,13 +354,14 @@ export default function MemberCodeScreen() {
     }
 
     try {
-      const passUrl = `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || 'http://localhost:3000'}/api/pass/${memberCode}`;
-      const supported = await Linking.canOpenURL(passUrl);
-      if (supported) {
-        await Linking.openURL(passUrl);
-      } else {
-        Alert.alert(t('memberCode.walletPassTitle'), t('memberCode.walletOpenFail'));
+      const baseUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
+      if (!baseUrl) {
+        Alert.alert(t('memberCode.walletPassTitle'), t('memberCode.walletNotConfigured'));
+        return;
       }
+
+      const passUrl = `${baseUrl}/api/pass/${encodeURIComponent(memberCode)}`;
+      await Linking.openURL(passUrl);
     } catch (err) {
       console.error(err);
       Alert.alert(t('common.error'), t('memberCode.walletAddFail'));
@@ -607,6 +630,16 @@ export default function MemberCodeScreen() {
                        maximumFractionDigits: 2,
                      })}`}
                </Text>
+               {menusafeQuery.isFetching || lastBalanceSyncIso ? (
+                 <Text
+                   style={[styles.statMeta, { fontSize: 11 * fontScale }]}
+                   numberOfLines={1}
+                 >
+                   {menusafeQuery.isFetching
+                     ? t('common.syncing')
+                     : t('common.lastUpdated', { time: formatShortDateTime(lastBalanceSyncIso!, locale) })}
+                 </Text>
+               ) : null}
                {menusafeQuery.isFetching && <ActivityIndicator size="small" color={Colors.primary} style={styles.loader} />}
             </View>
             <View style={styles.statDivider} />
@@ -916,6 +949,12 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 20,
     fontWeight: '700',
+  },
+  statMeta: {
+    marginTop: 6,
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 11,
+    fontWeight: '600' as const,
   },
   loader: {
     marginTop: 4,

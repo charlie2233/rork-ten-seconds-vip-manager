@@ -23,6 +23,7 @@ const MESSAGES: Record<Locale, Messages> = {
 	    'common.closingIn': '{seconds}秒后关闭',
 	    'common.error': '提示',
 	    'common.syncing': '同步中...',
+	    'common.lastUpdated': '更新：{time}',
 	    'common.vip': 'VIP',
     'a11y.languageHint': '打开语言选择菜单',
     'offline.title': '当前离线',
@@ -164,6 +165,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'memberCode.addToWallet': '添加到 Apple 钱包',
     'memberCode.walletIosOnly': 'Apple 钱包仅支持 iOS',
     'memberCode.walletPassTitle': '钱包卡包',
+    'memberCode.walletNotConfigured': '钱包卡包暂未配置，请稍后再试',
     'memberCode.walletOpenFail': '无法打开卡包，请检查网络连接',
     'memberCode.walletAddFail': '添加到钱包失败',
 
@@ -550,6 +552,7 @@ const MESSAGES: Record<Locale, Messages> = {
 	    'common.closingIn': 'Closing in {seconds}s',
 	    'common.error': 'Error',
 	    'common.syncing': 'Syncing...',
+	    'common.lastUpdated': 'Updated {time}',
 	    'common.vip': 'VIP',
     'a11y.languageHint': 'Opens the language menu',
     'offline.title': "You're offline",
@@ -691,6 +694,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'memberCode.addToWallet': 'Add to Apple Wallet',
     'memberCode.walletIosOnly': 'Apple Wallet is only available on iOS',
     'memberCode.walletPassTitle': 'Wallet Pass',
+    'memberCode.walletNotConfigured': 'Wallet pass is not configured yet.',
     'memberCode.walletOpenFail': 'Could not open the pass. Please check your internet connection.',
     'memberCode.walletAddFail': 'Failed to add pass to wallet.',
 
@@ -1077,6 +1081,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'common.closingIn': 'Se cerrará en {seconds}s',
     'common.error': 'Error',
     'common.syncing': 'Sincronizando...',
+    'common.lastUpdated': 'Actualizado {time}',
     'common.vip': 'VIP',
     'a11y.languageHint': 'Abre el menú de idioma',
     'offline.title': 'Sin conexión',
@@ -1218,6 +1223,7 @@ const MESSAGES: Record<Locale, Messages> = {
     'memberCode.addToWallet': 'Añadir a Apple Wallet',
     'memberCode.walletIosOnly': 'Apple Wallet solo está disponible en iOS',
     'memberCode.walletPassTitle': 'Pase de Wallet',
+    'memberCode.walletNotConfigured': 'El pase de Wallet aún no está configurado.',
     'memberCode.walletOpenFail': 'No se pudo abrir el pase. Revisa tu conexión a internet.',
     'memberCode.walletAddFail': 'No se pudo agregar el pase a Wallet.',
 

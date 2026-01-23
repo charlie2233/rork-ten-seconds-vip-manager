@@ -14,6 +14,33 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 
 - MenuSafe sync is wired up, but needs `MENUSAFE_API_URL` + `MENUSAFE_API_KEY` for live balance lookup (falls back to mock data when unset).
 
+## Configuration
+
+### API base URL
+
+Set `EXPO_PUBLIC_RORK_API_BASE_URL` (used by the tRPC client and the Apple Wallet pass download endpoint).
+
+### MenuSafe (backend)
+
+- `MENUSAFE_API_URL`
+- `MENUSAFE_API_KEY`
+
+### Apple Wallet pass (backend)
+
+The pass download endpoint is `GET /api/pass/:memberId` and uses `passkit-generator` with Apple signing certificates.
+
+Required env vars:
+
+- `PASSKIT_PASS_TYPE_IDENTIFIER`
+- `PASSKIT_TEAM_IDENTIFIER`
+
+Certificates (defaults):
+
+- `backend/certs/wwdr.pem`
+- `backend/certs/signerCert.pem`
+- `backend/certs/signerKey.pem`
+- `PASSKIT_SIGNER_KEY_PASSPHRASE` (optional)
+
 ## How can I edit this code?
 There are several ways of editing your native mobile application.
 
