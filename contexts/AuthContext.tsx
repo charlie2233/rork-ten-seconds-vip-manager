@@ -123,21 +123,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const normalizedMemberId = memberId.trim().toUpperCase();
       const normalizedPassword = password.trim().toLowerCase();
       
-      // Allow test account (case insensitive)
-      const isTestAccount = normalizedMemberId === 'TEST001' && normalizedPassword === 'test1234';
-      
-      if (isTestAccount) {
-        const testAccount = testAccounts.find(
-          (acc) => acc.memberId.toUpperCase() === normalizedMemberId && 
-                   acc.password.toLowerCase() === normalizedPassword
-        );
-        
-        if (testAccount) {
-          console.log('[AuthContext] Logging in as test account:', testAccount.user.name);
-          const userData: User = { ...testAccount.user };
-          await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
-          return userData;
-        }
+      const testAccount = testAccounts.find(
+        (acc) =>
+          acc.memberId.trim().toUpperCase() === normalizedMemberId &&
+          acc.password.trim().toLowerCase() === normalizedPassword
+      );
+
+      if (testAccount) {
+        console.log('[AuthContext] Logging in as test account:', testAccount.user.name);
+        const userData: User = { ...testAccount.user };
+        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+        return userData;
       }
       
       // Removed the generic fallback login logic. Only test accounts or valid MenuSafe authentication (future) should pass.
